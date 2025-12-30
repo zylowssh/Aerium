@@ -5,7 +5,7 @@ from kivymd.uix.button import MDFabButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.scrollview import MDScrollView
-
+from kivymd.uix.pickers import MDTimePickerDialVertical
 from alarmcard import AlarmCard
 
 
@@ -19,7 +19,7 @@ class MainApp(MDApp):
 
         #topbar
         topbar = MDTopAppBar(
-            MDTopAppBarTitle(text="Morpheus", halign="center"),
+            MDTopAppBarTitle(text="Aerium", halign="center"),
             type="large",
             pos_hint={"top": 1},
         )
@@ -60,12 +60,16 @@ class MainApp(MDApp):
         fab = MDFabButton(
             icon="plus",
             pos_hint={"right": 0.95, "y": 0.04},
-            on_release=self.add_alarm,
+            on_release=self.show_time_picker,
         )
         screen.add_widget(fab)
 
         return screen
-
+    
+    def show_time_picker(self, *args):
+        time_picker = MDTimePickerDialVertical()
+        time_picker.open()
+        
     def add_alarm(self, *args):
         # supprime le label si première alarme
         if self.label.parent:
