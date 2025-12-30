@@ -68,14 +68,21 @@ class MainApp(MDApp):
     
     def show_time_picker(self, *args):
         time_picker = MDTimePickerDialVertical()
+        time_picker.bind(on_ok=self.on_ok)
         time_picker.open()
         
-    def add_alarm(self, *args):
+    def on_ok(self, timepicker):
+        time = f"{timepicker.hour.zfill(2)}:{timepicker.minute.zfill(2)}"
+        self.add_alarm(time)
+        
+        
+        
+    def add_alarm(self, time):
         # supprime le label si première alarme
         if self.label.parent:
             self.label.parent.remove_widget(self.label)
             
-        card = AlarmCard("07:00", "Nouvelle alarme")
+        card = AlarmCard(time, "Nouvelle alarme")
         self.alarms_layout.add_widget(card)
 
 
