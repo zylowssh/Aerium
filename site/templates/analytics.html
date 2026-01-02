@@ -20,7 +20,15 @@
         <option value="today">Aujourd'hui</option>
         <option value="7d">7 jours</option>
         <option value="30d">30 jours</option>
+        <option value="custom">Personnalisé</option>
       </select>
+    </div>
+
+    <div id="custom-range" style="display: none; margin-left: 8px;">
+      <input type="date" id="range-from" style="padding: 6px 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: var(--card); color: var(--text); font-size: 0.9rem;" />
+      <span style="color: var(--muted); margin: 0 6px;">-</span>
+      <input type="date" id="range-to" style="padding: 6px 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: var(--card); color: var(--text); font-size: 0.9rem;" />
+      <button id="apply-range" class="link" style="padding: 6px 12px; margin-left: 8px;">Appliquer</button>
     </div>
   </div>
 

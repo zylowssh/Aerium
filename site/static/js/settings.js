@@ -1,9 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
   let isSnapping = false;
+  let savePending = false;
 
   const toggle = document.getElementById("toggle-analysis");
   const goodSlider = document.getElementById("good-threshold");
   if (!toggle || !goodSlider) return;
+
+  const lightModeToggle = document.getElementById("toggle-light-mode");
+  const audioAlertsToggle = document.getElementById("toggle-audio-alerts");
+  const themeHint = document.getElementById("theme-hint");
 
   const badSlider = document.getElementById("bad-threshold");
   const statusText = document.getElementById("status-text");
@@ -18,6 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const overviewUpdateSpeed = document.getElementById("overview-update-speed");
   const overviewSpeedValue = document.getElementById("overview-speed-value");
 
+  const retentionDays = document.getElementById("retention-days");
+  const retentionValue = document.getElementById("retention-value");
+  const cleanupBtn = document.getElementById("cleanup-btn");
+
   const saveBtn = document.getElementById("save-settings");
   const resetBtn = document.getElementById("reset-settings");
 
@@ -28,6 +37,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const MIN = 0;
   const MAX = 2000;
 
+  const PRESETS = {
+    office: { good_threshold: 800, bad_threshold: 1200 },
+    school: { good_threshold: 700, bad_threshold: 1100 },
+    strict: { good_threshold: 600, bad_threshold: 1000 },
+  };
+
   const DEFAULTS = {
     analysis_running: true,
     good_threshold: 800,
@@ -37,6 +52,30 @@ document.addEventListener("DOMContentLoaded", () => {
     overview_update_speed: 5,
   };
 
+  /* =========================
+     THEME MANAGEMENT
+  ========================= */
+  if (lightModeToggle) {
+    const isLight = localStorage.getItem("theme") === "light";
+    lightModeToggle.checked = isLight;
+    themeHint.textContent = `Actuellement: Mode ${isLight ? "clair" : "sombre"}`;
+
+    lightModeToggle.addEventListener("change", () => {
+      applyTheme(lightModeToggle.checked);
+      themeHint.textContent = `Actuellement: Mode ${lightModeToggle.checked ? "clair" : "sombre"}`;
+    });
+  }
+
+  /* =========================
+     AUDIO ALERTS TOGGLE
+  ========================= */
+  if (audioAlertsToggle) {
+    audioAlertsToggle.checked = localStorage.getItem("audioAlerts") !== "false";
+    audioAlertsToggle.addEventListener("change", () => {
+      localStorage.setItem("audioAlerts", audioAlertsToggle.checked ? "true" : "false");
+    });
+  }
+
   function updateLiveValues() {
     goodValue.textContent = `${snap(+goodSlider.value)} ppm`;
     badValue.textContent = `${snap(+badSlider.value)} ppm`;
@@ -45,6 +84,60 @@ document.addEventListener("DOMContentLoaded", () => {
   function snap(value) {
     const STEP = 50;
     return Math.round(value / STEP) * STEP;
+  }
+
+  /* =========================
+     TOAST NOTIFICATIONS
+  ========================= */
+  function showToast(message, duration = 2000) {
+    const container = document.getElementById("toast-container");
+    const toast = document.getElementById("toast");
+    if (!container || !toast) return;
+    
+    toast.textContent = message;
+    container.style.display = "block";
+    setTimeout(() => {
+      container.style.display = "none";
+    }, duration);
+  }
+
+  /* =========================
+     THRESHOLDS & ZONES SETUP
+  ========================= */
+
+  /* =========================
+     RETENTION SLIDER
+  ========================= */
+  if (retentionDays) {
+    retentionDays.addEventListener("input", () => {
+      retentionValue.textContent = `${retentionDays.value} jours`;
+    });
+  }
+
+  if (cleanupBtn) {
+    cleanupBtn.addEventListener("click", async () => {
+      const days = retentionDays ? +retentionDays.value : 90;
+      if (!confirm(`Supprimer les données de plus de ${days} jours?`)) return;
+      
+      cleanupBtn.disabled = true;
+      cleanupBtn.textContent = "⏳ Nettoyage...";
+      
+      try {
+        const res = await fetch("/api/cleanup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ days }),
+        });
+        const data = await res.json();
+        showToast(`${data.deleted} lignes supprimées`);
+      } catch (e) {
+        showToast("Erreur nettoyage", 3000);
+        console.error(e);
+      } finally {
+        cleanupBtn.disabled = false;
+        cleanupBtn.textContent = "🗑️ Nettoyer maintenant";
+      }
+    });
   }
 
   function springTo(slider, target, onDone) {
@@ -212,13 +305,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =========================
-     SAVE
+     SAVE (DEBOUNCED)
   ========================= */
   saveBtn.addEventListener("click", async () => {
+    if (savePending) return;
+    
     syncThresholds();
-
-    saveBtn.classList.add("btn-saved");
-    saveBtn.textContent = "✓ Enregistré";
+    savePending = true;
+    saveBtn.disabled = true;
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = "⏳ Enregistrement...";
 
     const settingsData = {
       analysis_running: toggle.checked,
@@ -229,34 +325,55 @@ document.addEventListener("DOMContentLoaded", () => {
       overview_update_speed: +overviewUpdateSpeed.value,
     };
 
-    // Use WebSocket if available, fallback to HTTP
-    if (isWSConnected() && socket) {
-      socket.emit('settings_change', settingsData);
-    } else {
-      await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settingsData),
-      });
+    try {
+      // Use WebSocket if available, fallback to HTTP
+      if (isWSConnected && isWSConnected() && socket) {
+        socket.emit('settings_change', settingsData);
+      } else {
+        const res = await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(settingsData),
+        });
+        if (!res.ok) throw new Error('Settings save failed');
+      }
+      
+      showNotification('✓ Paramètres enregistrés avec succès', 'success', 2000);
+      saveBtn.textContent = originalText;
+      
+      // Save to localStorage for persistence
+      saveUserPreferences('settings', settingsData);
+    } catch (e) {
+      console.error('Settings save error:', e);
+      showNotification('❌ Erreur lors de l\'enregistrement', 'error', 3000);
+      saveBtn.textContent = originalText;
+    } finally {
+      savePending = false;
+      saveBtn.disabled = false;
     }
-
-    setTimeout(() => {
-      saveBtn.textContent = "💾 Enregistrer";
-      saveBtn.classList.remove("btn-saved");
-    }, 900);
   });
 
   resetBtn.addEventListener("click", async () => {
-    resetBtn.classList.add("btn-resetting");
-    resetBtn.textContent = "↺ Réinitialisé";
+    if (!confirm("Réinitialiser tous les paramètres? Cette action est irréversible.")) return;
+    
+    resetBtn.disabled = true;
+    const originalText = resetBtn.textContent;
+    resetBtn.textContent = "⏳ Réinitialisation...";
 
-    await fetch("/api/settings", { method: "DELETE" });
-    await loadSettings();
-
-    setTimeout(() => {
-      resetBtn.textContent = "⟲ Réinitialiser";
-      resetBtn.classList.remove("btn-resetting");
-    }, 700);
+    try {
+      const res = await fetch("/api/settings", { method: "DELETE" });
+      if (!res.ok) throw new Error('Reset failed');
+      
+      await loadSettings();
+      showNotification('✓ Paramètres réinitialisés', 'success', 2000);
+      localStorage.removeItem('pref_settings');
+    } catch (e) {
+      console.error('Settings reset error:', e);
+      showNotification('❌ Erreur lors de la réinitialisation', 'error', 3000);
+    } finally {
+      resetBtn.disabled = false;
+      resetBtn.textContent = originalText;
+    }
   });
 
 
@@ -288,6 +405,61 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   });
+
+  /* =========================
+     PRESET BUTTONS
+  ========================= */
+  const presetButtons = document.querySelectorAll(".preset-btn");
+  presetButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const preset = btn.dataset.preset.toLowerCase();
+      if (!PRESETS[preset]) return;
+
+      const { good_threshold, bad_threshold } = PRESETS[preset];
+      goodSlider.value = good_threshold;
+      badSlider.value = bad_threshold;
+
+      syncThresholds();
+      updateTexts();
+      updateVisualization();
+      showToast(`✓ Préset "${preset}" appliqué`);
+    });
+  });
+
+  /* =========================
+     RETENTION & CLEANUP
+  ========================= */
+  if (retentionDays) {
+    retentionDays.addEventListener("input", () => {
+      retentionValue.textContent = `${retentionDays.value} jours`;
+    });
+  }
+
+  if (cleanupBtn) {
+    cleanupBtn.addEventListener("click", async () => {
+      const days = retentionDays ? +retentionDays.value : 90;
+      if (!confirm(`Supprimer les données de plus de ${days} jours?`)) return;
+
+      cleanupBtn.disabled = true;
+      cleanupBtn.textContent = "🔄 Nettoyage...";
+
+      try {
+        const res = await fetch("/api/cleanup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ retention_days: days }),
+        });
+        const data = await res.json();
+        showToast(`✓ ${data.deleted} lignes supprimées`);
+      } catch (e) {
+        showToast("✗ Erreur nettoyage", 3000);
+        console.error(e);
+      } finally {
+        cleanupBtn.disabled = false;
+        cleanupBtn.textContent = "🗑️ Nettoyer maintenant";
+      }
+    });
+  }
 
   loadSettings();
 

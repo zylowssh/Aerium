@@ -38,6 +38,14 @@ let analysisRunning = true;
 let bgFade = 1;
 let sharedSettings = null; // Cached settings from WebSocket (populated by websocket.js)
 
+// Theme management
+let darkMode = localStorage.getItem("theme") !== "light";
+
+// Alerts & trend tracking
+let lastHourData = [];
+let alertLog = [];
+let lastBadAlert = null;
+
 /*
 ================================================================================
                     UTILITY FUNCTIONS
@@ -294,7 +302,7 @@ function initNavbar() {
   const underline = document.querySelector(".nav-underline");
   const links = navCenter?.querySelectorAll("a");
 
-  if (!navCenter || !underline) return;
+  if (!navCenter || !underline || !links) return;
 
   const path = window.location.pathname;
 
@@ -311,21 +319,110 @@ function initNavbar() {
     underline.style.opacity = "1";
   }
 
+  // Initialize on load with active link
   const active = getActiveLink();
   if (active) {
     active.classList.add("active");
-    requestAnimationFrame(() => moveUnderline(active));
+    // Wait for everything to be laid out and painted
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        moveUnderline(active);
+      });
+    });
   }
 
-  links.forEach((l) =>
-    l.addEventListener("mouseenter", () => moveUnderline(l))
-  );
+  // Move underline on hover
+  links.forEach((l) => {
+    l.addEventListener("mouseenter", () => moveUnderline(l));
+  });
 
-  navCenter.addEventListener("mouseleave", () =>
-    moveUnderline(getActiveLink())
-  );
+  // Return to active link on mouse leave
+  navCenter.addEventListener("mouseleave", () => {
+    const activeLink = getActiveLink();
+    if (activeLink) moveUnderline(activeLink);
+  });
 
-  window.addEventListener("resize", () => moveUnderline(getActiveLink()));
+  // Reposition on window resize
+  window.addEventListener("resize", () => {
+    const activeLink = getActiveLink();
+    if (activeLink) moveUnderline(activeLink);
+  });
+}
+
+/*
+================================================================================
+                      THEME MANAGEMENT
+================================================================================
+*/
+
+function applyTheme(lightMode) {
+  const root = document.documentElement;
+  if (lightMode) {
+    root.style.setProperty("--bg", "#ffffff");
+    root.style.setProperty("--card", "#f3f4f6");
+    root.style.setProperty("--text", "#111827");
+    root.style.setProperty("--muted", "#6b7280");
+    root.style.setProperty("--good", "#059669");
+    root.style.setProperty("--medium", "#d97706");
+    root.style.setProperty("--bad", "#dc2626");
+    document.documentElement.style.setProperty("--border-light", "rgba(0,0,0,0.1)");
+    document.documentElement.style.setProperty("--border-dark", "rgba(0,0,0,0.06)");
+    darkMode = false;
+    localStorage.setItem("theme", "light");
+  } else {
+    root.style.setProperty("--bg", "#0b0d12");
+    root.style.setProperty("--card", "#141826");
+    root.style.setProperty("--text", "#e5e7eb");
+    root.style.setProperty("--muted", "#9ca3af");
+    root.style.setProperty("--good", "#4ade80");
+    root.style.setProperty("--medium", "#facc15");
+    root.style.setProperty("--bad", "#f87171");
+    document.documentElement.style.setProperty("--border-light", "rgba(255,255,255,0.08)");
+    document.documentElement.style.setProperty("--border-dark", "rgba(255,255,255,0.06)");
+    darkMode = true;
+    localStorage.setItem("theme", "dark");
+  }
+}
+
+// Apply saved theme on load
+applyTheme(darkMode === false);
+
+// Expose for settings page
+window.applyTheme = applyTheme;
+window.getDarkMode = () => darkMode;
+
+/*
+================================================================================
+                      ALERT & TREND MANAGEMENT
+================================================================================
+*/
+
+function addAlert(type, message, value) {
+  const event = {
+    type, // 'threshold', 'pause', 'resume'
+    message,
+    value,
+    timestamp: new Date(),
+  };
+  alertLog.unshift(event); // Add to front
+  if (alertLog.length > 10) alertLog.pop(); // Keep last 10
+
+  // Dispatch custom event for panels to update
+  window.dispatchEvent(new CustomEvent("alert-updated", { detail: event }));
+}
+
+function getTrendPercent() {
+  if (!lastHourData || lastHourData.length < 2) return 0;
+  const oldest = lastHourData[0];
+  const newest = lastHourData[lastHourData.length - 1];
+  const change = ((newest - oldest) / oldest) * 100;
+  return Math.round(change);
+}
+
+function pushToHourly(ppm) {
+  lastHourData.push(ppm);
+  // Keep only 60 readings (roughly 1 minute at 1s intervals, scaled for different speeds)
+  if (lastHourData.length > 60) lastHourData.shift();
 }
 
 /*

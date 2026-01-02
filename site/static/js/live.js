@@ -16,6 +16,13 @@ let pollInterval = null;
 let analysisRunningLocal = true;
 let useWebSocket = true; // Use WebSocket by default
 
+let smoothEnabled = false;
+let outliersEnabled = false;
+let recentValues = [];
+
+let audioEnabled = localStorage.getItem("audioAlerts") !== "false";
+let lastBadAlertTime = 0;
+
 const valueEl = document.getElementById("value");
 const trendEl = document.getElementById("trend");
 const qualityEl = document.getElementById("quality");
@@ -23,8 +30,70 @@ const chartCanvas = document.getElementById("chart");
 const pausedOverlay = document.getElementById("paused-overlay");
 const exportBtn = document.getElementById("export");
 const resetBtn = document.getElementById("reset-btn");
+const smoothToggle = document.getElementById("toggle-smooth");
+const outlierToggle = document.getElementById("toggle-outliers");
 
 const isLivePage = !!(valueEl && qualityEl && chartCanvas);
+
+// Smooth & Outlier toggles
+if (isLivePage) {
+  smoothToggle?.addEventListener("change", () => { smoothEnabled = smoothToggle.checked; });
+  outlierToggle?.addEventListener("change", () => { outliersEnabled = outlierToggle.checked; });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Alert Notifications
+──────────────────────────────────────────────────────────────────────────── */
+
+function playAlertSound() {
+  if (!audioEnabled) return;
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  
+  osc.frequency.value = 800; // Hz
+  osc.type = "sine";
+  
+  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+  
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.3);
+}
+
+function showAlertNotification(message, level = "warning") {
+  if (!isLivePage) return;
+
+  // Visual alert
+  const notification = document.createElement("div");
+  notification.style.cssText = `
+    position: fixed; top: 80px; right: 20px; z-index: 10000;
+    background: ${level === "critical" ? "#f87171" : "#facc15"};
+    color: #0b0d12;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    animation: slideIn 0.3s ease;
+  `;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => notification.remove(), 4000);
+  
+  // Desktop notification if available
+  if (Notification.permission === "granted") {
+    new Notification("Morpheus CO₂ Alert", {
+      body: message,
+      icon: level === "critical" ? "🔴" : "🟡",
+    });
+  }
+  
+  // Audio alert
+  playAlertSound();
+}
 
 /*
 ================================================================================
@@ -380,8 +449,42 @@ window.handleCO2Update = function(data) {
 
   if (!data || data.ppm == null) return;
 
-  const ppm = data.ppm;
+  let ppm = data.ppm;
+
+  // Apply outlier filtering
+  if (outliersEnabled && lastPPM !== null) {
+    const threshold = lastPPM * 0.2; // Cap at +20%
+    if (ppm > lastPPM + threshold) {
+      ppm = lastPPM + threshold;
+    }
+  }
+
+  // Apply smoothing (3-point moving average)
+  if (smoothEnabled) {
+    recentValues.push(ppm);
+    if (recentValues.length > 3) recentValues.shift();
+    ppm = Math.round(recentValues.reduce((a, b) => a + b, 0) / recentValues.length);
+  }
+
   console.log("📊 New PPM (WebSocket):", ppm);
+
+  // Track hourly trends
+  pushToHourly(ppm);
+  
+  // Check for threshold alerts
+  const now = Date.now();
+  if (lastPPM !== null) {
+    if (lastPPM < badThreshold && ppm >= badThreshold) {
+      // Just crossed into bad zone
+      showAlertNotification(`⚠️ Air dégradé: ${ppm} ppm`, "critical");
+      addAlert("threshold", "Dépassement du seuil mauvais", ppm);
+      lastBadAlertTime = now;
+    } else if (lastPPM >= badThreshold && ppm < badThreshold) {
+      // Just left bad zone
+      showAlertNotification(`✓ Air acceptable: ${ppm} ppm`, "success");
+      addAlert("threshold", "Retour à air acceptable", ppm);
+    }
+  }
 
   if (window.pushNavPpm) {
     try { window.pushNavPpm(ppm, data.timestamp); } catch (e) {}
@@ -497,22 +600,41 @@ function initLivePage() {
    Button Handlers
 ──────────────────────────────────────────────────────────────────────────── */
 exportBtn?.addEventListener("click", () => {
-  let csv = "time,ppm\n";
-  chart.data.labels.forEach((t, i) => {
-    csv += `${t},${chart.data.datasets[0].data[i]}\n`;
-  });
+  if (!chart || !chart.data || chart.data.labels.length === 0) {
+    showNotification('❌ Aucune donnée à exporter', 'error', 2000);
+    return;
+  }
 
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "co2_history.csv";
-  a.click();
+  try {
+    let csv = "time,ppm\n";
+    chart.data.labels.forEach((t, i) => {
+      const ppm = chart.data.datasets[0].data[i];
+      csv += `${t},${ppm}\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().slice(0, 10);
+    a.download = `co2_${timestamp}.csv`;
+    a.click();
+    
+    showNotification(`✓ Exporté ${chart.data.labels.length} données`, 'success', 2000);
+  } catch (err) {
+    console.error('Export failed:', err);
+    showNotification('❌ Erreur lors de l\'export', 'error', 2000);
+  }
 });
 
 resetBtn?.addEventListener("click", () => {
+  if (chart && chart.data.labels.length === 0) {
+    showNotification('Graphique déjà vide', 'info', 1500);
+    return;
+  }
   chart.data.labels = [];
   chart.data.datasets[0].data = [];
   chart.update();
+  showNotification('✓ Graphique réinitialisé', 'success', 1500);
 });
 
 if (isLivePage) {
