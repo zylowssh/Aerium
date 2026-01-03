@@ -1,7 +1,15 @@
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path("data/aerium.sqlite")
+# Database path - try main folder first, fallback to site folder
+MAIN_DB_PATH = Path("../data/aerium.sqlite")
+SITE_DB_PATH = Path("data/aerium.sqlite")
+
+# Use main folder if it exists, otherwise use site folder
+if MAIN_DB_PATH.exists():
+    DB_PATH = MAIN_DB_PATH
+else:
+    DB_PATH = SITE_DB_PATH
 
 def get_db():
     DB_PATH.parent.mkdir(exist_ok=True)

@@ -48,6 +48,60 @@
   <div id="hourly-stats" style="margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;"></div>
 </section>
 
+<!-- CSV Import Section -->
+<section class="card">
+  <h3>📥 Importer des Données CO₂</h3>
+  <p class="hint">Chargez un fichier CSV avec les colonnes: timestamp, ppm</p>
+  
+  <div style="margin-bottom: 16px;">
+    <input 
+      type="file" 
+      id="csv_import_file" 
+      accept=".csv"
+      style="
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px dashed rgba(61, 217, 143, 0.3);
+        color: #e8ecf1;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        width: 100%;
+        cursor: pointer;
+      "
+    />
+  </div>
+  
+  <button 
+    onclick="importCSV()"
+    style="
+      width: 100%;
+      padding: 10px 16px;
+      background: rgba(61, 217, 143, 0.2);
+      border: 1px solid rgba(61, 217, 143, 0.3);
+      color: #3dd98f;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    "
+    onmouseover="this.style.opacity='0.8'"
+    onmouseout="this.style.opacity='1'"
+  >
+    ⬆️ Charger le fichier
+  </button>
+  
+  <div id="csv_import_result" style="
+    font-size: 0.85rem; 
+    color: #9ca3af;
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    display: none;
+    white-space: pre-wrap;
+  "></div>
+</section>
+
 <script>
 let dailyChartInstance = null;
 let comparisonChartInstance = null;
@@ -396,6 +450,61 @@ document.querySelectorAll('input[name="comparison-type"]').forEach(radio => {
 
 // Load initial chart
 loadDailyChart();
+
+// CSV Import Function
+async function importCSV() {
+  const fileInput = document.getElementById('csv_import_file');
+  const resultDiv = document.getElementById('csv_import_result');
+  const file = fileInput.files[0];
+  
+  if (!file) {
+    resultDiv.style.display = 'block';
+    resultDiv.style.color = '#ff6b6b';
+    resultDiv.textContent = '⚠️ Veuillez sélectionner un fichier CSV';
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  try {
+    resultDiv.style.display = 'block';
+    resultDiv.style.color = '#9ca3af';
+    resultDiv.textContent = '📤 Téléchargement en cours...';
+    
+    const response = await fetch('/api/import/csv', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      resultDiv.style.color = '#3dd98f';
+      resultDiv.textContent = `✅ Succès!\n\n` +
+        `Lectures importées: ${result.imported || result.success || 0}\n` +
+        `Lignes ignorées: ${result.skipped || 0}\n` +
+        `Erreurs: ${result.errors || 0}`;
+      
+      fileInput.value = '';
+      
+      // Reload charts after import
+      setTimeout(() => {
+        loadDailyChart();
+        loadComparisonChart('7days');
+        loadHeatmapChart();
+        loadHourlyChart();
+      }, 1000);
+    } else {
+      resultDiv.style.color = '#ff6b6b';
+      resultDiv.textContent = `❌ Erreur:\n${result.error || result.message || 'Erreur lors du téléchargement'}`;
+    }
+  } catch (error) {
+    resultDiv.style.display = 'block';
+    resultDiv.style.color = '#ff6b6b';
+    resultDiv.textContent = `❌ Erreur réseau:\n${error.message}`;
+  }
+}
 </script>
 
 {% endblock %}

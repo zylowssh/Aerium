@@ -32,7 +32,6 @@
         <a href="/">🏠 Vue d'ensemble</a>
         <a href="/live">📊 Live</a>
         <a href="/settings">⚙️ Paramètres</a>
-        <a href="/analytics">🔎 Analytique</a>
         <a href="/visualization">📈 Visualisations</a>
         {% if session.get('username') %}
         <a href="{{ url_for('onboarding_page') }}">📖 Guide</a>
@@ -71,7 +70,6 @@
       <a href="/">🏠 Vue d'ensemble</a>
       <a href="/live">📊 Live</a>
       <a href="/settings">⚙️ Paramètres</a>
-      <a href="/analytics">🔎 Analytique</a>
       {% if session.get('username') %}
       <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 10px 0;">
       <a href="{{ url_for('onboarding_page') }}">📖 Guide</a>
@@ -92,7 +90,6 @@
     <script defer src="{{ url_for('static', filename='js/websocket.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/settings.js') }}"></script>
-    <script defer src="{{ url_for('static', filename='js/analytics.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/live.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/overview.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>

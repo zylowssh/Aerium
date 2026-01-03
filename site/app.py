@@ -256,16 +256,7 @@ def login_page():
         user = get_user_by_username(username)
         
         if user and check_password_hash(user['password_hash'], password):
-            # Check if email is verified
-            if not user['email_verified']:
-                # Log failed login attempt
-                ip_address = request.remote_addr
-                user_agent = request.headers.get('User-Agent', 'Unknown')
-                log_login(user['id'], ip_address, user_agent, success=False)
-                
-                return render_template("login.html", 
-                    error="Veuillez vérifier votre email avant de vous connecter. Vérifiez votre spam.")
-            
+            # Login successful
             session['user_id'] = user['id']
             session['username'] = user['username']
             
@@ -542,16 +533,26 @@ def live_page():
 def settings_page():
     return render_template("settings.html")  # Settings page
 
-@app.route("/analytics")
-@login_required
-def analytics():
-    return render_template("analytics.html")
-
 @app.route("/visualization")
 @login_required
 def visualization():
-    """Advanced data visualization dashboard"""
+    """Advanced data visualization dashboard with CSV import"""
     return render_template("visualization.html")
+
+@app.route("/debug-session")
+def debug_session():
+    """Debug session and auth info"""
+    return jsonify({
+        "session_user_id": session.get('user_id'),
+        "session_username": session.get('username'),
+        "user_in_session": 'user_id' in session,
+        "is_admin_result": is_admin(session.get('user_id')) if 'user_id' in session else None,
+        "user_data": {
+            "id": get_user_by_id(session.get('user_id'))['id'] if session.get('user_id') else None,
+            "username": get_user_by_id(session.get('user_id'))['username'] if session.get('user_id') else None,
+            "role": get_user_by_id(session.get('user_id'))['role'] if session.get('user_id') else None,
+        } if session.get('user_id') else None
+    })
 
 @app.route("/admin")
 @admin_required
@@ -907,7 +908,7 @@ def remove_scheduled_export(export_id):
     return jsonify({'success': True})
 
 @app.route("/api/import/csv", methods=["POST"])
-@admin_required
+@login_required
 @limiter.limit("5 per minute")
 def import_csv():
     """Import CO₂ readings from CSV file"""
