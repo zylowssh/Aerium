@@ -187,6 +187,12 @@ function initKeyboardShortcuts() {
       e.preventDefault();
       applyTheme(darkMode === true);
     }
+
+    // Ctrl+H: Show keyboard help
+    if ((e.ctrlKey || e.metaKey) && e.key === "h") {
+      e.preventDefault();
+      showKeyboardHelp();
+    }
   });
 }
 
@@ -428,9 +434,10 @@ function showKeyboardHelp() {
   const help = `
     ⌨️ RACCOURCIS CLAVIER
     ═══════════════════════════════════════════
+    Ctrl+H      • Afficher cette aide
     Ctrl+S      • Sauvegarder les paramètres
     Ctrl+E      • Exporter les données (page live)
-    Ctrl+Shift+K • Activer le lissage (page live)
+    Ctrl+Shift+K • Lisser le graphique (page live)
     Ctrl+Shift+T • Basculer le thème (clair/sombre)
     Escape      • Fermer les panneaux ouverts
   `;

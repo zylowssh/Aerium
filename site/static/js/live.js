@@ -30,6 +30,7 @@ let animatingPointIndex = -1;
 const valueEl = document.getElementById("value");
 const trendEl = document.getElementById("trend");
 const qualityEl = document.getElementById("quality");
+const trendInfoEl = document.getElementById("trend-info");
 const chartCanvas = document.getElementById("chart");
 const pausedOverlay = document.getElementById("paused-overlay");
 const exportBtn = document.getElementById("export");
@@ -351,6 +352,8 @@ function showPausedOverlay() {
   valueEl.textContent = "⏸";
   valueEl.style.color = "#9ca3af";
   trendEl.textContent = "";
+  trendInfoEl.textContent = "Analyse en pause";
+  trendInfoEl.style.color = "#9ca3af";
   qualityEl.textContent = "Analyse en pause";
   qualityEl.style.color = "#9ca3af";
   qualityEl.style.background = "rgba(255,255,255,0.08)";
@@ -400,6 +403,23 @@ function updateTrend(prev, current) {
   trendEl.style.transform = `rotate(${target}deg)`;
   trendEl.style.color = ppmColor(current);
   lastRotation = target;
+
+  // Update trend percentage display
+  const trendPercent = getTrendPercent();
+  if (trendInfoEl && lastHourData.length > 1) {
+    const trendText = 
+      trendPercent > 5 ? `📈 +${trendPercent}% (Dégradation)` :
+      trendPercent < -5 ? `📉 ${trendPercent}% (Amélioration)` :
+      `➡️ Stable`;
+    
+    const trendColor =
+      trendPercent > 5 ? '#f87171' :
+      trendPercent < -5 ? '#4ade80' :
+      '#9ca3af';
+    
+    trendInfoEl.textContent = trendText;
+    trendInfoEl.style.color = trendColor;
+  }
 }
 
 function animateQuality(ppm) {
@@ -725,6 +745,86 @@ resetBtn?.addEventListener("click", () => {
   chart.update();
   showNotification('✓ Graphique réinitialisé', 'success', 1500);
 });
+
+/*
+================================================================================
+                      ALERT HISTORY
+================================================================================
+*/
+
+function updateAlertHistoryDisplay() {
+  const alertHistorySection = document.getElementById('alert-history-section');
+  const alertHistoryList = document.getElementById('alert-history-list');
+  
+  if (!alertHistorySection || !alertHistoryList) return;
+  
+  if (!alertLog || alertLog.length === 0) {
+    alertHistoryList.innerHTML = '<div style="color: #9ca3af; text-align: center; padding: 20px;">Aucune alerte</div>';
+    return;
+  }
+  
+  alertHistoryList.innerHTML = alertLog.map((alert, index) => {
+    const time = new Date(alert.timestamp).toLocaleTimeString('fr-FR');
+    const colorClass = 
+      alert.type === 'threshold' ? 'rgba(248, 113, 113, 0.2)' :
+      alert.type === 'pause' ? 'rgba(250, 204, 21, 0.2)' :
+      'rgba(74, 222, 128, 0.2)';
+    
+    const borderColor = 
+      alert.type === 'threshold' ? 'rgba(248, 113, 113, 0.4)' :
+      alert.type === 'pause' ? 'rgba(250, 204, 21, 0.4)' :
+      'rgba(74, 222, 128, 0.4)';
+    
+    return `
+      <div style="
+        padding: 12px;
+        background: ${colorClass};
+        border: 1px solid ${borderColor};
+        border-radius: 6px;
+        font-size: 0.9rem;
+      ">
+        <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
+          <div style="flex: 1;">
+            <div style="font-weight: 600; color: #e5e7eb;">${alert.message}</div>
+            ${alert.value ? `<div style="color: #9ca3af; margin-top: 4px;">${alert.value} ppm</div>` : ''}
+          </div>
+          <div style="color: #9ca3af; font-size: 0.85rem; white-space: nowrap;">${time}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Setup alert history button
+if (isLivePage) {
+  const showAlertsBtn = document.getElementById('show-alerts-btn');
+  const closeAlertsBtn = document.getElementById('close-alerts');
+  const alertHistorySection = document.getElementById('alert-history-section');
+  
+  if (showAlertsBtn && closeAlertsBtn && alertHistorySection) {
+    showAlertsBtn.addEventListener('click', () => {
+      updateAlertHistoryDisplay();
+      alertHistorySection.style.display = 'block';
+      showAlertsBtn.style.display = 'none';
+      // Scroll to top of alerts section
+      setTimeout(() => alertHistorySection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    });
+    
+    closeAlertsBtn.addEventListener('click', () => {
+      alertHistorySection.style.display = 'none';
+      showAlertsBtn.style.display = 'flex';
+    });
+  }
+  
+  // Listen for alert updates
+  window.addEventListener('alert-updated', () => {
+    updateAlertHistoryDisplay();
+    const alertHistorySection = document.getElementById('alert-history-section');
+    if (alertHistorySection && alertHistorySection.style.display !== 'none') {
+      updateAlertHistoryDisplay();
+    }
+  });
+}
 
 if (isLivePage) {
   document.addEventListener("DOMContentLoaded", initLivePage);

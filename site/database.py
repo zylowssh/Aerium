@@ -42,6 +42,23 @@ def init_db():
         )
     """)
 
+    # Users table for authentication
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # Create index on username for faster lookups
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_users_username 
+        ON users(username)
+    """)
+
     db.commit()
     db.close()
 
@@ -60,3 +77,36 @@ def cleanup_old_data(days_to_keep=90):
     db.close()
     
     return deleted_count
+# ================================================================================
+#                        USER AUTHENTICATION
+# ================================================================================
+
+def get_user_by_username(username):
+    """Get user by username"""
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    db.close()
+    return user
+
+def get_user_by_id(user_id):
+    """Get user by ID"""
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    db.close()
+    return user
+
+def create_user(username, email, password_hash):
+    """Create a new user"""
+    db = get_db()
+    try:
+        cur = db.execute(
+            "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
+            (username, email, password_hash)
+        )
+        db.commit()
+        user_id = cur.lastrowid
+        db.close()
+        return user_id
+    except sqlite3.IntegrityError:
+        db.close()
+        return None

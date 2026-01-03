@@ -10,6 +10,7 @@
   </div>
 
   <div id="quality" class="quality">---</div>
+  <div id="trend-info" style="margin-top: 8px; font-size: 0.9rem; color: #9ca3af;">---</div>
 
   <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
     <button
@@ -99,5 +100,54 @@
     <span id="data-points">Points: 0</span>
   </div>
 </section>
+
+<section class="card" id="alert-history-section" style="display: none;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h2 style="margin: 0;">Historique des alertes</h2>
+    <button 
+      id="close-alerts" 
+      style="
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >✕</button>
+  </div>
+  <div id="alert-history-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
+    <div style="color: #9ca3af; text-align: center; padding: 20px;">Aucune alerte</div>
+  </div>
+</section>
+
+<button 
+  id="show-alerts-btn"
+  style="
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3dd98f, #4db8ff);
+    border: none;
+    color: #0a0e18;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(61, 217, 143, 0.3);
+    z-index: 1000;
+    transition: all 0.3s ease;
+  "
+  title="Afficher l'historique des alertes"
+>🔔</button>
 
 {% endblock %}

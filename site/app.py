@@ -1,15 +1,17 @@
-from flask import Flask, jsonify, render_template, request, make_response
+from flask import Flask, jsonify, render_template, request, make_response, session, redirect, url_for
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import random
 import time
 from datetime import datetime, date, UTC
 import os
-from database import get_db, init_db
+from database import get_db, init_db, get_user_by_username, create_user, get_user_by_id
 import json
 from flask import send_file
 import io
 from weasyprint import HTML
 import threading
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 
 from fake_co2 import generate_co2, save_reading, reset_state
 from database import cleanup_old_data
@@ -59,21 +61,108 @@ def save_settings(data):
     db.commit()
     db.close()
 
+# ================================================================================
+#                        AUTHENTICATION DECORATOR
+# ================================================================================
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login_page', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# ================================================================================
+#                        AUTHENTICATION ROUTES
+# ================================================================================
+
+@app.route("/login", methods=["GET", "POST"])
+def login_page():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        
+        if not username or not password:
+            return render_template("login.html", error="Nom d'utilisateur et mot de passe requis")
+        
+        user = get_user_by_username(username)
+        
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            next_page = request.args.get('next')
+            if next_page and next_page.startswith('/'):
+                return redirect(next_page)
+            return redirect(url_for('index'))
+        else:
+            return render_template("login.html", error="Identifiants invalides")
+    
+    return render_template("login.html")
+
+@app.route("/register", methods=["GET", "POST"])
+def register_page():
+    if request.method == "POST":
+        username = request.form.get("username")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        
+        # Validation
+        if not all([username, email, password, confirm_password]):
+            return render_template("register.html", error="Tous les champs sont requis")
+        
+        if len(username) < 3:
+            return render_template("register.html", error="Le nom d'utilisateur doit contenir au moins 3 caractères")
+        
+        if len(password) < 6:
+            return render_template("register.html", error="Le mot de passe doit contenir au moins 6 caractères")
+        
+        if password != confirm_password:
+            return render_template("register.html", error="Les mots de passe ne correspondent pas")
+        
+        # Check if username or email already exists
+        if get_user_by_username(username):
+            return render_template("register.html", error="Ce nom d'utilisateur existe déjà")
+        
+        # Create user
+        password_hash = generate_password_hash(password)
+        user_id = create_user(username, email, password_hash)
+        
+        if not user_id:
+            return render_template("register.html", error="Cet email existe déjà")
+        
+        # Auto-login after registration
+        session['user_id'] = user_id
+        session['username'] = username
+        return redirect(url_for('index'))
+    
+    return render_template("register.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
+
 # 1. ROOT ROUTE - DASHBOARD (MUST BE FIRST!)
 @app.route("/")
+@login_required
 def index():
     return render_template("index.html")  # Dashboard page
 
 @app.route("/live")
+@login_required
 def live_page():
     return render_template("live.html")  # Settings page
 
 # 2. SETTINGS ROUTE
 @app.route("/settings")
+@login_required
 def settings_page():
     return render_template("settings.html")  # Settings page
 
 @app.route("/analytics")
+@login_required
 def analytics():
     return render_template("analytics.html")
 

@@ -51,6 +51,12 @@
           <span class="nav-mini-value" id="nav-ppm-value">— ppm</span>
           <canvas id="nav-ppm-spark" width="160" height="48" aria-label="Historique CO₂"></canvas>
         </div>
+        {% if session.get('username') %}
+        <div class="nav-user">
+          <span class="nav-username">👤 {{ session.get('username') }}</span>
+          <a href="{{ url_for('logout') }}" class="nav-logout" title="Déconnexion">🚪</a>
+        </div>
+        {% endif %}
       </div>
     </nav>
 

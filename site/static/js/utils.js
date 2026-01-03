@@ -427,6 +427,89 @@ function pushToHourly(ppm) {
 
 /*
 ================================================================================
+                      TOAST NOTIFICATIONS
+================================================================================
+*/
+function showToast(message, type = 'info', duration = 3000) {
+  // Create toast container if it doesn't exist
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9998;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 360px;
+    `;
+    document.body.appendChild(toastContainer);
+  }
+
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  const bgColor = type === 'success' ? 'rgba(61, 217, 143, 0.15)' :
+                  type === 'error' ? 'rgba(239, 83, 80, 0.15)' :
+                  type === 'warning' ? 'rgba(249, 199, 79, 0.15)' :
+                  'rgba(77, 184, 255, 0.15)';
+  
+  const borderColor = type === 'success' ? 'rgba(61, 217, 143, 0.4)' :
+                      type === 'error' ? 'rgba(239, 83, 80, 0.4)' :
+                      type === 'warning' ? 'rgba(249, 199, 79, 0.4)' :
+                      'rgba(77, 184, 255, 0.4)';
+  
+  const textColor = type === 'success' ? '#3dd98f' :
+                    type === 'error' ? '#ef5350' :
+                    type === 'warning' ? '#f9c74f' :
+                    '#4db8ff';
+  
+  const icon = type === 'success' ? '✓' :
+               type === 'error' ? '✕' :
+               type === 'warning' ? '⚠' :
+               'ℹ';
+  
+  toast.style.cssText = `
+    background: ${bgColor};
+    border: 1px solid ${borderColor};
+    color: ${textColor};
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideInRight 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  `;
+  
+  toast.innerHTML = `<span style="font-size: 1.1rem;">${icon}</span><span>${message}</span>`;
+  
+  toastContainer.appendChild(toast);
+  
+  // Auto-remove after duration
+  const timeout = setTimeout(() => {
+    toast.style.animation = 'slideOutRight 0.3s ease-in forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+  
+  // Allow manual dismiss
+  toast.addEventListener('click', () => {
+    clearTimeout(timeout);
+    toast.style.animation = 'slideOutRight 0.3s ease-in forwards';
+    setTimeout(() => toast.remove(), 300);
+  });
+  
+  return toast;
+}
+
+/*
+================================================================================
                       INITIALIZATION BOOTSTRAP
 ================================================================================
 */
