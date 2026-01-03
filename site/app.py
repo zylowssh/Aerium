@@ -270,6 +270,11 @@ def login_page():
                 session.permanent = True
                 app.permanent_session_lifetime = timedelta(days=30)
             
+            # Check if user has completed onboarding
+            onboarding = get_onboarding_status(user['id'])
+            if not onboarding or not onboarding.get('completed'):
+                return redirect(url_for('onboarding_page'))
+            
             next_page = request.args.get('next')
             if next_page and next_page.startswith('/'):
                 return redirect(next_page)
@@ -404,7 +409,8 @@ def register_page():
             # Email service not configured, allow login without verification
             session['user_id'] = user_id
             session['username'] = username
-            return redirect(url_for('index'))
+            # Redirect to onboarding for new users
+            return redirect(url_for('onboarding_page'))
     
     return render_template("register.html")
 

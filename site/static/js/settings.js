@@ -4,18 +4,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const toggle = document.getElementById("toggle-analysis");
   const goodSlider = document.getElementById("good-threshold");
+  const warningSlider = document.getElementById("warning-threshold");
+  const criticalSlider = document.getElementById("critical-threshold");
+  
   if (!toggle || !goodSlider) return;
 
   const lightModeToggle = document.getElementById("toggle-light-mode");
   const audioAlertsToggle = document.getElementById("toggle-audio-alerts");
   const themeHint = document.getElementById("theme-hint");
 
-  const badSlider = document.getElementById("bad-threshold");
-  const statusText = document.getElementById("status-text");
   const goodValue = document.getElementById("good-value");
-  const badValue = document.getElementById("bad-value");
-  const goodLabel = document.getElementById("good-label");
-  const badLabel = document.getElementById("bad-label");
+  const warningValue = document.getElementById("warning-value");
+  const criticalValue = document.getElementById("critical-value");
+
+  const goodSeg = document.querySelector(".good-seg");
+  const warningSeg = document.querySelector(".warning-seg");
+  const badSeg = document.querySelector(".bad-seg");
 
   const realisticMode = document.getElementById("realistic-mode");
   const updateSpeed = document.getElementById("update-speed");
@@ -29,28 +33,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const saveBtn = document.getElementById("save-settings");
   const resetBtn = document.getElementById("reset-settings");
+  let autoSaveTimeout;
 
-  const goodSeg = document.querySelector(".good-seg");
-  const midSeg = document.querySelector(".medium-seg");
-  const badSeg = document.querySelector(".bad-seg");
-
-  const MIN = 0;
+  const MIN = 400;
   const MAX = 2000;
-
-  const PRESETS = {
-    office: { good_threshold: 800, bad_threshold: 1200 },
-    school: { good_threshold: 700, bad_threshold: 1100 },
-    strict: { good_threshold: 600, bad_threshold: 1000 },
-  };
-
-  const DEFAULTS = {
-    analysis_running: true,
-    good_threshold: 800,
-    bad_threshold: 1200,
-    realistic_mode: true,
-    update_speed: 1,
-    overview_update_speed: 5,
-  };
+  const STEP = 50;
 
   /* =========================
      THEME MANAGEMENT
@@ -76,19 +63,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function updateLiveValues() {
-    goodValue.textContent = `${snap(+goodSlider.value)} ppm`;
-    badValue.textContent = `${snap(+badSlider.value)} ppm`;
-  }
-
+  // Snap to nearest 50
   function snap(value) {
-    const STEP = 50;
     return Math.round(value / STEP) * STEP;
   }
 
-  /* =========================
-     TOAST NOTIFICATIONS
-  ========================= */
+  // Toast notifications
   function showToast(message, duration = 2000) {
     const container = document.getElementById("toast-container");
     const toast = document.getElementById("toast");
@@ -100,46 +80,63 @@ document.addEventListener("DOMContentLoaded", () => {
       container.style.display = "none";
     }, duration);
   }
-
-  /* =========================
-     THRESHOLDS & ZONES SETUP
-  ========================= */
-
-  /* =========================
-     RETENTION SLIDER
-  ========================= */
-  if (retentionDays) {
-    retentionDays.addEventListener("input", () => {
-      retentionValue.textContent = `${retentionDays.value} jours`;
-    });
+  // ========================================
+  // UPDATE LIVE VALUES
+  // ========================================
+  function updateLiveValues() {
+    goodValue.textContent = `${goodSlider.value} ppm`;
+    warningValue.textContent = `${warningSlider.value} ppm`;
+    criticalValue.textContent = `${criticalSlider.value} ppm`;
   }
 
-  if (cleanupBtn) {
-    cleanupBtn.addEventListener("click", async () => {
-      const days = retentionDays ? +retentionDays.value : 90;
-      if (!confirm(`Supprimer les données de plus de ${days} jours?`)) return;
-      
-      cleanupBtn.disabled = true;
-      cleanupBtn.textContent = "⏳ Nettoyage...";
-      
-      try {
-        const res = await fetch("/api/cleanup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ days }),
-        });
-        const data = await res.json();
-        showToast(`${data.deleted} lignes supprimées`);
-      } catch (e) {
-        showToast("Erreur nettoyage", 3000);
-        console.error(e);
-      } finally {
-        cleanupBtn.disabled = false;
-        cleanupBtn.textContent = "🗑️ Nettoyer maintenant";
+  // ========================================
+  // SYNC THRESHOLDS (PUSH BACK)
+  // ========================================
+  function syncThresholds(changedSlider = null) {
+    let good = +goodSlider.value;
+    let warning = +warningSlider.value;
+    let critical = +criticalSlider.value;
+
+    // Clamp to bounds
+    good = Math.max(MIN, Math.min(good, MAX));
+    warning = Math.max(MIN, Math.min(warning, MAX));
+    critical = Math.max(MIN, Math.min(critical, MAX));
+
+    // If no slider specified, just ensure order
+    if (!changedSlider) {
+      if (good >= warning) warning = good + STEP;
+      if (warning >= critical) critical = warning + STEP;
+      if (critical > MAX) critical = MAX;
+    } else {
+      // Push behavior: only move other sliders if they're in the way
+      if (changedSlider === goodSlider) {
+        // Moving good: if it goes above warning, push warning up
+        if (good >= warning) warning = good + STEP;
+        if (warning >= critical) critical = warning + STEP;
+      } else if (changedSlider === warningSlider) {
+        // Moving warning: push good down or critical up as needed
+        if (warning <= good) good = warning - STEP;
+        if (warning >= critical) critical = warning + STEP;
+      } else if (changedSlider === criticalSlider) {
+        // Moving critical: if it goes below warning, push warning down
+        if (critical <= warning) warning = critical - STEP;
+        if (warning <= good) good = warning - STEP;
       }
-    });
+    }
+
+    // Final bounds check
+    good = Math.max(MIN, Math.min(good, MAX));
+    warning = Math.max(MIN, Math.min(warning, MAX));
+    critical = Math.max(MIN, Math.min(critical, MAX));
+
+    goodSlider.value = good;
+    warningSlider.value = warning;
+    criticalSlider.value = critical;
   }
 
+  // ========================================
+  // SPRING ANIMATION
+  // ========================================
   function springTo(slider, target, onDone) {
     if (isSnapping) return;
 
@@ -160,13 +157,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (t < 1) {
         requestAnimationFrame(animate);
       } else {
-        // 🔒 FINAL HARD LOCK
         slider.value = target;
-
         isSnapping = false;
-
         updateLiveValues();
-        updateTexts();
         updateVisualization();
         if (onDone) onDone();
       }
@@ -175,143 +168,155 @@ document.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(animate);
   }
 
-  /* =========================
-     TEXT
-  ========================= */
-  function updateTexts() {
-    statusText.textContent = toggle.checked
-      ? "Analyse en direct activée"
-      : "Analyse en direct désactivée";
-
-    statusText.classList.toggle("on", toggle.checked);
-    statusText.classList.toggle("off", !toggle.checked);
-
-    goodValue.textContent = `${goodSlider.value} ppm`;
-    badValue.textContent = `${badSlider.value} ppm`;
-    speedValue.textContent = `${updateSpeed.value} secondes`;
-    overviewSpeedValue.textContent = `${overviewUpdateSpeed.value} secondes`;
-
-    goodLabel.textContent = goodSlider.value;
-    badLabel.textContent = badSlider.value;
-  }
-
-  /* =========================
-     LINKED SLIDERS
-  ========================= */
-  function syncThresholds(changed) {
-    let good = +goodSlider.value;
-    let bad = +badSlider.value;
-
-    good = Math.max(MIN, Math.min(good, MAX));
-    bad = Math.max(MIN, Math.min(bad, MAX));
-
-    // 🔗 Always move the OTHER slider
-    if (good > bad) {
-      if (changed === goodSlider) bad = good;
-      else good = bad;
-    }
-
-    goodSlider.value = good;
-    badSlider.value = bad;
-  }
-
-  function updateThresholdLabels() {
-    const good = +goodSlider.value;
-    const bad = +badSlider.value;
-
-    const goodPct = (good / MAX) * 100;
-    const badPct = (bad / MAX) * 100;
-
-    goodLabel.style.left = `${goodPct}%`;
-    badLabel.style.left = `${badPct}%`;
-
-    // 🔥 COLLISION HANDLING
-    const distance = Math.abs(goodPct - badPct);
-
-    if (distance < 6) {
-      goodLabel.style.transform = "translate(-50%, -6px)";
-      badLabel.style.transform = "translate(-50%, 10px)";
-    } else {
-      goodLabel.style.transform = "translateX(-50%)";
-      badLabel.style.transform = "translateX(-50%)";
-    }
-  }
-
-  /* =========================
-     VISUAL ZONES
-  ========================= */
+  // ========================================
+  // UPDATE VISUALIZATION (Répartition des zones)
+  // ========================================
   function updateVisualization() {
     const good = +goodSlider.value;
-    const bad = +badSlider.value;
+    const warning = +warningSlider.value;
+    const critical = +criticalSlider.value;
 
-    if (good === bad) {
-      const pct = (good / MAX) * 100;
-      goodSeg.style.width = `${pct}%`;
-      badSeg.style.width = `${100 - pct}%`;
-      midSeg.style.display = "none";
-      updateThresholdLabels();
-      return;
-    }
-
-    midSeg.style.display = "flex";
-
-    const goodW = (good / MAX) * 100;
-    const midW  = ((bad - good) / MAX) * 100;
-    const badW  = 100 - goodW - midW;
+    const goodW = ((good - MIN) / (MAX - MIN)) * 100;
+    const warningW = ((warning - good) / (MAX - MIN)) * 100;
+    const badW = ((critical - warning) / (MAX - MIN)) * 100;
+    const extraW = ((MAX - critical) / (MAX - MIN)) * 100;
 
     goodSeg.style.width = `${goodW}%`;
-    midSeg.style.width  = `${midW}%`;
-    badSeg.style.width  = `${badW}%`;
-
-    updateThresholdLabels(); // ✅ single call
+    warningSeg.style.width = `${warningW}%`;
+    badSeg.style.width = `${badW + extraW}%`;
   }
 
-  /* =========================
-     LOAD
-  ========================= */
+  // ========================================
+  // SNAP SLIDERS ON CHANGE
+  // ========================================
+  function snapSlider(slider) {
+    const snapped = snap(+slider.value);
+    springTo(slider, snapped, () => {
+      slider.value = snapped;
+      syncThresholds();
+      updateLiveValues();
+      updateVisualization();
+    });
+  }
+
+  goodSlider.addEventListener("change", () => snapSlider(goodSlider));
+  warningSlider.addEventListener("change", () => snapSlider(warningSlider));
+  criticalSlider.addEventListener("change", () => snapSlider(criticalSlider));
+
+  // ========================================
+  // LIVE INPUT WHILE DRAGGING + AUTOSAVE
+  // ========================================
+  function scheduleAutoSave() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+      autoSaveSettings();
+    }, 800); // Save 800ms after user stops dragging
+  }
+
+  async function autoSaveSettings() {
+    const settingsData = {
+      analysis_running: toggle.checked,
+      good_threshold: +goodSlider.value,
+      warning_threshold: +warningSlider.value,
+      critical_threshold: +criticalSlider.value,
+      realistic_mode: realisticMode.checked,
+      update_speed: +updateSpeed.value,
+      overview_update_speed: +overviewUpdateSpeed.value,
+    };
+
+    try {
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settingsData),
+      });
+    } catch (e) {
+      console.error("Auto-save error:", e);
+    }
+  }
+
+  [goodSlider, warningSlider, criticalSlider].forEach(slider => {
+    slider.addEventListener("input", () => {
+      if (isSnapping) return;
+      syncThresholds(slider); // Pass which slider changed
+      updateVisualization();
+      updateLiveValues();
+      scheduleAutoSave(); // Trigger autosave
+    });
+  });
+
+  // ========================================
+  // LOAD SETTINGS
+  // ========================================
   async function loadSettings() {
     try {
-      // Always fetch from server to ensure we have latest settings
       const res = await fetch("/api/settings");
-      const s = await res.json();
+      const settings = await res.json();
 
-      toggle.checked = s.analysis_running;
-      const good = Number.isFinite(s.good_threshold)
-        ? s.good_threshold
-        : DEFAULTS.good_threshold;
-      const bad = Number.isFinite(s.bad_threshold)
-        ? s.bad_threshold
-        : DEFAULTS.bad_threshold;
+      toggle.checked = settings.analysis_running !== false;
+      goodSlider.value = settings.good_threshold || 800;
+      warningSlider.value = settings.warning_threshold || 1000;
+      criticalSlider.value = settings.critical_threshold || 1200;
 
-      goodSlider.value = Math.min(Math.max(good, MIN), MAX);
-      badSlider.value = Math.min(Math.max(bad, MIN), MAX);
+      realisticMode.checked = settings.realistic_mode !== false;
+      updateSpeed.value = settings.update_speed || 1;
+      overviewUpdateSpeed.value = settings.overview_update_speed || 5;
 
-      realisticMode.checked = s.realistic_mode;
-      updateSpeed.value = s.update_speed;
-      overviewUpdateSpeed.value = s.overview_update_speed || DEFAULTS.overview_update_speed;
-    } catch {
-      // Fallback to defaults on error
-      toggle.checked = DEFAULTS.analysis_running;
-      goodSlider.value = DEFAULTS.good_threshold;
-      badSlider.value = DEFAULTS.bad_threshold;
-      realisticMode.checked = DEFAULTS.realistic_mode;
-      updateSpeed.value = DEFAULTS.update_speed;
-      overviewUpdateSpeed.value = DEFAULTS.overview_update_speed;
+      syncThresholds();
+      updateLiveValues();
+      
+      // Force visualization after browser renders
+      requestAnimationFrame(() => {
+        updateVisualization();
+      });
+    } catch (e) {
+      console.error("Load settings error:", e);
+      // Use defaults
+      toggle.checked = true;
+      goodSlider.value = 800;
+      warningSlider.value = 1000;
+      criticalSlider.value = 1200;
+      updateLiveValues();
+      
+      requestAnimationFrame(() => {
+        updateVisualization();
+      });
     }
-
-    syncThresholds();
-    updateTexts();
-    updateVisualization();
   }
 
-  /* =========================
-     SAVE (DEBOUNCED)
-  ========================= */
+  // ========================================
+  // UPDATE SPEED DISPLAY
+  // ========================================
+  updateSpeed.addEventListener("input", () => {
+    speedValue.textContent = `${updateSpeed.value} seconde${updateSpeed.value != 1 ? "s" : ""}`;
+    scheduleAutoSave();
+  });
+
+  overviewUpdateSpeed.addEventListener("input", () => {
+    overviewSpeedValue.textContent = `${overviewUpdateSpeed.value} seconde${overviewUpdateSpeed.value != 1 ? "s" : ""}`;
+    scheduleAutoSave();
+  });
+
+  if (retentionDays) {
+    retentionDays.addEventListener("input", () => {
+      retentionValue.textContent = `${retentionDays.value} jours`;
+      scheduleAutoSave();
+    });
+  }
+
+  // Autosave toggle and checkbox changes
+  toggle.addEventListener("change", () => {
+    scheduleAutoSave();
+  });
+
+  realisticMode.addEventListener("change", () => {
+    scheduleAutoSave();
+  });
+
+  // ========================================
+  // SAVE SETTINGS
+  // ========================================
   saveBtn.addEventListener("click", async () => {
-    if (savePending) return;
-    
-    syncThresholds();
-    savePending = true;
     saveBtn.disabled = true;
     const originalText = saveBtn.textContent;
     saveBtn.textContent = "⏳ Enregistrement...";
@@ -319,42 +324,51 @@ document.addEventListener("DOMContentLoaded", () => {
     const settingsData = {
       analysis_running: toggle.checked,
       good_threshold: +goodSlider.value,
-      bad_threshold: +badSlider.value,
+      warning_threshold: +warningSlider.value,
+      critical_threshold: +criticalSlider.value,
       realistic_mode: realisticMode.checked,
       update_speed: +updateSpeed.value,
       overview_update_speed: +overviewUpdateSpeed.value,
     };
 
     try {
-      // Use WebSocket if available, fallback to HTTP
-      if (isWSConnected && isWSConnected() && socket) {
-        socket.emit('settings_change', settingsData);
-      } else {
-        const res = await fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(settingsData),
-        });
-        if (!res.ok) throw new Error('Settings save failed');
-      }
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settingsData),
+      });
+
+      if (!res.ok) throw new Error("Save failed");
       
-      showNotification('✓ Paramètres enregistrés avec succès', 'success', 2000);
-      saveBtn.textContent = originalText;
-      
-      // Save to localStorage for persistence
-      saveUserPreferences('settings', settingsData);
+      showToast("✓ Paramètres enregistrés avec succès", 2000);
     } catch (e) {
-      console.error('Settings save error:', e);
-      showNotification('❌ Erreur lors de l\'enregistrement', 'error', 3000);
-      saveBtn.textContent = originalText;
+      console.error("Save error:", e);
+      showToast("❌ Erreur lors de l'enregistrement", 3000);
     } finally {
-      savePending = false;
       saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
     }
   });
 
+  // Save thresholds button (alternative)
+  if (saveThresholdsBtn) {
+    saveThresholdsBtn.addEventListener("click", () => {
+      saveBtn.click();
+    });
+  }
+
+  // Save thresholds button (alternative)
+  if (saveThresholdsBtn) {
+    saveThresholdsBtn.addEventListener("click", () => {
+      saveBtn.click();
+    });
+  }
+
+  // ========================================
+  // RESET SETTINGS
+  // ========================================
   resetBtn.addEventListener("click", async () => {
-    if (!confirm("Réinitialiser tous les paramètres? Cette action est irréversible.")) return;
+    if (!confirm("Réinitialiser tous les paramètres?")) return;
     
     resetBtn.disabled = true;
     const originalText = resetBtn.textContent;
@@ -362,79 +376,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const res = await fetch("/api/settings", { method: "DELETE" });
-      if (!res.ok) throw new Error('Reset failed');
+      if (!res.ok) throw new Error("Reset failed");
       
       await loadSettings();
-      showNotification('✓ Paramètres réinitialisés', 'success', 2000);
-      localStorage.removeItem('pref_settings');
+      showToast("✓ Paramètres réinitialisés", 2000);
     } catch (e) {
-      console.error('Settings reset error:', e);
-      showNotification('❌ Erreur lors de la réinitialisation', 'error', 3000);
+      console.error("Reset error:", e);
+      showToast("❌ Erreur lors de la réinitialisation", 3000);
     } finally {
       resetBtn.disabled = false;
       resetBtn.textContent = originalText;
     }
   });
 
-
-  /* =========================
-     LIVE INPUT
-  ========================= */
-  [goodSlider, badSlider].forEach((el) =>
-    el.addEventListener("input", (e) => {
-      if (isSnapping) return;
-
-      syncThresholds(e.target);
-      updateVisualization();
-      updateLiveValues();
-    })
-  );
-
-  // Update live speed display when slider changes
-  updateSpeed.addEventListener("input", () => {
-    updateTexts();
-  });
-
-  // Update overview speed display when slider changes and trigger handler to restart interval
-  overviewUpdateSpeed.addEventListener("input", () => {
-    updateTexts();
-    // Immediately apply the new interval to the overview page
-    if (window.handleOverviewSettings) {
-      window.handleOverviewSettings({
-        overview_update_speed: +overviewUpdateSpeed.value
-      });
-    }
-  });
-
-  /* =========================
-     PRESET BUTTONS
-  ========================= */
-  const presetButtons = document.querySelectorAll(".preset-btn");
-  presetButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const preset = btn.dataset.preset.toLowerCase();
-      if (!PRESETS[preset]) return;
-
-      const { good_threshold, bad_threshold } = PRESETS[preset];
-      goodSlider.value = good_threshold;
-      badSlider.value = bad_threshold;
-
-      syncThresholds();
-      updateTexts();
-      updateVisualization();
-      showToast(`✓ Préset "${preset}" appliqué`);
-    });
-  });
-
-  /* =========================
-     RETENTION & CLEANUP
-  ========================= */
-  if (retentionDays) {
-    retentionDays.addEventListener("input", () => {
-      retentionValue.textContent = `${retentionDays.value} jours`;
-    });
-  }
-
+  // ========================================
+  // CLEANUP OLD DATA
+  // ========================================
   if (cleanupBtn) {
     cleanupBtn.addEventListener("click", async () => {
       const days = retentionDays ? +retentionDays.value : 90;
@@ -447,13 +404,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch("/api/cleanup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ retention_days: days }),
+          body: JSON.stringify({ days }),
         });
         const data = await res.json();
         showToast(`✓ ${data.deleted} lignes supprimées`);
       } catch (e) {
+        console.error("Cleanup error:", e);
         showToast("✗ Erreur nettoyage", 3000);
-        console.error(e);
       } finally {
         cleanupBtn.disabled = false;
         cleanupBtn.textContent = "🗑️ Nettoyer maintenant";
@@ -461,48 +418,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  loadSettings();
-
-  function snapOne(slider) {
-    const snapped = snap(+slider.value);
-
-    springTo(slider, snapped, () => {
-      slider.value = snapped;
-      syncThresholds(slider);
-      updateTexts();
-      updateVisualization();
-    });
-  }
-
-  goodSlider.addEventListener("change", () => snapOne(goodSlider));
-  badSlider.addEventListener("change", () => snapOne(badSlider));
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // WebSocket Settings Update Handler
-  // ─────────────────────────────────────────────────────────────────────────
-  window.handleSettingsUpdate = function(settings) {
-    // Update UI when settings change from another source (e.g., reset button, another tab)
-    if (settings.analysis_running !== undefined) {
-      toggle.checked = settings.analysis_running;
-    }
-    if (settings.good_threshold !== undefined) {
-      goodSlider.value = Math.min(Math.max(settings.good_threshold, MIN), MAX);
-    }
-    if (settings.bad_threshold !== undefined) {
-      badSlider.value = Math.min(Math.max(settings.bad_threshold, MIN), MAX);
-    }
-    if (settings.realistic_mode !== undefined) {
-      realisticMode.checked = settings.realistic_mode;
-    }
-    if (settings.update_speed !== undefined) {
-      updateSpeed.value = settings.update_speed;
-    }
-    if (settings.overview_update_speed !== undefined) {
-      overviewUpdateSpeed.value = settings.overview_update_speed;
-    }
-    
-    syncThresholds();
-    updateTexts();
-    updateVisualization();
-  };
-});
+  // Load settings on page load
+  loadSettings();});

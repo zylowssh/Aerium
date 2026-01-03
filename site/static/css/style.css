@@ -163,6 +163,17 @@ h2 {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Center nav items absolutely */
+.navbar::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
 /* Light mode navbar */
 body[style*="--bg: #ffffff"] .navbar {
   background: rgba(243, 244, 246, 0.95);
@@ -230,7 +241,9 @@ body[style*="--bg: #ffffff"] .theme-toggle:hover {
    Navbar Center (Navigation Links)
 ──────────────────────────────────────────────────────────────────────────── */
 .nav-center {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   justify-content: center;
   gap: 6px;
@@ -1216,7 +1229,7 @@ input[type="range"]::-moz-range-thumb:hover {
   background: var(--good);
 }
 
-.medium-seg {
+.warning-seg {
   background: var(--medium);
 }
 
