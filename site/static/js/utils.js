@@ -358,18 +358,27 @@ function initNavbar() {
 function applyTheme(lightMode) {
   const root = document.documentElement;
   if (lightMode) {
-    root.style.setProperty("--bg", "#ffffff");
-    root.style.setProperty("--card", "#f3f4f6");
-    root.style.setProperty("--text", "#111827");
-    root.style.setProperty("--muted", "#6b7280");
-    root.style.setProperty("--good", "#059669");
-    root.style.setProperty("--medium", "#d97706");
-    root.style.setProperty("--bad", "#dc2626");
-    document.documentElement.style.setProperty("--border-light", "rgba(0,0,0,0.1)");
-    document.documentElement.style.setProperty("--border-dark", "rgba(0,0,0,0.06)");
+    // Light Mode - Clean, professional look with proper contrast
+    root.style.setProperty("--bg", "#f8f9fa");
+    root.style.setProperty("--card", "#ffffff");
+    root.style.setProperty("--text", "#1a1f36");
+    root.style.setProperty("--muted", "#6c757d");
+    root.style.setProperty("--good", "#28a745");
+    root.style.setProperty("--medium", "#ffc107");
+    root.style.setProperty("--bad", "#dc3545");
+    root.style.setProperty("--accent", "#0066cc");
+    document.documentElement.style.setProperty("--border-light", "rgba(0,0,0,0.12)");
+    document.documentElement.style.setProperty("--border-dark", "rgba(0,0,0,0.08)");
+    
+    // Light mode shadow adjustments
+    document.documentElement.style.setProperty("--shadow-sm", "0 1px 3px rgba(0,0,0,0.08)");
+    document.documentElement.style.setProperty("--shadow-md", "0 4px 12px rgba(0,0,0,0.1)");
+    document.documentElement.style.setProperty("--shadow-lg", "0 8px 24px rgba(0,0,0,0.12)");
+    
     darkMode = false;
     localStorage.setItem("theme", "light");
   } else {
+    // Dark Mode - Deep, professional look
     root.style.setProperty("--bg", "#0b0d12");
     root.style.setProperty("--card", "#141826");
     root.style.setProperty("--text", "#e5e7eb");
@@ -377,8 +386,15 @@ function applyTheme(lightMode) {
     root.style.setProperty("--good", "#4ade80");
     root.style.setProperty("--medium", "#facc15");
     root.style.setProperty("--bad", "#f87171");
+    root.style.setProperty("--accent", "#4db8ff");
     document.documentElement.style.setProperty("--border-light", "rgba(255,255,255,0.08)");
     document.documentElement.style.setProperty("--border-dark", "rgba(255,255,255,0.06)");
+    
+    // Dark mode shadow adjustments
+    document.documentElement.style.setProperty("--shadow-sm", "0 2px 8px rgba(0,0,0,0.12)");
+    document.documentElement.style.setProperty("--shadow-md", "0 8px 24px rgba(0,0,0,0.18)");
+    document.documentElement.style.setProperty("--shadow-lg", "0 16px 48px rgba(0,0,0,0.24)");
+    
     darkMode = true;
     localStorage.setItem("theme", "dark");
   }

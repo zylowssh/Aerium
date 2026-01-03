@@ -1440,10 +1440,13 @@ def api_thresholds():
             "good_level": thresholds['good_level'],
             "warning_level": thresholds['warning_level'],
             "critical_level": thresholds['critical_level']
-        })
+        }), 200
     
-    if request.method == "POST":
+    elif request.method == "POST":
         data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
         good = int(data.get('good_level', 800))
         warning = int(data.get('warning_level', 1000))
         critical = int(data.get('critical_level', 1200))
@@ -1460,7 +1463,9 @@ def api_thresholds():
             "good_level": good,
             "warning_level": warning,
             "critical_level": critical
-        })
+        }), 200
+    
+    return jsonify({"error": "Method not allowed"}), 405
 
 def generate_pdf(html):
     pdf_io = io.BytesIO()
