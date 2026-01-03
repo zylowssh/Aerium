@@ -364,10 +364,10 @@ def reset_password_page(token):
 @limiter.limit("3 per minute")
 def register_page():
     if request.method == "POST":
-        username = request.form.get("username")
-        email = request.form.get("email")
-        password = request.form.get("password")
-        confirm_password = request.form.get("confirm_password")
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
         
         # Validation
         if not all([username, email, password, confirm_password]):
@@ -426,7 +426,12 @@ def verify_email(token):
     
     if user_id:
         user = get_user_by_id(user_id)
-        return render_template("email_verified.html", username=user['username'], success=True)
+        if user:
+            return render_template("email_verified.html", username=user['username'], success=True)
+        else:
+            return render_template("email_verified.html", 
+                error="Lien de vérification invalide ou expiré. Veuillez vous réinscrire.",
+                success=False), 400
     else:
         return render_template("email_verified.html", 
             error="Lien de vérification invalide ou expiré. Veuillez vous réinscrire.",
@@ -468,10 +473,14 @@ def change_password():
     user_id = session.get('user_id')
     user = get_user_by_id(user_id)
     
+    if not user:
+        session.clear()
+        return redirect(url_for('login_page'))
+    
     if request.method == "POST":
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
+        current_password = request.form.get('current_password', "")
+        new_password = request.form.get('new_password', "")
+        confirm_password = request.form.get('confirm_password', "")
         
         error = None
         
@@ -547,16 +556,22 @@ def visualization():
 @app.route("/debug-session")
 def debug_session():
     """Debug session and auth info"""
+    user_data = None
+    if session.get('user_id'):
+        user = get_user_by_id(session.get('user_id'))
+        if user:
+            user_data = {
+                "id": user['id'],
+                "username": user['username'],
+                "role": user['role'],
+            }
+    
     return jsonify({
         "session_user_id": session.get('user_id'),
         "session_username": session.get('username'),
         "user_in_session": 'user_id' in session,
         "is_admin_result": is_admin(session.get('user_id')) if 'user_id' in session else None,
-        "user_data": {
-            "id": get_user_by_id(session.get('user_id'))['id'] if session.get('user_id') else None,
-            "username": get_user_by_id(session.get('user_id'))['username'] if session.get('user_id') else None,
-            "role": get_user_by_id(session.get('user_id'))['role'] if session.get('user_id') else None,
-        } if session.get('user_id') else None
+        "user_data": user_data
     })
 
 @app.route("/admin")
@@ -833,6 +848,9 @@ def export_excel():
         
         wb = openpyxl.Workbook()
         ws = wb.active
+        if ws is None:
+            return jsonify({'error': 'Failed to create Excel workbook'}), 500
+        
         ws.title = "CO₂ Data"
         
         # Headers
@@ -922,10 +940,11 @@ def import_csv():
     
     file = request.files['file']
     
-    if file.filename == '':
+    if not file or not file.filename:
         return jsonify({'error': 'No file selected'}), 400
     
-    if not file.filename.endswith('.csv'):
+    filename = secure_filename(file.filename)
+    if not filename or not filename.lower().endswith('.csv'):
         return jsonify({'error': 'File must be CSV format'}), 400
     
     try:
