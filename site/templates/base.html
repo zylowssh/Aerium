@@ -41,7 +41,7 @@
         {% if session.get('username') %}
         <a href="{{ url_for('onboarding_page') }}">📖 Guide</a>
         {% endif %}
-        {% if session.get('username') and is_admin(session.get('user_id')) %}
+        {% if session.get('username') and is_admin %}
         <a href="/simulator">🔬 Simulateur</a>
         <a href="/admin-tools">🛠️ Admin</a>
         {% endif %}
@@ -83,7 +83,7 @@
       {% if session.get('username') %}
       <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 10px 0;">
       <a href="{{ url_for('onboarding_page') }}">📖 Guide</a>
-      {% if is_admin(session.get('user_id')) %}
+      {% if is_admin %}
       <a href="/simulator">🔬 Simulateur</a>
       <a href="/admin-tools">🛠️ Outils Admin</a>
       {% endif %}

@@ -1553,6 +1553,163 @@ def api_settings():
     
     return jsonify(settings)
 
+@app.route("/api/user/profile")
+@login_required
+def api_user_profile():
+    """Get current user's profile information"""
+    user_id = session['user_id']
+    user = get_user_by_id(user_id)
+    
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    return jsonify({
+        "id": user['id'],
+        "username": user['username'],
+        "email": user['email'],
+        "role": "Admin" if is_admin(user_id) else "Utilisateur",
+        "created_at": user.get('created_at'),
+    })
+
+@app.route("/api/user/change-password", methods=["POST"])
+@login_required
+def api_change_password():
+    """Change user password"""
+    user_id = session['user_id']
+    data = request.json
+    
+    if not data:
+        return jsonify({"error": "No JSON data provided"}), 400
+    
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+    
+    if not current_password or not new_password:
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    if len(new_password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters"}), 400
+    
+    user = get_user_by_id(user_id)
+    if not user or not check_password_hash(user['password_hash'], current_password):
+        return jsonify({"error": "Current password is incorrect"}), 401
+    
+    # Update password
+    db = get_db()
+    hashed = generate_password_hash(new_password)
+    db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hashed, user_id))
+    db.commit()
+    db.close()
+    
+    log_audit(user_id, "UPDATE", "Password changed")
+    
+    return jsonify({"status": "ok", "message": "Password changed successfully"})
+
+@app.route("/api/admin/database-info")
+@login_required
+def api_database_info():
+    """Get database information (admin only)"""
+    user_id = session['user_id']
+    
+    if not is_admin(user_id):
+        return jsonify({"error": "Admin access required"}), 403
+    
+    try:
+        import os
+        import sqlite3
+        from pathlib import Path
+        
+        # Use same database path as database.py
+        main_db_path = Path("../data/aerium.sqlite")
+        site_db_path = Path("data/aerium.sqlite")
+        
+        if main_db_path.exists():
+            db_path = str(main_db_path)
+        else:
+            db_path = str(site_db_path)
+        
+        # Get database file info
+        if os.path.exists(db_path):
+            size = os.path.getsize(db_path)
+            modified = os.path.getmtime(db_path)
+        else:
+            return jsonify({"error": "Database file not found"}), 404
+        
+        # Get database schema
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = [row[0] for row in cursor.fetchall()]
+        
+        # Build schema string
+        schema_str = "Tables:\n"
+        for table in tables:
+            try:
+                cursor.execute(f"PRAGMA table_info({table})")
+                columns = cursor.fetchall()
+                schema_str += f"\n{table}:\n"
+                for col in columns:
+                    schema_str += f"  - {col[1]} ({col[2]})\n"
+            except sqlite3.OperationalError:
+                schema_str += f"\n{table}: [Error reading schema]\n"
+        
+        conn.close()
+        
+        return jsonify({
+            "file": db_path,
+            "size": size,
+            "modified": modified,
+            "tables": tables,
+            "schema": schema_str
+        })
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+@app.route("/api/admin/backup-database", methods=["POST"])
+@login_required
+def api_backup_database():
+    """Create database backup (admin only)"""
+    user_id = session['user_id']
+    
+    if not is_admin(user_id):
+        return jsonify({"error": "Admin access required"}), 403
+    
+    try:
+        import shutil
+        from datetime import datetime
+        from pathlib import Path
+        
+        # Use same database path as database.py
+        main_db_path = Path("../data/aerium.sqlite")
+        site_db_path = Path("data/aerium.sqlite")
+        
+        if main_db_path.exists():
+            db_path = str(main_db_path)
+        else:
+            db_path = str(site_db_path)
+        
+        if not os.path.exists(db_path):
+            return jsonify({"error": "Database file not found"}), 404
+        
+        # Create backup directory if it doesn't exist
+        backup_dir = os.path.dirname(db_path) + "/backups"
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # Create backup file
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_filename = f"aerium_backup_{timestamp}.sqlite"
+        backup_path = os.path.join(backup_dir, backup_filename)
+        
+        shutil.copy2(db_path, backup_path)
+        
+        log_audit(user_id, "BACKUP", f"Database backed up to {backup_path}")
+        
+        # Return the backup file
+        return send_file(backup_path, as_attachment=True, download_name=f"morpheus-backup-{timestamp}.sqlite")
+    except Exception as e:
+        log_audit(user_id, "ERROR", f"Backup failed: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/history/latest/<int:limit>")
 def api_history_latest(limit):
     db = get_db()

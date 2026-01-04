@@ -1,7 +1,30 @@
 document.addEventListener("DOMContentLoaded", () => {
   let isSnapping = false;
-  let savePending = false;
+  let autoSaveTimeout;
 
+  // ========================================
+  // TAB SWITCHING
+  // ========================================
+  const navItems = document.querySelectorAll(".settings-nav-item");
+  const panels = document.querySelectorAll(".settings-panel");
+
+  navItems.forEach(item => {
+    item.addEventListener("click", () => {
+      const tabName = item.getAttribute("data-tab");
+      
+      // Update active nav item
+      navItems.forEach(nav => nav.classList.remove("active"));
+      item.classList.add("active");
+      
+      // Update active panel
+      panels.forEach(panel => panel.classList.remove("active"));
+      document.getElementById(`${tabName}-panel`).classList.add("active");
+    });
+  });
+
+  // ========================================
+  // ELEMENT SELECTORS
+  // ========================================
   const toggle = document.getElementById("toggle-analysis");
   const goodSlider = document.getElementById("good-threshold");
   const warningSlider = document.getElementById("warning-threshold");
@@ -10,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!toggle || !goodSlider) return;
 
   const audioAlertsToggle = document.getElementById("toggle-audio-alerts");
-
   const goodValue = document.getElementById("good-value");
   const warningValue = document.getElementById("warning-value");
   const criticalValue = document.getElementById("critical-value");
@@ -31,15 +53,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const saveBtn = document.getElementById("save-settings");
   const resetBtn = document.getElementById("reset-settings");
-  let autoSaveTimeout;
+  
+  // Account settings
+  const currentPasswordInput = document.getElementById("current-password");
+  const newPasswordInput = document.getElementById("new-password");
+  const confirmPasswordInput = document.getElementById("confirm-password");
+  const changePasswordBtn = document.getElementById("change-password-btn");
+  const accountUsername = document.getElementById("account-username");
+  const accountEmail = document.getElementById("account-email");
+  const accountRole = document.getElementById("account-role");
+  
+  // Database settings
+  const dbInfoDiv = document.getElementById("db-info");
+  const dbSchemaDiv = document.getElementById("db-schema");
+  const backupDbBtn = document.getElementById("backup-db-btn");
+  const restoreDbBtn = document.getElementById("restore-db-btn");
+  const exportDataBtn = document.getElementById("export-data-btn");
 
   const MIN = 400;
   const MAX = 2000;
   const STEP = 50;
 
-  /* =========================
-     AUDIO ALERTS TOGGLE
-  ========================= */
+  // ========================================
+  // AUDIO ALERTS TOGGLE
+  // ========================================
   if (audioAlertsToggle) {
     audioAlertsToggle.checked = localStorage.getItem("audioAlerts") !== "false";
     audioAlertsToggle.addEventListener("change", () => {
@@ -64,6 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
       container.style.display = "none";
     }, duration);
   }
+
   // ========================================
   // UPDATE LIVE VALUES
   // ========================================
@@ -74,41 +112,34 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================
-  // SYNC THRESHOLDS (PUSH BACK)
+  // SYNC THRESHOLDS
   // ========================================
   function syncThresholds(changedSlider = null) {
     let good = +goodSlider.value;
     let warning = +warningSlider.value;
     let critical = +criticalSlider.value;
 
-    // Clamp to bounds
     good = Math.max(MIN, Math.min(good, MAX));
     warning = Math.max(MIN, Math.min(warning, MAX));
     critical = Math.max(MIN, Math.min(critical, MAX));
 
-    // If no slider specified, just ensure order
     if (!changedSlider) {
       if (good >= warning) warning = good + STEP;
       if (warning >= critical) critical = warning + STEP;
       if (critical > MAX) critical = MAX;
     } else {
-      // Push behavior: only move other sliders if they're in the way
       if (changedSlider === goodSlider) {
-        // Moving good: if it goes above warning, push warning up
         if (good >= warning) warning = good + STEP;
         if (warning >= critical) critical = warning + STEP;
       } else if (changedSlider === warningSlider) {
-        // Moving warning: push good down or critical up as needed
         if (warning <= good) good = warning - STEP;
         if (warning >= critical) critical = warning + STEP;
       } else if (changedSlider === criticalSlider) {
-        // Moving critical: if it goes below warning, push warning down
         if (critical <= warning) warning = critical - STEP;
         if (warning <= good) good = warning - STEP;
       }
     }
 
-    // Final bounds check
     good = Math.max(MIN, Math.min(good, MAX));
     warning = Math.max(MIN, Math.min(warning, MAX));
     critical = Math.max(MIN, Math.min(critical, MAX));
@@ -119,20 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================
-  // SNAP TO NEAREST VALUE (WITH CSS TRANSITION)
-  // ========================================
-  function snapSliderValue(slider, target) {
-    // Add CSS transition for smooth movement
-    slider.style.transition = 'opacity 0.2s ease';
-    slider.value = target;
-    // Trigger CSS transition for visual smoothness
-    requestAnimationFrame(() => {
-      slider.style.transition = '';
-    });
-  }
-
-  // ========================================
-  // UPDATE VISUALIZATION (Répartition des zones)
+  // UPDATE VISUALIZATION
   // ========================================
   function updateVisualization() {
     const good = +goodSlider.value;
@@ -154,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ========================================
   function snapSlider(slider) {
     const snapped = snap(+slider.value);
-    snapSliderValue(slider, snapped);
+    slider.value = snapped;
     syncThresholds();
     updateLiveValues();
     updateVisualization();
@@ -171,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTimeout(autoSaveTimeout);
     autoSaveTimeout = setTimeout(() => {
       autoSaveSettings();
-    }, 800); // Save 800ms after user stops dragging
+    }, 800);
   }
 
   async function autoSaveSettings() {
@@ -199,10 +217,10 @@ document.addEventListener("DOMContentLoaded", () => {
   [goodSlider, warningSlider, criticalSlider].forEach(slider => {
     slider.addEventListener("input", () => {
       if (isSnapping) return;
-      syncThresholds(slider); // Pass which slider changed
+      syncThresholds(slider);
       updateVisualization();
       updateLiveValues();
-      scheduleAutoSave(); // Trigger autosave
+      scheduleAutoSave();
     });
   });
 
@@ -225,16 +243,13 @@ document.addEventListener("DOMContentLoaded", () => {
       updateSpeed.value = settings.update_speed || 1;
       overviewUpdateSpeed.value = settings.overview_update_speed || 5;
 
-      // Update speed displays
       speedValue.textContent = `${updateSpeed.value} seconde${updateSpeed.value != 1 ? "s" : ""}`;
       overviewSpeedValue.textContent = `${overviewUpdateSpeed.value} seconde${overviewUpdateSpeed.value != 1 ? "s" : ""}`;
 
-      // Ensure thresholds are properly synced and validated
       syncThresholds();
       updateLiveValues();
       console.log('✓ Values updated. Good:', goodSlider.value, 'Warning:', warningSlider.value, 'Critical:', criticalSlider.value);
       
-      // Force visualization update - multiple calls to ensure proper rendering
       updateVisualization();
       console.log('✓ Visualization updated');
       requestAnimationFrame(() => {
@@ -242,7 +257,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     } catch (e) {
       console.error("❌ Load settings error:", e);
-      // Use defaults
       toggle.checked = true;
       goodSlider.value = 800;
       warningSlider.value = 1000;
@@ -251,8 +265,6 @@ document.addEventListener("DOMContentLoaded", () => {
       overviewSpeedValue.textContent = "5 secondes";
       syncThresholds();
       updateLiveValues();
-      
-      // Ensure visualization is updated with defaults
       updateVisualization();
       requestAnimationFrame(() => {
         updateVisualization();
@@ -280,7 +292,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Autosave toggle and checkbox changes
   toggle.addEventListener("change", () => {
     scheduleAutoSave();
   });
@@ -380,6 +391,209 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Load settings on page load
+  // ========================================
+  // ACCOUNT SETTINGS
+  // ========================================
+  async function loadAccountInfo() {
+    try {
+      // Fetch user profile from session
+      const res = await fetch("/api/user/profile");
+      if (!res.ok) return;
+      const user = await res.json();
+      
+      if (accountUsername) accountUsername.textContent = `Utilisateur: ${user.username || '-'}`;
+      if (accountEmail) accountEmail.textContent = `Email: ${user.email || '-'}`;
+      if (accountRole) accountRole.textContent = `Rôle: ${user.role || 'Utilisateur'}`;
+    } catch (e) {
+      console.error("Error loading account info:", e);
+    }
+  }
+
+  if (changePasswordBtn) {
+    changePasswordBtn.addEventListener("click", async () => {
+      if (newPasswordInput.value !== confirmPasswordInput.value) {
+        showToast("❌ Les mots de passe ne correspondent pas", 3000);
+        return;
+      }
+
+      if (newPasswordInput.value.length < 8) {
+        showToast("❌ Le mot de passe doit avoir au moins 8 caractères", 3000);
+        return;
+      }
+
+      changePasswordBtn.disabled = true;
+      changePasswordBtn.textContent = "⏳ Changement...";
+
+      try {
+        const res = await fetch("/api/user/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            current_password: currentPasswordInput.value,
+            new_password: newPasswordInput.value
+          }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || "Changement échoué");
+        }
+
+        showToast("✓ Mot de passe changé avec succès", 2000);
+        currentPasswordInput.value = "";
+        newPasswordInput.value = "";
+        confirmPasswordInput.value = "";
+      } catch (e) {
+        console.error("Password change error:", e);
+        showToast(`❌ ${e.message}`, 3000);
+      } finally {
+        changePasswordBtn.disabled = false;
+        changePasswordBtn.textContent = "🔐 Changer le mot de passe";
+      }
+    });
+  }
+
+  // ========================================
+  // DATABASE SETTINGS
+  // ========================================
+  async function loadDatabaseInfo() {
+    try {
+      const res = await fetch("/api/admin/database-info");
+      if (!res.ok) return;
+      const data = await res.json();
+      
+      if (dbInfoDiv) {
+        dbInfoDiv.innerHTML = `
+          <p><strong>Fichier:</strong> ${data.file || 'unknown'}</p>
+          <p><strong>Taille:</strong> ${formatBytes(data.size || 0)}</p>
+          <p><strong>Tables:</strong> ${data.tables?.length || 0}</p>
+          <p><strong>Dernière modification:</strong> ${new Date(data.modified || 0).toLocaleString()}</p>
+        `;
+      }
+
+      if (dbSchemaDiv && data.schema) {
+        dbSchemaDiv.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;">${data.schema}</pre>`;
+      }
+    } catch (e) {
+      console.error("Error loading database info:", e);
+      if (dbInfoDiv) dbInfoDiv.innerHTML = '<p style="color: red;">Erreur de chargement</p>';
+    }
+  }
+
+  function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  if (backupDbBtn) {
+    backupDbBtn.addEventListener("click", async () => {
+      backupDbBtn.disabled = true;
+      backupDbBtn.textContent = "⏳ Création...";
+
+      try {
+        const res = await fetch("/api/admin/backup-database", { method: "POST" });
+        if (!res.ok) throw new Error("Backup failed");
+        
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `morpheus-backup-${new Date().toISOString().split('T')[0]}.db`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        showToast("✓ Sauvegarde créée et téléchargée", 2000);
+      } catch (e) {
+        console.error("Backup error:", e);
+        showToast("❌ Erreur lors de la sauvegarde", 3000);
+      } finally {
+        backupDbBtn.disabled = false;
+        backupDbBtn.textContent = "💾 Créer une sauvegarde";
+      }
+    });
+  }
+
+  if (exportDataBtn) {
+    exportDataBtn.addEventListener("click", async () => {
+      exportDataBtn.disabled = true;
+      exportDataBtn.textContent = "⏳ Export...";
+
+      try {
+        const res = await fetch("/api/export-csv");
+        if (!res.ok) throw new Error("Export failed");
+        
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `co2-data-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        showToast("✓ Données exportées", 2000);
+      } catch (e) {
+        console.error("Export error:", e);
+        showToast("❌ Erreur lors de l'export", 3000);
+      } finally {
+        exportDataBtn.disabled = false;
+        exportDataBtn.textContent = "📤 Exporter les données";
+      }
+    });
+  }
+
+  // ========================================
+  // PRESET BUTTONS
+  // ========================================
+  const presetBtns = document.querySelectorAll(".preset-btn");
+  presetBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const preset = btn.getAttribute("data-preset");
+      applyPreset(preset);
+    });
+  });
+
+  function applyPreset(preset) {
+    let good, warning, critical;
+    
+    switch(preset) {
+      case "office":
+        good = 800;
+        warning = 1000;
+        critical = 1200;
+        break;
+      case "school":
+        good = 700;
+        warning = 900;
+        critical = 1100;
+        break;
+      case "strict":
+        good = 600;
+        warning = 800;
+        critical = 1000;
+        break;
+      default:
+        return;
+    }
+
+    goodSlider.value = good;
+    warningSlider.value = warning;
+    criticalSlider.value = critical;
+    
+    syncThresholds();
+    updateLiveValues();
+    updateVisualization();
+    scheduleAutoSave();
+    
+    showToast(`✓ Préset "${preset}" appliqué`, 2000);
+  }
+
+  // ========================================
+  // INITIALIZE
+  // ========================================
   loadSettings();
+  loadAccountInfo();
+  loadDatabaseInfo();
 });
