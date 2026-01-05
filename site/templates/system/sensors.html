@@ -1,6 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+.page-header {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    padding: 50px 40px;
+    border-radius: 16px;
+    color: white;
+    margin-bottom: 40px;
+    box-shadow: 0 8px 32px rgba(67, 233, 123, 0.4);
+    text-align: center;
+}
+
+.page-header h1 {
+    margin: 0 0 15px 0;
+    font-size: 2.8em;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.page-header p {
+    margin: 0;
+    opacity: 0.95;
+    font-size: 1.15em;
+    font-weight: 300;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.95em;
+}
+
+.back-link:hover {
+    opacity: 0.7;
+    transform: translateX(-5px);
+}
+</style>
+
+<div class="page-header">
+    <a href="/" class="back-link">← Retour à l'accueil</a>
+    <h1>📡 Gestion des Capteurs</h1>
+    <p>Configurez et gérez vos capteurs CO₂</p>
+</div>
+
 <div class="sensors-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
   <!-- Header -->
   <div style="margin-bottom: 32px;">

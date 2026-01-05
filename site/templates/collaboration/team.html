@@ -1,0 +1,1154 @@
+{% extends "base.html" %}
+
+{% block title %}Collaboration & Équipes - Aerium{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/collaboration.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tenant-management.css') }}">
+
+<style>
+.collab-header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    padding: 50px 40px;
+    border-radius: 16px;
+    color: white;
+    margin-bottom: 40px;
+    box-shadow: 0 8px 32px rgba(79, 172, 254, 0.4);
+    text-align: center;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.95em;
+}
+
+.back-link:hover {
+    opacity: 0.7;
+    transform: translateX(-5px);
+}
+
+.collab-header h1 {
+    margin: 0 0 15px 0;
+    font-size: 2.8em;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.collab-header p {
+    margin: 0;
+    opacity: 0.95;
+    font-size: 1.15em;
+    font-weight: 300;
+}
+</style>
+
+<div class="container">
+    <div class="collab-header">
+        <a href="/" class="back-link">← Retour à l'accueil</a>
+        <h1>👥 Collaboration & Équipes</h1>
+        <p>Gérez les organisations, équipes, partages et collaborez en temps réel</p>
+    </div>
+
+    <!-- Main Tab Navigation -->
+    <div class="collaboration-tabs" style="margin-bottom: 30px;">
+        <button class="tab-btn active" onclick="switchMainTab('organizations')">🏢 Organisations</button>
+        <button class="tab-btn" onclick="switchMainTab('teams')">👥 Équipes</button>
+        <button class="tab-btn" onclick="switchMainTab('sharing')">📊 Partages</button>
+        <button class="tab-btn" onclick="switchMainTab('team-activity')">📈 Activité</button>
+    </div>
+
+    <!-- ORGANIZATIONS TAB -->
+    <div id="organizations-content" class="main-tab-content active">
+        <div class="tenant-tabs" style="margin-bottom: 20px;">
+            <button class="tab-btn active" onclick="switchOrgTab('orgs')">Organisations</button>
+            <button class="tab-btn" onclick="switchOrgTab('org-members')">Membres</button>
+            <button class="tab-btn" onclick="switchOrgTab('locations')">Emplacements</button>
+            <button class="tab-btn" onclick="switchOrgTab('quotas')">Quotas & Utilisation</button>
+        </div>
+
+        <!-- Org: Organizations -->
+        <div id="orgs" class="org-tab-content active">
+            <section class="card">
+                <div class="section-header">
+                    <h2>🏢 Organisations Actives</h2>
+                    <button class="btn btn-primary" onclick="openCreateOrgModal()">
+                        ➕ Nouvelle Organisation
+                    </button>
+                </div>
+
+                <div class="organizations-grid" id="organizationsGrid">
+                    <p class="loading">Chargement des organisations...</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Org: Members -->
+        <div id="org-members" class="org-tab-content">
+            <section class="card">
+                <h2>👥 Gestion des Membres</h2>
+                <div class="members-section">
+                    <div class="form-group">
+                        <label>Sélectionner une organisation</label>
+                        <select id="memberOrgSelect" onchange="loadOrgMembers()">
+                            <option value="">Choisir une organisation...</option>
+                        </select>
+                    </div>
+
+                    <div class="members-table">
+                        <table id="membersTable">
+                            <thead>
+                                <tr>
+                                    <th>Utilisateur</th>
+                                    <th>Rôle</th>
+                                    <th>Permissions</th>
+                                    <th>Depuis</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="membersBody">
+                                <tr>
+                                    <td colspan="5" class="text-center">Sélectionnez une organisation</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="add-member-form">
+                        <h3>Ajouter un Membre</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="newMemberEmail" placeholder="email@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Rôle</label>
+                                <select id="newMemberRole">
+                                    <option value="viewer">Spectateur</option>
+                                    <option value="member">Membre</option>
+                                    <option value="admin">Administrateur</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="addMemberToOrg()">
+                                Ajouter Membre
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Org: Locations -->
+        <div id="locations" class="org-tab-content">
+            <section class="card">
+                <h2>📍 Emplacements</h2>
+                <div class="locations-section">
+                    <div class="form-group">
+                        <label>Sélectionner une organisation</label>
+                        <select id="locationOrgSelect" onchange="loadOrgLocations()">
+                            <option value="">Choisir une organisation...</option>
+                        </select>
+                    </div>
+
+                    <div class="locations-map" id="locationsMap">
+                        <p class="text-muted">Carte des emplacements s'affichera ici</p>
+                    </div>
+
+                    <div class="locations-list" id="locationsList">
+                        <h3>Liste des Emplacements</h3>
+                        <div id="locationsListContent">
+                            <p class="text-muted">Aucun emplacement</p>
+                        </div>
+                    </div>
+
+                    <div class="add-location-form">
+                        <h3>Ajouter un Emplacement</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nom</label>
+                                <input type="text" id="locationName" placeholder="Bureau NYC">
+                            </div>
+                            <div class="form-group">
+                                <label>Adresse</label>
+                                <input type="text" id="locationAddress" placeholder="123 Main St">
+                            </div>
+                            <div class="form-group">
+                                <label>Latitude</label>
+                                <input type="number" id="locationLat" step="0.0001" placeholder="40.7128">
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude</label>
+                                <input type="number" id="locationLon" step="0.0001" placeholder="-74.0060">
+                            </div>
+                            <button class="btn btn-primary" onclick="addLocationToOrg()">
+                                Créer Emplacement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Org: Quotas -->
+        <div id="quotas" class="org-tab-content">
+            <section class="card">
+                <h2>📊 Quotas & Utilisation</h2>
+                <div class="quotas-section">
+                    <div class="form-group">
+                        <label>Sélectionner une organisation</label>
+                        <select id="quotaOrgSelect" onchange="loadOrgQuotas()">
+                            <option value="">Choisir une organisation...</option>
+                        </select>
+                    </div>
+
+                    <div class="quotas-grid" id="quotasGrid">
+                        <div class="quota-card">
+                            <h4>Capteurs</h4>
+                            <div class="quota-bar">
+                                <div class="quota-used" style="width: 45%"></div>
+                            </div>
+                            <p class="quota-text">9 / 20 capteurs</p>
+                        </div>
+                        <div class="quota-card">
+                            <h4>Utilisateurs</h4>
+                            <div class="quota-bar">
+                                <div class="quota-used" style="width: 60%"></div>
+                            </div>
+                            <p class="quota-text">6 / 10 utilisateurs</p>
+                        </div>
+                        <div class="quota-card">
+                            <h4>Stockage</h4>
+                            <div class="quota-bar">
+                                <div class="quota-used" style="width: 35%"></div>
+                            </div>
+                            <p class="quota-text">3.5 / 10 GB</p>
+                        </div>
+                        <div class="quota-card">
+                            <h4>Lectures/Jour</h4>
+                            <div class="quota-bar">
+                                <div class="quota-used" style="width: 75%"></div>
+                            </div>
+                            <p class="quota-text">7500 / 10000 lectures</p>
+                        </div>
+                    </div>
+
+                    <div class="subscription-section">
+                        <h3>Plan d'Abonnement</h3>
+                        <div class="subscription-info">
+                            <p><strong>Plan Actuel:</strong> <span id="currentTier">Pro</span></p>
+                            <button class="btn btn-secondary" onclick="openUpgradeModal()">
+                                Améliorer le Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- TEAMS TAB -->
+    <div id="teams-content" class="main-tab-content">
+        <!-- Create Team Section -->
+        <section class="card">
+            <h2>👥 Créer une Équipe</h2>
+            <p>Créez une équipe pour partager et collaborer sur des projets de surveillance du CO₂</p>
+            
+            <form class="form-group" onsubmit="handleCreateTeam(event)">
+                <div class="form-field">
+                    <label for="team-name">Nom de l'Équipe</label>
+                    <input type="text" id="team-name" placeholder="ex: Équipe Qualité de l'Air du Bureau" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="team-desc">Description</label>
+                    <textarea id="team-desc" placeholder="À quoi sert cette équipe?" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Créer une Équipe</button>
+            </form>
+
+            <div id="team-create-status" class="data-container" style="display: none;"></div>
+        </section>
+
+        <!-- Teams List Section -->
+        <section class="card">
+            <h2>📋 Vos Équipes</h2>
+            <p>Gérez vos équipes existantes et les membres</p>
+            
+            <div class="control-group">
+                <button onclick="loadTeams()" class="btn btn-primary">Actualiser les Équipes</button>
+            </div>
+
+            <div id="teams-container" class="data-container">
+                <div class="loading">Chargement des équipes...</div>
+            </div>
+        </section>
+
+        <!-- Team Members Section -->
+        <section class="card">
+            <h2>👨‍💼 Gérer les Membres de l'Équipe</h2>
+            <p>Ajoutez et gérez les membres de l'équipe</p>
+            
+            <form class="form-group" onsubmit="handleAddTeamMember(event)">
+                <div class="form-field">
+                    <label for="team-select">Sélectionner une Équipe</label>
+                    <select id="team-select" required>
+                        <option value="">Choisir une équipe...</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="member-email">Email du Membre</label>
+                    <input type="email" id="member-email" placeholder="collegue@example.com" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="member-role">Rôle</label>
+                    <select id="member-role">
+                        <option value="viewer">Lecteur</option>
+                        <option value="editor">Éditeur</option>
+                        <option value="admin">Administrateur</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Ajouter un Membre</button>
+            </form>
+
+            <div id="member-status" class="data-container" style="display: none;"></div>
+        </section>
+    </div>
+
+    <!-- SHARING TAB -->
+    <div id="sharing-content" class="main-tab-content">
+        <!-- Share Dashboard Section -->
+        <section class="card">
+            <h2>📊 Partager le Tableau de Bord</h2>
+            <p>Créez un lien de tableau de bord partageable pour vos collègues</p>
+            
+            <form class="form-group" onsubmit="handleShareDashboard(event)">
+                <div class="form-field">
+                    <label for="dashboard-name">Nom du Tableau de Bord</label>
+                    <input type="text" id="dashboard-name" placeholder="ex: Rapport Hebdomadaire" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="share-config">Configuration du Tableau de Bord (JSON)</label>
+                    <textarea id="share-config" placeholder='{"metrics": ["co2", "temperature"]}' rows="4"></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label for="expiry-days">Expiration (jours)</label>
+                    <input type="number" id="expiry-days" value="7" min="1" max="365">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Créer un Lien de Partage</button>
+            </form>
+
+            <div id="share-status" class="data-container" style="display: none;"></div>
+        </section>
+
+        <!-- Shared Dashboards Section -->
+        <section class="card">
+            <h2>🔐 Tableaux de Bord Partagés</h2>
+            <p>Consultez les tableaux de bord partagés avec vous</p>
+            
+            <div class="control-group">
+                <button onclick="loadSharedDashboards()" class="btn btn-primary">Charger les Tableaux Partagés</button>
+            </div>
+
+            <div id="shared-dashboards-container" class="data-container">
+                <div class="loading">Chargement des tableaux partagés...</div>
+            </div>
+        </section>
+
+        <!-- Share Sensors Section -->
+        <section class="card">
+            <h2>🔗 Partager des Capteurs</h2>
+            <p>Partagez vos capteurs avec les membres de l'équipe</p>
+            
+            <div class="section-header">
+                <h3>Tableaux de Bord Partagés</h3>
+                <button class="btn btn-primary" onclick="openShareModal()">
+                    ➕ Partager un Capteur
+                </button>
+            </div>
+
+            <div class="shares-grid" id="sharesGrid">
+                <p class="loading">Chargement des partages...</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- TEAM ACTIVITY TAB -->
+    <div id="team-activity-content" class="main-tab-content">
+        <!-- Shared Alerts Section -->
+        <section class="card">
+            <h2>🔔 Alertes Partagées</h2>
+            <p>Gérez les alertes créées et partagées avec votre équipe</p>
+            
+            <div class="section-header">
+                <h3>Alertes Partagées avec l'Équipe</h3>
+                <button class="btn btn-primary" onclick="openAlertModal()">
+                    🔔 Créer une Alerte
+                </button>
+            </div>
+
+            <div class="alerts-list" id="alertsList">
+                <p class="loading">Chargement des alertes...</p>
+            </div>
+        </section>
+
+        <!-- Comments Section -->
+        <section class="card">
+            <h2>💬 Commentaires et Annotations</h2>
+            <p>Annotez et commentez les lectures avec votre équipe</p>
+            
+            <div class="comments-section">
+                <div class="form-group">
+                    <label>Sélectionner une Lecture</label>
+                    <input type="number" id="readingIdSelect" placeholder="ID de la lecture">
+                    <button class="btn btn-secondary" onclick="loadReadingComments()">
+                        Charger
+                    </button>
+                </div>
+
+                <div class="comments-container" id="commentsContainer">
+                    <p class="text-muted">Sélectionnez une lecture</p>
+                </div>
+
+                <div class="add-comment-form">
+                    <h3>Ajouter un Commentaire</h3>
+                    <div class="form-group">
+                        <textarea id="commentText" placeholder="Écrivez votre commentaire..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="addComment()">
+                        Poster Commentaire
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Activity Feed Section -->
+        <section class="card">
+            <h2>📈 Fil d'Activité</h2>
+            <p>Consultez l'historique complet des activités de votre équipe</p>
+            
+            <div class="activity-filters">
+                <select id="activityFilter" onchange="filterActivity()">
+                    <option value="">Tous les événements</option>
+                    <option value="anomaly">Anomalies Détectées</option>
+                    <option value="alert">Alertes Déclenchées</option>
+                    <option value="comment">Commentaires Ajoutés</option>
+                    <option value="share">Partages Créés</option>
+                </select>
+            </div>
+
+            <div class="activity-feed" id="activityFeed">
+                <p class="loading">Chargement de l'activité...</p>
+            </div>
+        </section>
+
+        <!-- Team Statistics -->
+        <section class="team-stats">
+            <h2>📊 Statistiques de l'Équipe</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Membres Actifs</h3>
+                    <p class="stat-value" id="activeMembers">5</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Alertes Actives</h3>
+                    <p class="stat-value" id="activeAlerts">8</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Commentaires (30j)</h3>
+                    <p class="stat-value" id="recentComments">24</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Événements (7j)</h3>
+                    <p class="stat-value" id="recentEvents">143</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modals -->
+    <div id="createOrgModal" class="modal">
+        <div class="modal-content">
+            <h2>Créer une Nouvelle Organisation</h2>
+            <div class="form-group">
+                <label>Nom de l'Organisation</label>
+                <input type="text" id="tenantName" placeholder="Acme Corporation">
+            </div>
+            <div class="form-group">
+                <label>Plan d'Abonnement</label>
+                <select id="tenantTier">
+                    <option value="free">Gratuit</option>
+                    <option value="pro">Pro</option>
+                    <option value="enterprise">Entreprise</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('createOrgModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="createTenant()">Créer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <h2>Partager un Tableau de Bord</h2>
+            <div class="form-group">
+                <label>Sélectionner un Capteur</label>
+                <select id="shareSensorSelect">
+                    <option value="">Choisir un capteur...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Membres de l'Équipe</label>
+                <div id="teamMembersCheckbox">
+                    <!-- Checkboxes générées dynamiquement -->
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Niveau de Permission</label>
+                <select id="sharePermission">
+                    <option value="viewer">Spectateur (lecture seule)</option>
+                    <option value="commenter">Commentateur (peut commenter)</option>
+                    <option value="editor">Éditeur (peut modifier les alertes)</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('shareModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="createShare()">Partager</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <h2>Créer une Alerte d'Équipe</h2>
+            <div class="form-group">
+                <label>Partage (Capteur Partagé)</label>
+                <select id="alertShareSelect">
+                    <option value="">Choisir un partage...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nom de l'Alerte</label>
+                <input type="text" id="alertName" placeholder="CO₂ Élevé">
+            </div>
+            <div class="form-group">
+                <label>Condition</label>
+                <select id="alertCondition">
+                    <option value="ppm > 800">PPM > 800</option>
+                    <option value="ppm > 1000">PPM > 1000</option>
+                    <option value="ppm < 400">PPM < 400</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Notifier les Membres</label>
+                <div id="alertMembersCheckbox">
+                    <!-- Checkboxes générées dynamiquement -->
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('alertModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="createAlert()">Créer Alerte</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tab Navigation
+function switchMainTab(tab) {
+    document.querySelectorAll('.main-tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(tab + '-content').classList.add('active');
+    document.querySelectorAll('.collaboration-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function switchOrgTab(tab) {
+    document.querySelectorAll('.org-tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    document.querySelectorAll('.tenant-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+// Modal Functions
+function openCreateOrgModal() {
+    document.getElementById('createOrgModal').style.display = 'block';
+}
+
+function openShareModal() {
+    document.getElementById('shareModal').style.display = 'block';
+}
+
+function openAlertModal() {
+    document.getElementById('alertModal').style.display = 'block';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Team Functions
+function handleCreateTeam(event) {
+    event.preventDefault();
+    const teamName = document.getElementById('team-name').value;
+    const teamDesc = document.getElementById('team-desc').value;
+    const statusDiv = document.getElementById('team-create-status');
+    
+    statusDiv.innerHTML = '<div class="loading">Création de l\'équipe...</div>';
+    statusDiv.style.display = 'block';
+    
+    fetch('/api/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            team_name: teamName,
+            description: teamDesc
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML = `<div class="success"><h3>✓ Équipe Créée</h3><p>ID: ${data.team_id}</p></div>`;
+            document.getElementById('team-name').value = '';
+            document.getElementById('team-desc').value = '';
+            loadTeams();
+        } else {
+            statusDiv.innerHTML = '<div class="error">Erreur: ' + data.message + '</div>';
+        }
+    })
+    .catch(e => {
+        statusDiv.innerHTML = '<div class="error">Erreur: ' + e.message + '</div>';
+    });
+}
+
+function loadTeams() {
+    const container = document.getElementById('teams-container');
+    container.innerHTML = '<div class="loading">Chargement des équipes...</div>';
+    
+    fetch('/api/teams')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.teams) {
+                let html = '<div class="data-display">';
+                if (data.teams.length === 0) {
+                    html += '<p class="info-text">Pas encore d\'équipes. Créez-en une pour commencer!</p>';
+                } else {
+                    html += '<div class="teams-list">';
+                    data.teams.forEach(team => {
+                        html += `<div class="team-card">
+                            <h3>${team.name}</h3>
+                            <p class="team-desc">${team.description || 'Pas de description'}</p>
+                            <div class="team-info">
+                                <span>Propriétaire: ${team.owner}</span>
+                                <span>Membres: ${team.member_count}</span>
+                            </div>
+                            <button class="btn btn-small" onclick="viewTeamMembers(${team.id})">Voir les Membres</button>
+                        </div>`;
+                    });
+                    html += '</div>';
+                }
+                html += '</div>';
+                container.innerHTML = html;
+            }
+        })
+        .catch(e => {
+            container.innerHTML = '<div class="error">Erreur: ' + e.message + '</div>';
+        });
+}
+
+function handleAddTeamMember(event) {
+    event.preventDefault();
+    const teamId = document.getElementById('team-select').value;
+    const email = document.getElementById('member-email').value;
+    const role = document.getElementById('member-role').value;
+    const statusDiv = document.getElementById('member-status');
+    
+    statusDiv.innerHTML = '<div class="loading">Ajout du membre...</div>';
+    statusDiv.style.display = 'block';
+    
+    fetch(`/api/teams/${teamId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_email: email,
+            role: role
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML = `<div class="success"><h3>✓ Membre Ajouté</h3><p>${email}</p></div>`;
+            document.getElementById('member-email').value = '';
+        } else {
+            statusDiv.innerHTML = '<div class="error">Erreur: ' + data.message + '</div>';
+        }
+    })
+    .catch(e => {
+        statusDiv.innerHTML = '<div class="error">Erreur: ' + e.message + '</div>';
+    });
+}
+
+function handleShareDashboard(event) {
+    event.preventDefault();
+    const dashName = document.getElementById('dashboard-name').value;
+    const config = document.getElementById('share-config').value || '{}';
+    const expiry = document.getElementById('expiry-days').value;
+    const statusDiv = document.getElementById('share-status');
+    
+    statusDiv.innerHTML = '<div class="loading">Création du lien de partage...</div>';
+    statusDiv.style.display = 'block';
+    
+    fetch('/api/share/dashboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            dashboard_name: dashName,
+            configuration: config,
+            expiry_days: expiry
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success && data.share_link) {
+            const shareUrl = window.location.origin + '/shared/' + data.share_token;
+            statusDiv.innerHTML = `<div class="success"><h3>✓ Tableau Partagé</h3><input type="text" readonly value="${shareUrl}" style="width:100%;padding:10px;"><button class="btn btn-small" onclick="copyToClipboard('${shareUrl}')">Copier</button></div>`;
+            document.getElementById('dashboard-name').value = '';
+        } else {
+            statusDiv.innerHTML = '<div class="error">Erreur lors de la création du lien</div>';
+        }
+    })
+    .catch(e => {
+        statusDiv.innerHTML = '<div class="error">Erreur: ' + e.message + '</div>';
+    });
+}
+
+function loadSharedDashboards() {
+    const container = document.getElementById('shared-dashboards-container');
+    container.innerHTML = '<div class="loading">Chargement...</div>';
+    
+    fetch('/api/share/dashboards')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.dashboards) {
+                let html = '<div class="dashboards-list">';
+                data.dashboards.forEach(dash => {
+                    html += `<div class="dashboard-card">
+                        <h3>${dash.name}</h3>
+                        <p>Partagé par: ${dash.shared_by}</p>
+                        <a href="/shared/${dash.token}" class="btn btn-primary">Accéder</a>
+                    </div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            }
+        })
+        .catch(e => {
+            container.innerHTML = '<div class="error">Erreur: ' + e.message + '</div>';
+        });
+}
+
+// Organization Functions
+function openCreateTenantModal() { openCreateOrgModal(); }
+function createTenant() {
+    const name = document.getElementById('tenantName').value;
+    const tier = document.getElementById('tenantTier').value;
+    
+    fetch('/api/organizations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, tier: tier })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('createOrgModal');
+            alert('Organisation créée avec succès!');
+        } else {
+            alert('Erreur: ' + data.message);
+        }
+    });
+}
+
+function loadOrgMembers() {
+    const orgId = document.getElementById('memberOrgSelect').value;
+    if (!orgId) return;
+    
+    fetch(`/api/organizations/${orgId}/members`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Update table
+            }
+        });
+}
+
+function addMemberToOrg() {
+    const orgId = document.getElementById('memberOrgSelect').value;
+    const email = document.getElementById('newMemberEmail').value;
+    const role = document.getElementById('newMemberRole').value;
+    
+    fetch(`/api/organizations/${orgId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, role: role })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Membre ajouté!');
+            loadOrgMembers();
+        }
+    });
+}
+
+function loadOrgLocations() {
+    const orgId = document.getElementById('locationOrgSelect').value;
+    if (!orgId) return;
+    
+    fetch(`/api/organizations/${orgId}/locations`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Update locations
+            }
+        });
+}
+
+function addLocationToOrg() {
+    const orgId = document.getElementById('locationOrgSelect').value;
+    const name = document.getElementById('locationName').value;
+    const address = document.getElementById('locationAddress').value;
+    const lat = document.getElementById('locationLat').value;
+    const lon = document.getElementById('locationLon').value;
+    
+    fetch(`/api/organizations/${orgId}/locations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, address, latitude: lat, longitude: lon })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Emplacement créé!');
+            loadOrgLocations();
+        }
+    });
+}
+
+function loadOrgQuotas() {
+    const orgId = document.getElementById('quotaOrgSelect').value;
+    if (!orgId) return;
+    
+    fetch(`/api/organizations/${orgId}/quotas`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Update quotas
+            }
+        });
+}
+
+// Sharing Functions
+function createShare() {
+    const sensor = document.getElementById('shareSensorSelect').value;
+    const permission = document.getElementById('sharePermission').value;
+    
+    fetch('/api/share/sensor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sensor_id: sensor, permission: permission })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('shareModal');
+            alert('Capteur partagé!');
+        }
+    });
+}
+
+function createAlert() {
+    const share = document.getElementById('alertShareSelect').value;
+    const name = document.getElementById('alertName').value;
+    const condition = document.getElementById('alertCondition').value;
+    
+    fetch('/api/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ share_id: share, name: name, condition: condition })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('alertModal');
+            alert('Alerte créée!');
+        }
+    });
+}
+
+function loadReadingComments() {
+    const readingId = document.getElementById('readingIdSelect').value;
+    if (!readingId) return;
+    
+    fetch(`/api/readings/${readingId}/comments`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Display comments
+            }
+        });
+}
+
+function addComment() {
+    const readingId = document.getElementById('readingIdSelect').value;
+    const text = document.getElementById('commentText').value;
+    
+    fetch(`/api/readings/${readingId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('commentText').value = '';
+            loadReadingComments();
+        }
+    });
+}
+
+function filterActivity() {
+    const filter = document.getElementById('activityFilter').value;
+    
+    fetch(`/api/activity?filter=${filter}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Display activity
+            }
+        });
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Copié!');
+    });
+}
+
+function viewTeamMembers(teamId) {
+    fetch(`/api/teams/${teamId}/members`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                let membersList = 'Membres:\n';
+                data.members.forEach(m => {
+                    membersList += `- ${m.email} (${m.role})\n`;
+                });
+                alert(membersList);
+            }
+        });
+}
+
+function openUpgradeModal() {
+    alert('Contact our sales team for upgrades');
+}
+
+// Initialize
+window.addEventListener('load', () => {
+    loadTeams();
+    loadSharedDashboards();
+});
+</script>
+
+<style>
+.main-tab-content {
+    display: none;
+}
+
+.main-tab-content.active {
+    display: block;
+}
+
+.org-tab-content {
+    display: none;
+}
+
+.org-tab-content.active {
+    display: block;
+}
+
+.collaboration-tabs,
+.tenant-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    border-bottom: 2px solid var(--border-light);
+    padding-bottom: 15px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tab-btn:hover {
+    color: var(--text);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.teams-list,
+.dashboards-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.team-card,
+.dashboard-card {
+    background: rgba(255,255,255,0.03);
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid var(--accent);
+}
+
+.team-info {
+    display: flex;
+    gap: 15px;
+    margin: 15px 0;
+    font-size: 0.85em;
+    color: var(--muted);
+}
+
+.success {
+    padding: 15px;
+    background: rgba(76, 175, 80, 0.1);
+    border: 2px solid #4caf50;
+    border-radius: 8px;
+    color: #2e7d32;
+}
+
+.error {
+    padding: 15px;
+    background: rgba(244, 67, 54, 0.1);
+    border: 2px solid #f44336;
+    border-radius: 8px;
+    color: #c62828;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+    background-color: var(--card);
+    margin: 5% auto;
+    padding: 30px;
+    border: 1px solid var(--border-light);
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+}
+
+.quotas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.quota-card {
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.quota-bar {
+    width: 100%;
+    height: 20px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.quota-used {
+    height: 100%;
+    background: var(--accent);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: rgba(255,255,255,0.03);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    border-left: 4px solid var(--accent);
+}
+
+.stat-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: var(--accent);
+    margin: 10px 0 0 0;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/collaboration.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tenant-management.js') }}"></script>
+{% endblock %}

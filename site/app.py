@@ -710,12 +710,6 @@ def visualization():
     """Advanced data visualization dashboard with CSV import"""
     return render_template("visualization/visualization.html")
 
-@app.route("/features-hub")
-@login_required
-def features_hub():
-    """Feature hub - Main landing page with all features"""
-    return render_template("features/features-hub.html")
-
 @app.route("/advanced-features")
 @login_required
 def advanced_features_page():
@@ -738,7 +732,7 @@ def visualizations_feature():
 @login_required
 def collaboration_feature():
     """Collaboration & Sharing feature page"""
-    return render_template("collaboration/collaboration.html")
+    return render_template("collaboration/team.html")
 
 @app.route("/export")
 @login_required
@@ -749,26 +743,26 @@ def export_manager():
 @app.route("/organizations")
 @login_required
 def organizations():
-    """Multi-Tenant Management - Create and manage organizations"""
-    return render_template("system/tenant-management.html")
+    """Redirect to Collaboration page"""
+    return redirect(url_for('collaboration_feature'))
 
 @app.route("/team-collaboration")
 @login_required
 def team_collaboration():
-    """Team Collaboration - Share dashboards, alerts, and comments"""
-    return render_template("collaboration/collaboration-feature.html")
+    """Redirect to Collaboration page"""
+    return redirect(url_for('collaboration_feature'))
 
 @app.route("/admin/performance")
 @login_required
 def performance_monitoring():
-    """Performance Monitoring - Real-time metrics and optimization"""
-    return render_template("system/performance-monitoring.html")
+    """Redirect to consolidated performance page"""
+    return redirect(url_for('performance_feature'))
 
 @app.route("/performance")
 @login_required
 def performance_feature():
-    """Performance & Optimization feature page"""
-    return render_template("features/performance-feature.html")
+    """Performance & Optimization feature page (User + Admin Tabs)"""
+    return render_template("features/performance.html")
 
 @app.route("/health")
 @login_required

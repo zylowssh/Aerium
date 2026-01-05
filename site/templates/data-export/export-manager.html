@@ -3,6 +3,52 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/export-manager.css') }}">
 
+<style>
+.page-header {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    padding: 50px 40px;
+    border-radius: 16px;
+    color: white;
+    margin-bottom: 40px;
+    box-shadow: 0 8px 32px rgba(168, 237, 234, 0.4);
+    text-align: center;
+}
+
+.page-header h1 {
+    margin: 0 0 15px 0;
+    font-size: 2.8em;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.page-header p {
+    margin: 0;
+    opacity: 0.95;
+    font-size: 1.15em;
+    font-weight: 300;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.95em;
+}
+
+.back-link:hover {
+    opacity: 0.7;
+    transform: translateX(-5px);
+}
+</style>
+
+<div class="page-header">
+    <a href="/" class="back-link">← Retour à l'accueil</a>
+    <h1>📤 Gestionnaire d'Exports</h1>
+    <p>Exportez vos données de CO₂ en plusieurs formats</p>
+</div>
+
 <div class="container">
         <div class="export-header">
             <h1>📊 Gestionnaire d'Export de Données</h1>
@@ -41,6 +87,32 @@
                         <button class="btn-format pdf" onclick="exportData('pdf')">
                             <span>📋</span> PDF
                         </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Export Rapide Visualisations -->
+            <section class="export-card">
+                <h2>📥 Export Rapide</h2>
+                <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.9rem;">Téléchargez rapidement vos visualisations et données</p>
+                
+                <div class="export-form">
+                    <div class="form-group">
+                        <label>Format d'export</label>
+                        <select id="quickExportFormat">
+                            <option value="csv">📄 CSV Format</option>
+                            <option value="json">📊 JSON Format</option>
+                            <option value="pdf">📋 PDF Report</option>
+                            <option value="excel">📊 Excel Spreadsheet</option>
+                        </select>
+                    </div>
+
+                    <button onclick="quickExportData()" class="btn-save" style="width: 100%;">
+                        📥 Exporter Maintenant
+                    </button>
+
+                    <div id="quick-export-result" style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; display: none;">
+                        <!-- Export results will appear here -->
                     </div>
                 </div>
             </section>
@@ -119,6 +191,41 @@
         </section>
     </div>
 </div>
+
+<script>
+// Quick Export Function
+function quickExportData() {
+    const format = document.getElementById('quickExportFormat').value;
+    const resultDiv = document.getElementById('quick-export-result');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.style.color = '#9ca3af';
+    resultDiv.innerHTML = `📤 Préparation de l'export ${format.toUpperCase()}...`;
+    
+    fetch(`/api/visualization/export?format=${format}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                resultDiv.style.color = '#4ade80';
+                resultDiv.innerHTML = `
+                    <div style="text-align: center;">
+                        <p style="font-weight: 600; margin-bottom: 10px;">✓ Export ${format.toUpperCase()} prêt</p>
+                        <button onclick="window.location.href='/api/export/${format}'" class="btn-save" style="padding: 8px 16px;">
+                            📥 Télécharger le fichier
+                        </button>
+                    </div>
+                `;
+            } else {
+                resultDiv.style.color = '#f87171';
+                resultDiv.innerHTML = '❌ Échec de l\'export';
+            }
+        })
+        .catch(e => {
+            resultDiv.style.color = '#f87171';
+            resultDiv.innerHTML = `❌ Erreur: ${e.message}`;
+        });
+}
+</script>
 
 {% endblock %}
 

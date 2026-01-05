@@ -44,14 +44,30 @@
         <a href="/">🏠 Vue d'ensemble</a>
         <a href="/live">📊 Live</a>
         <a href="/simulator">🔬 Simulateur</a>
-        <a href="/sensors">📡 Capteurs</a>
+        
+        <!-- Data & Monitoring Dropdown -->
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-btn">📈 Données</button>
+          <div class="nav-dropdown-menu">
+            <a href="/sensors">📡 Capteurs</a>
+            <a href="/visualization">📊 Visualisations</a>
+            <a href="/export">📤 Export</a>
+          </div>
+        </div>
+
+        <!-- Insights Dropdown -->
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-btn">💡 Insights</button>
+          <div class="nav-dropdown-menu">
+            <a href="/analytics">📊 Analytics</a>
+            <a href="/health">💚 Santé</a>
+            <a href="/performance">⚡ Performance</a>
+          </div>
+        </div>
+
+        <a href="/collaboration">👥 Collaboration</a>
         <a href="/settings">⚙️ Paramètres</a>
-        <a href="/visualization">📈 Visualisations</a>
-        <a href="/features-hub">✨ Fonctionnalités</a>
-        <a href="/export">📤 Export</a>
-        <a href="/organizations">🏢 Organisations</a>
-        <a href="/team-collaboration">👥 Collaboration</a>
-        <a href="/admin/performance">⚡ Performance</a>
+        
         {% if session.get('username') %}
         <a href="{{ url_for('onboarding_page') }}">📖 Guide</a>
         {% endif %}
@@ -94,11 +110,11 @@
       <a href="/simulator">🔬 Simulateur</a>
       <a href="/sensors">📡 Capteurs</a>
       <a href="/settings">⚙️ Paramètres</a>
-      <a href="/features-hub">✨ Features</a>
+      <a href="/analytics">📊 Analytics</a>
+      <a href="/health">💚 Santé</a>
       <a href="/export">📤 Export</a>
-      <a href="/organizations">🏢 Organisations</a>
-      <a href="/team-collaboration">👥 Collaboration</a>
-      <a href="/admin/performance">⚡ Performance</a>
+      <a href="/collaboration">👥 Collaboration</a>
+      <a href="/performance">⚡ Performance</a>
       {% if session.get('username') %}
       <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 10px 0;">
       <a href="{{ url_for('onboarding_page') }}">📖 Guide</a>
