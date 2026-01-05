@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tenant-management.css') }}">
+
+<div class="container">
+    <div class="tenant-header">
+        <h1>🏢 Gestion des Organisations</h1>
+            <p>Gérez les organisations, les emplacements et les membres d'équipe</p>
+            <button class="btn btn-primary" onclick="openCreateTenantModal()">
+                ➕ Nouvelle Organisation
+            </button>
+        </div>
+
+        <div class="tenant-tabs">
+            <button class="tab-btn active" onclick="switchTab('organizations')">Organisations</button>
+            <button class="tab-btn" onclick="switchTab('members')">Membres</button>
+            <button class="tab-btn" onclick="switchTab('locations')">Emplacements</button>
+            <button class="tab-btn" onclick="switchTab('quotas')">Quotas & Utilisation</button>
+        </div>
+
+        <!-- Tab: Organizations -->
+        <div id="organizations" class="tab-content active">
+            <section class="card">
+                <h2>Organisations Active</h2>
+                <div class="organizations-grid" id="organizationsGrid">
+                    <p class="loading">Chargement des organisations...</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Tab: Members -->
+        <div id="members" class="tab-content">
+            <section class="card">
+                <h2>Gestion des Membres</h2>
+                <div class="members-section">
+                    <div class="form-group">
+                        <label>Sélectionner une organisation</label>
+                        <select id="memberOrgSelect" onchange="loadOrgMembers()">
+                            <option value="">Choisir une organisation...</option>
+                        </select>
+                    </div>
+
+                    <div class="members-table">
+                        <table id="membersTable">
+                            <thead>
+                                <tr>
+                                    <th>Utilisateur</th>
+                                    <th>Rôle</th>
+                                    <th>Permissions</th>
+                                    <th>Depuis</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="membersBody">
+                                <tr>
+                                    <td colspan="5" class="text-center">Sélectionnez une organisation</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="add-member-form">
+                        <h3>Ajouter un Membre</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="newMemberEmail" placeholder="email@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Rôle</label>
+                                <select id="newMemberRole">
+                                    <option value="viewer">Spectateur</option>
+                                    <option value="member">Membre</option>
+                                    <option value="admin">Administrateur</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="addMemberToOrg()">
+                                Ajouter Membre
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Tab: Locations -->
+        <div id="locations" class="tab-content">
+            <section class="card">
+                <h2>Emplacements</h2>
+                <div class="locations-section">
+                    <div class="form-group">
+                        <label>Sélectionner une organisation</label>
+                        <select id="locationOrgSelect" onchange="loadOrgLocations()">
+                            <option value="">Choisir une organisation...</option>
+                        </select>
+                    </div>
+
+                    <div class="locations-map" id="locationsMap">
+                        <p class="text-muted">Carte des emplacements s'affichera ici</p>
+                    </div>
+
+                    <div class="locations-list" id="locationsList">
+                        <h3>Liste des Emplacements</h3>
+                        <div id="locationsListContent">
+                            <p class="text-muted">Aucun emplacement</p>
+                        </div>
+                    </div>
+
+                    <div class="add-location-form">
+                        <h3>Ajouter un Emplacement</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nom</label>
+                                <input type="text" id="locationName" placeholder="Bureau NYC">
+                            </div>
+                            <div class="form-group">
+                                <label>Adresse</label>
+                                <input type="text" id="locationAddress" placeholder="123 Main St">
+                            </div>
+                            <div class="form-group">
+                                <label>Latitude</label>
+                                <input type="number" id="locationLat" step="0.0001" placeholder="40.7128">
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude</label>
+                                <input type="number" id="locationLon" step="0.0001" placeholder="-74.0060">
+                            </div>
+                            <button class="btn btn-primary" onclick="addLocationToOrg()">
+                                Créer Emplacement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Tab: Quotas -->
+        <div id="quotas" class="tab-content">
+            <section class="card">
+                <h2>Quotas & Utilisation</h2>
+                <div class="quotas-section">
+                    <div class="form-group">
+                        <label>Sélectionner une organisation</label>
+                        <select id="quotaOrgSelect" onchange="loadOrgQuotas()">
+                            <option value="">Choisir une organisation...</option>
+                        </select>
+                    </div>
+
+                    <div class="quotas-grid" id="quotasGrid">
+                        <div class="quota-card">
+                            <h4>Capteurs</h4>
+                            <div class="quota-bar">
+                                <div class="quota-used" style="width: 45%"></div>
+                            </div>
+                            <p class="quota-text">9 / 20 capteurs</p>
+                        </div>
+                        <div class="quota-card">
+                            <h4>Utilisateurs</h4>
+                            <div class="quota-bar">
+                                <div class="quota-used" style="width: 60%"></div>
+                            </div>
+                            <p class="quota-text">6 / 10 utilisateurs</p>
+                        </div>
+                        <div class="quota-card">
+                            <h4>Stockage</h4>
+                            <div class="quota-bar">
+                                <div class="quota-used" style="width: 35%"></div>
+                            </div>
+                            <p class="quota-text">3.5 / 10 GB</p>
+                        </div>
+                        <div class="quota-card">
+                            <h4>Lectures/Jour</h4>
+                            <div class="quota-bar">
+                                <div class="quota-used" style="width: 75%"></div>
+                            </div>
+                            <p class="quota-text">7500 / 10000 lectures</p>
+                        </div>
+                    </div>
+
+                    <div class="subscription-section">
+                        <h3>Plan d'Abonnement</h3>
+                        <div class="subscription-info">
+                            <p><strong>Plan Actuel:</strong> <span id="currentTier">Pro</span></p>
+                            <button class="btn btn-secondary" onclick="openUpgradeModal()">
+                                Améliorer le Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="createTenantModal" class="modal">
+        <div class="modal-content">
+            <h2>Créer une Nouvelle Organisation</h2>
+            <div class="form-group">
+                <label>Nom de l'Organisation</label>
+                <input type="text" id="tenantName" placeholder="Acme Corporation">
+            </div>
+            <div class="form-group">
+                <label>Plan d'Abonnement</label>
+                <select id="tenantTier">
+                    <option value="free">Gratuit</option>
+                    <option value="pro">Pro</option>
+                    <option value="enterprise">Entreprise</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('createTenantModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="createTenant()">Créer</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tenant-management.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/export-manager.css') }}">
+
+<div class="container">
+        <div class="export-header">
+            <h1>📊 Gestionnaire d'Export de Données</h1>
+            <p>Exportez vos données de CO₂ en plusieurs formats</p>
+        </div>
+
+        <div class="export-grid">
+            <!-- Export Immédiat -->
+            <section class="export-card">
+                <h2>📥 Export Immédiat</h2>
+                <div class="export-form">
+                    <div class="form-group">
+                        <label>Capteur</label>
+                        <select id="sensorSelect">
+                            <option value="">Sélectionnez un capteur...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Période</label>
+                        <select id="periodSelect">
+                            <option value="7">7 derniers jours</option>
+                            <option value="30">30 derniers jours</option>
+                            <option value="90">90 derniers jours</option>
+                            <option value="365">1 année</option>
+                        </select>
+                    </div>
+
+                    <div class="export-formats">
+                        <button class="btn-format csv" onclick="exportData('csv')">
+                            <span>📄</span> CSV
+                        </button>
+                        <button class="btn-format excel" onclick="exportData('excel')">
+                            <span>📊</span> Excel
+                        </button>
+                        <button class="btn-format pdf" onclick="exportData('pdf')">
+                            <span>📋</span> PDF
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Export Programmé -->
+            <section class="export-card">
+                <h2>⏰ Export Programmé</h2>
+                <div class="scheduled-form">
+                    <div class="form-group">
+                        <label>Capteur</label>
+                        <select id="scheduledSensor">
+                            <option value="">Sélectionnez un capteur...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Format</label>
+                        <select id="scheduledFormat">
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fréquence</label>
+                        <select id="scheduledFrequency">
+                            <option value="daily">Quotidien</option>
+                            <option value="weekly">Hebdomadaire</option>
+                            <option value="monthly">Mensuel</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="scheduledEmail" placeholder="votre@email.com">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="scheduleExport()">
+                        Programmer Export
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Historique des Exports -->
+        <section class="export-history">
+            <h2>📜 Historique des Exports</h2>
+            <div class="history-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Capteur</th>
+                            <th>Format</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr>
+                            <td colspan="6" class="text-center">Aucun export pour le moment</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Exports Programmés -->
+        <section class="scheduled-exports">
+            <h2>📅 Exports Programmés</h2>
+            <div class="scheduled-list" id="scheduledList">
+                <p class="text-muted">Aucun export programmé</p>
+            </div>
+        </section>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/export-manager.js') }}"></script>
+{% endblock %}

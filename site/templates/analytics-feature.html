@@ -3,6 +3,8 @@
 {% block title %}Analytics & Perspectives - Aerium{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analytics-feature.css') }}">
+
 <div class="feature-page analytics-page">
     <div class="feature-header">
         <a href="/features-hub" class="back-btn">← Retour aux Fonctionnalités</a>
@@ -76,8 +78,11 @@
     </div>
 </div>
 
-<script>
-function loadPredictions() {
+{% endblock %}
+
+{% block scripts %}
+<script defer src="{{ url_for('static', filename='js/analytics-feature.js') }}"></script>
+{% endblock %}
     const hours = document.getElementById('pred-hours').value;
     const container = document.getElementById('predictions-container');
     container.innerHTML = '<div class="loading">Loading predictions for next ' + hours + ' hours...</div>';
@@ -217,9 +222,6 @@ window.addEventListener('load', () => {
     loadAnomalies();
     loadInsights();
     loadHealth();
-});
-</script>
-
 <style>
 .feature-page {
     max-width: 1200px;
@@ -348,9 +350,9 @@ window.addEventListener('load', () => {
     color: var(--text);
 }
 
-/* Prediction List */
 .prediction-list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 15px;
 }
 
@@ -358,46 +360,43 @@ window.addEventListener('load', () => {
     display: flex;
     align-items: center;
     gap: 15px;
-    padding: 15px;
-    background: rgba(255,255,255,0.03);
+    padding: 12px;
+    background: rgba(61, 217, 143, 0.1);
     border-radius: 8px;
 }
 
 .pred-time {
-    font-weight: bold;
     min-width: 50px;
+    font-weight: bold;
     color: var(--accent);
 }
 
 .pred-value {
-    font-weight: bold;
-    min-width: 80px;
+    min-width: 100px;
+    color: var(--text);
 }
 
 .pred-bar {
-    flex: 1;
-    height: 6px;
+    height: 8px;
     background: var(--accent);
-    border-radius: 3px;
-    opacity: 0.6;
+    border-radius: 4px;
 }
 
-/* Anomaly List */
 .anomaly-list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 15px;
 }
 
 .anomaly-item {
-    padding: 20px;
+    padding: 15px;
+    background: rgba(220, 53, 69, 0.1);
+    border-left: 4px solid #dc3545;
     border-radius: 8px;
-    border-left: 4px solid #ffc107;
-    background: rgba(255,255,255,0.03);
 }
 
 .anomaly-item.severity-high {
-    border-left-color: #ff6b6b;
-    background: rgba(255, 107, 107, 0.1);
+    border-left-color: #dc3545;
 }
 
 .anomaly-item.severity-medium {
@@ -406,169 +405,176 @@ window.addEventListener('load', () => {
 }
 
 .anomaly-item.severity-low {
-    border-left-color: #4ecdc4;
-    background: rgba(78, 205, 196, 0.1);
+    border-left-color: #17a2b8;
+    background: rgba(23, 162, 184, 0.1);
 }
 
 .anomaly-header {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
-    align-items: center;
 }
 
 .anomaly-score {
+    color: var(--accent);
     font-weight: bold;
 }
 
 .anomaly-severity {
-    font-size: 0.8em;
-    padding: 4px 8px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
-    background: var(--accent);
-    color: white;
+    font-size: 0.85em;
 }
 
 .anomaly-description {
     margin: 10px 0;
-    line-height: 1.5;
+    color: var(--text);
 }
 
 .anomaly-time {
     display: block;
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: var(--muted);
 }
 
-/* Insights List */
 .insights-list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 15px;
 }
 
 .insight-item {
     display: flex;
     gap: 15px;
-    padding: 20px;
-    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    background: rgba(61, 217, 143, 0.05);
     border-radius: 8px;
 }
 
 .insight-icon {
-    font-size: 1.5em;
-    min-width: 30px;
-    text-align: center;
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
 }
 
 .insight-content h4 {
-    margin: 0 0 8px 0;
+    margin: 0 0 5px 0;
     color: var(--text);
 }
 
 .insight-content p {
     margin: 0;
     color: var(--muted);
-    line-height: 1.5;
+    font-size: 0.9em;
 }
 
-/* Recommendations List */
 .recommendations-list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 15px;
 }
 
 .recommendation-item {
     display: flex;
     gap: 15px;
-    padding: 20px;
-    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    background: rgba(61, 217, 143, 0.05);
     border-radius: 8px;
-    border-left: 4px solid var(--accent);
 }
 
 .rec-icon {
-    font-size: 1.5em;
-    min-width: 30px;
-    text-align: center;
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2em;
 }
 
 .rec-content h4 {
-    margin: 0 0 8px 0;
+    margin: 0 0 5px 0;
     color: var(--text);
 }
 
 .rec-content p {
     margin: 0 0 10px 0;
     color: var(--muted);
-    line-height: 1.5;
+    font-size: 0.9em;
 }
 
 .rec-priority {
     display: inline-block;
-    font-size: 0.85em;
-    padding: 4px 10px;
+    padding: 4px 12px;
     background: var(--accent);
     color: white;
     border-radius: 4px;
-}
-
-.success {
-    padding: 20px;
-    background: rgba(76, 175, 80, 0.1);
-    border: 2px solid #4caf50;
-    border-radius: 8px;
-    color: #2e7d32;
-    text-align: center;
+    font-size: 0.8em;
+    font-weight: bold;
 }
 
 .error {
     padding: 20px;
-    background: rgba(244, 67, 54, 0.1);
-    border: 2px solid #f44336;
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid #dc3545;
     border-radius: 8px;
-    color: #c62828;
+    color: #dc3545;
+    text-align: center;
+}
+
+.success {
+    padding: 20px;
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid #28a745;
+    border-radius: 8px;
+    color: #28a745;
     text-align: center;
 }
 
 .info-text {
-    text-align: center;
+    padding: 15px;
+    background: rgba(23, 162, 184, 0.1);
+    border-radius: 8px;
     color: var(--muted);
-    font-size: 0.9em;
-    margin-top: 15px;
-}
-
-/* Dark Mode Support - Using Global Theme Variables */
-html {
-    color-scheme: light dark;
-}
-
-body {
-    background: var(--bg);
-    color: var(--text);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.feature-page {
-    background: var(--bg);
-    color: var(--text);
+    font-size: 0.95em;
 }
 
 @media (max-width: 768px) {
-    .feature-header h1 {
-        font-size: 1.8em;
+    .feature-content {
+        gap: 20px;
     }
 
     .feature-section {
         padding: 20px;
     }
 
-    .control-group {
+    .feature-header h1 {
+        font-size: 1.8em;
+    }
+
+    .prediction-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .anomaly-header {
         flex-direction: column;
     }
 
-    .control-group select {
-        width: 100%;
+    .insight-item,
+    .recommendation-item {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
 </style>
-{% endblock %}

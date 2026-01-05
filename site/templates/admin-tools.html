@@ -3,6 +3,8 @@
 {% block title %}Outils d'Administration Avancés{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-tools.css') }}">
+
 <div class="admin-tools-container">
     <!-- Header -->
     <div class="admin-header">
@@ -272,9 +274,6 @@
             </div>
         </div>
     </div>
-<style>
-/* Container */
-.admin-tools-container {
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
@@ -1054,12 +1053,6 @@
     .backup-btn {
         flex: 1;
     }
-}
-</style>
-
-<script>
-// UI helpers
-function setTableMessage(tbodyId, message, colspan) {
     const tbody = document.getElementById(tbodyId);
     if (!tbody) return;
     tbody.innerHTML = `<tr><td colspan="${colspan}" class="loading">${message}</td></tr>`;
@@ -1979,18 +1972,8 @@ async function cleanupBackups() {
 // Simulator Functions
 
 
-// Initialize tabs on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Load data for all tabs
-    loadAuditLogs();
-    loadSessions();
-    loadLoginHistory();
-    loadRetentionPolicies();
-    loadSystemStats();
-    loadBackups();
-    loadUsers();
-    loadAnalytics();
-    loadMaintenanceStatus();
-});
-</script>
+{% endblock %}
+
+{% block scripts %}
+<script defer src="{{ url_for('static', filename='js/admin-tools.js') }}"></script>
 {% endblock %}

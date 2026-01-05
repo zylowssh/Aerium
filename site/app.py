@@ -744,6 +744,30 @@ def collaboration_feature():
     """Collaboration & Sharing feature page"""
     return render_template("collaboration-feature.html")
 
+@app.route("/export")
+@login_required
+def export_manager():
+    """Data Export Manager - Export readings to CSV, Excel, PDF"""
+    return render_template("export-manager.html")
+
+@app.route("/organizations")
+@login_required
+def organizations():
+    """Multi-Tenant Management - Create and manage organizations"""
+    return render_template("tenant-management.html")
+
+@app.route("/team-collaboration")
+@login_required
+def team_collaboration():
+    """Team Collaboration - Share dashboards, alerts, and comments"""
+    return render_template("collaboration.html")
+
+@app.route("/admin/performance")
+@login_required
+def performance_monitoring():
+    """Performance Monitoring - Real-time metrics and optimization"""
+    return render_template("performance-monitoring.html")
+
 @app.route("/performance")
 @login_required
 def performance_feature():
