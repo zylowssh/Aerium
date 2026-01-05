@@ -169,8 +169,253 @@ function toggleRole(userId, currentRole) {
 <!-- Regular User Dashboard -->
 {% else %}
 
+<!-- ================= WELCOME SECTION ================= -->
+<section class="card">
+  <h2>👋 Bienvenue, {{ user.username }}!</h2>
+  
+  <!-- Quick Stats Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    <!-- Today's Average CO2 -->
+    <div style="
+      background: linear-gradient(135deg, rgba(77, 184, 255, 0.2), rgba(61, 217, 143, 0.1));
+      border: 1px solid rgba(77, 184, 255, 0.3);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    ">
+      <div style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 10px;">Moyenne CO₂ (Aujourd'hui)</div>
+      <div style="font-size: 2.5rem; font-weight: 700; color: #4db8ff; margin-bottom: 5px;">
+        {% if today_stats.avg_ppm %}{{ today_stats.avg_ppm|round(0)|int }}{% else %}—{% endif %} ppm
+      </div>
+      <div style="color: #7a8fa6; font-size: 0.85rem;">
+        {% if today_stats.total_readings %}{{ today_stats.total_readings }} lectures{% else %}Pas de données{% endif %}
+      </div>
+    </div>
+
+    <!-- Peak CO2 Today -->
+    <div style="
+      background: linear-gradient(135deg, rgba(239, 83, 80, 0.2), rgba(255, 107, 107, 0.1));
+      border: 1px solid rgba(239, 83, 80, 0.3);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    ">
+      <div style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 10px;">Pic CO₂ (Aujourd'hui)</div>
+      <div style="font-size: 2.5rem; font-weight: 700; color: #ff6b6b; margin-bottom: 5px;">
+        {% if today_stats.max_ppm %}{{ today_stats.max_ppm|round(0)|int }}{% else %}—{% endif %} ppm
+      </div>
+      <div style="color: #7a8fa6; font-size: 0.85rem;">
+        {% if today_stats.min_ppm %}Min: {{ today_stats.min_ppm|round(0)|int }} ppm{% else %}N/A{% endif %}
+      </div>
+    </div>
+
+    <!-- Bad Air Events -->
+    <div style="
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(251, 146, 60, 0.1));
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    ">
+      <div style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 10px;">Air Dégradé (Aujourd'hui)</div>
+      <div style="font-size: 2.5rem; font-weight: 700; color: #f97316; margin-bottom: 5px;">
+        {% if bad_events.bad_events %}{{ bad_events.bad_events }}{% else %}0{% endif %}
+      </div>
+      <div style="color: #7a8fa6; font-size: 0.85rem;">
+        {% if user_settings and user_settings.co2_threshold %}au-dessus de {{ user_settings.co2_threshold }} ppm{% else %}au-dessus de 800 ppm{% endif %}
+      </div>
+    </div>
+
+    <!-- Weekly Average -->
+    <div style="
+      background: linear-gradient(135deg, rgba(61, 217, 143, 0.2), rgba(77, 184, 255, 0.1));
+      border: 1px solid rgba(61, 217, 143, 0.3);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    ">
+      <div style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 10px;">Moyenne (7 jours)</div>
+      <div style="font-size: 2.5rem; font-weight: 700; color: #4ade80; margin-bottom: 5px;">
+        {% if week_stats.avg_ppm %}{{ week_stats.avg_ppm|round(0)|int }}{% else %}—{% endif %} ppm
+      </div>
+      <div style="color: #7a8fa6; font-size: 0.85rem;">
+        {% if week_stats.total_readings %}{{ week_stats.total_readings }} lectures{% else %}Pas de données{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= QUICK ACTIONS ================= -->
+<section class="card">
+  <h2>🚀 Actions Rapides</h2>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+    <a href="/live" style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(77, 184, 255, 0.1);
+      border: 1px solid rgba(77, 184, 255, 0.3);
+      border-radius: 8px;
+      color: #4db8ff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    "
+    onmouseover="this.style.background='rgba(77, 184, 255, 0.15)'"
+    onmouseout="this.style.background='rgba(77, 184, 255, 0.1)'"
+    >
+      📊 Voir le Direct
+    </a>
+    
+    <a href="/visualization" style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(61, 217, 143, 0.1);
+      border: 1px solid rgba(61, 217, 143, 0.3);
+      border-radius: 8px;
+      color: #3dd98f;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    "
+    onmouseover="this.style.background='rgba(61, 217, 143, 0.15)'"
+    onmouseout="this.style.background='rgba(61, 217, 143, 0.1)'"
+    >
+      📈 Visualisations
+    </a>
+    
+    <a href="/simulator" style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      border-radius: 8px;
+      color: #f97316;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    "
+    onmouseover="this.style.background='rgba(249, 115, 22, 0.15)'"
+    onmouseout="this.style.background='rgba(249, 115, 22, 0.1)'"
+    >
+      🔬 Simulateur
+    </a>
+    
+    <a href="/settings" style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 8px;
+      color: #a78bfa;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    "
+    onmouseover="this.style.background='rgba(139, 92, 246, 0.15)'"
+    onmouseout="this.style.background='rgba(139, 92, 246, 0.1)'"
+    >
+      ⚙️ Paramètres
+    </a>
+  </div>
+</section>
+
+<!-- ================= ACCOUNT INFO ================= -->
+<section class="card">
+  <h2>👤 Informations du Compte</h2>
+  
+  <div style="
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  ">
+    <div style="padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+      <div style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 8px;">Nom d'utilisateur</div>
+      <div style="color: #e5e7eb; font-weight: 600; font-size: 1.1rem;">{{ user.username }}</div>
+    </div>
+    
+    <div style="padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+      <div style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 8px;">Email</div>
+      <div style="color: #e5e7eb; font-weight: 600; font-size: 1rem;">{{ user.email }}</div>
+    </div>
+    
+    <div style="padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+      <div style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 8px;">Email Vérifié</div>
+      <div style="font-size: 1.5rem; font-weight: 700;">
+        {% if user.email_verified %}
+        <span style="color: #4ade80;">✓ Oui</span>
+        {% else %}
+        <span style="color: #ff6b6b;">✗ Non</span>
+        {% endif %}
+      </div>
+    </div>
+    
+    <div style="padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+      <div style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 8px;">Compte Créé</div>
+      <div style="color: #e5e7eb; font-weight: 600;">{{ user.created_at.split(' ')[0] if user.created_at else 'N/A' }}</div>
+    </div>
+  </div>
+  
+  <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+    <a href="{{ url_for('profile') }}" style="
+      display: inline-block;
+      padding: 10px 20px;
+      background: rgba(77, 184, 255, 0.15);
+      border: 1px solid rgba(77, 184, 255, 0.3);
+      border-radius: 6px;
+      color: #4db8ff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    "
+    onmouseover="this.style.background='rgba(77, 184, 255, 0.2)'"
+    onmouseout="this.style.background='rgba(77, 184, 255, 0.15)'"
+    >
+      Gérer le Profil →
+    </a>
+  </div>
+</section>
+
+<!-- ================= LOGIN HISTORY ================= -->
+{% if login_history %}
+<section class="card">
+  <h2>🔐 Historique de Connexion</h2>
+  
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; color: #e5e7eb; font-size: 0.9rem;">
+      <thead>
+        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+          <th style="text-align: left; padding: 12px 10px; color: #9ca3af; font-weight: 600;">Date et Heure</th>
+          <th style="text-align: left; padding: 12px 10px; color: #9ca3af; font-weight: 600;">Adresse IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for login in login_history %}
+        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+          <td style="padding: 12px 10px;">
+            {{ login.login_timestamp }}
+          </td>
+          <td style="padding: 12px 10px; color: #9ca3af; font-size: 0.85rem;">
+            {{ login.ip_address }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
 <!-- ================= HERO ================= -->
-<section class="hero">
+<section class="hero" style="margin-top: 40px;">
   <div class="hero-content">
     <h1>Aerium</h1>
     <p class="hero-sub">

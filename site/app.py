@@ -629,8 +629,56 @@ def dashboard():
                              admin_stats=admin_stats,
                              admin_users=admin_users)
     else:
-        # Show regular user landing page
-        return render_template("dashboard.html", is_admin=False)
+        # Show regular user dashboard with user-specific stats
+        user = get_user_by_id(user_id)
+        user_settings = get_user_settings(user_id)
+        login_history = get_login_history(user_id, limit=10)
+        
+        # Calculate user statistics from database
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Get today's reading stats
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_readings,
+                AVG(ppm) as avg_ppm,
+                MAX(ppm) as max_ppm,
+                MIN(ppm) as min_ppm
+            FROM readings
+            WHERE DATE(timestamp) = CURRENT_DATE
+        """)
+        today_stats = cursor.fetchone()
+        
+        # Get this week's stats
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_readings,
+                AVG(ppm) as avg_ppm
+            FROM readings
+            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+        """)
+        week_stats = cursor.fetchone()
+        
+        # Get high CO2 events (above threshold)
+        user_threshold = user_settings.get('co2_threshold', 800) if user_settings else 800
+        cursor.execute("""
+            SELECT COUNT(*) as bad_events
+            FROM readings
+            WHERE DATE(timestamp) = CURRENT_DATE AND ppm > ?
+        """, (user_threshold,))
+        bad_events = cursor.fetchone()
+        
+        db.close()
+        
+        return render_template("dashboard.html", 
+                             is_admin=False,
+                             user=user,
+                             user_settings=user_settings,
+                             login_history=login_history,
+                             today_stats=today_stats,
+                             week_stats=week_stats,
+                             bad_events=bad_events)
 
 @app.route("/live")
 @login_required
