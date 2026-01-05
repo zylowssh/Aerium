@@ -1,220 +1,170 @@
-# START HERE 👈
+# Documentation Morpheus
 
-**Welcome to the Morpheus CO₂ Monitoring System**
+Bienvenue dans la documentation du système de surveillance de la qualité de l'air CO₂ Morpheus.
 
-This is your entry point to the documentation. Choose your path below:
+## 🎯 Par Où Commencer ?
 
----
+### 👤 Nouveaux Utilisateurs
+**Commencez ici** → [Guide de Démarrage](GUIDE-DEMARRAGE.md)
 
-## 🚀 **I Want to Get Started Right Now (5 minutes)**
+Apprenez comment installer, configurer et utiliser Morpheus pour la première fois.
 
-👉 Read [01-QUICK-START.md](01-QUICK-START.md)
+### 📖 Utilisateurs Réguliers
+**Guide complet** → [Guide Utilisateur](GUIDE-UTILISATEUR.md)
 
-Gets you up and running in 5 minutes with:
-- Installation steps
-- Running the application  
-- Running tests
-- Basic usage examples
+Documentation complète de toutes les fonctionnalités, de la gestion des capteurs aux analyses avancées.
 
----
+### 💻 Développeurs
+**Contribuer au projet** → [Guide Développeur](GUIDE-DEVELOPPEUR.md)
 
-## 💻 **I'm a Developer Working on This Project**
+Architecture du projet, API, et directives de contribution pour les développeurs.
 
-👉 Read [02-DEVELOPER-GUIDE.md](02-DEVELOPER-GUIDE.md)
+### 🔧 Intégrations
+**API & WebSocket** → [Référence API](REFERENCE-API.md)
 
-Your daily reference guide with:
-- Project structure
-- Core modules explained
-- Common development tasks
-- Code examples
-- Debugging tips
-- Best practices
+Documentation complète de l'API REST et WebSocket pour les intégrations.
 
----
+### 🆘 Problèmes ?
+**Résoudre les problèmes** → [Guide de Dépannage](DEPANNAGE.md)
 
-## 🏗️ **I Need to Understand the Architecture**
-
-👉 Read [03-TECHNICAL-DETAILS.md](03-TECHNICAL-DETAILS.md)
-
-Deep technical documentation:
-- Three-layer architecture
-- Database schema
-- Authentication flow
-- Data flow diagrams
-- Performance optimizations
-- Security features
-- Testing architecture
+Solutions aux problèmes courants et guide de débogage.
 
 ---
 
-## 📡 **I'm Integrating with This API**
+## 📚 Structure de la Documentation
 
-👉 Read [API-REFERENCE.md](API-REFERENCE.md)
-
-Complete REST & WebSocket documentation:
-- All endpoints (25+)
-- Request/response formats
-- Authentication requirements
-- Rate limits
-- Error codes
-- Example integrations (Python, JavaScript)
-
----
-
-## 🧪 **I Need to Run or Write Tests**
-
-👉 Read [TESTING-GUIDE.md](TESTING-GUIDE.md)
-
-Testing documentation with:
-- How to run all tests (1 command)
-- Test coverage by module
-- Individual test descriptions
-- Debugging failed tests
-- CI/CD setup
-- Test metrics
+```
+docs/
+├── INDEX.md (vous êtes ici)      # Hub de documentation
+├── GUIDE-DEMARRAGE.md             # Installation et premiers pas
+├── GUIDE-UTILISATEUR.md           # Guide complet des fonctionnalités
+├── REFERENCE-API.md               # Documentation API REST et WebSocket
+├── GUIDE-DEVELOPPEUR.md           # Architecture et contribution
+└── DEPANNAGE.md                   # Résolution de problèmes
+```
 
 ---
 
-## 📁 **I Need to Find a Specific File**
+## 🚀 Liens Rapides
 
-👉 Read [FILES-STRUCTURE.md](FILES-STRUCTURE.md)
+### Installation
+- [Configuration Système Requise](GUIDE-DEMARRAGE.md#configuration-système)
+- [Installation des Dépendances](GUIDE-DEMARRAGE.md#installation)
+- [Premier Lancement](GUIDE-DEMARRAGE.md#premier-lancement)
 
-Complete file organization guide:
-- Directory tree
-- Key files explained
-- File statistics
-- Production vs frontend code
-- Dependencies
-- Deployment files
+### Utilisation
+- [Configuration des Capteurs](GUIDE-UTILISATEUR.md#gestion-des-capteurs)
+- [Surveillance en Temps Réel](GUIDE-UTILISATEUR.md#surveillance-en-temps-réel)
+- [Analyses de Données](GUIDE-UTILISATEUR.md#analyses-de-données)
+- [Export de Données](GUIDE-UTILISATEUR.md#export-de-données)
+- [Alertes & Notifications](GUIDE-UTILISATEUR.md#alertes--notifications)
 
----
+### Développement
+- [Configuration de Développement](GUIDE-DEVELOPPEUR.md#configuration-de-développement)
+- [Architecture du Projet](GUIDE-DEVELOPPEUR.md#architecture-du-projet)
+- [Schéma de Base de Données](GUIDE-DEVELOPPEUR.md#schéma-de-base-de-données)
+- [Tests](GUIDE-DEVELOPPEUR.md#tests)
+- [Déploiement](GUIDE-DEVELOPPEUR.md#déploiement)
 
-## 🔧 **Something's Broken - Help!**
+### API
+- [Authentification](REFERENCE-API.md#authentification)
+- [Endpoints REST](REFERENCE-API.md#endpoints-api-rest)
+- [WebSocket](REFERENCE-API.md#api-websocket)
+- [Exemples de Code](REFERENCE-API.md#exemples-complets)
 
-👉 Read [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-
-Solutions for 20+ common issues:
-- Startup problems
-- Authentication issues
-- Database errors
-- WebSocket issues
-- Email configuration
-- Performance problems
-- Advanced debugging
-
----
-
-## 🚀 **I Want to Know What's Next**
-
-👉 Read [04-IMPROVEMENTS-ROADMAP.md](04-IMPROVEMENTS-ROADMAP.md)
-
-Future enhancement planning:
-- Phase 6: Machine learning
-- Phase 7: UX/UI improvements
-- Phase 8: Performance & scalability
-- Phase 9: Security enhancements
-- Phase 10: Reporting & compliance
-- Timeline and resource estimates
+### Dépannage
+- [Problèmes d'Installation](DEPANNAGE.md#problèmes-dinstallation--démarrage)
+- [Problèmes de Connexion](DEPANNAGE.md#problèmes-dauthentification)
+- [Problèmes de Performance](DEPANNAGE.md#problèmes-de-performance)
+- [Débogage Général](DEPANNAGE.md#débogage-général)
 
 ---
 
-## 📋 **I Need a Complete Overview**
+## 💡 Parcours d'Apprentissage Recommandés
 
-👉 Read [00-OVERVIEW.md](00-OVERVIEW.md)
+### Pour les Utilisateurs Finaux
+1. Lisez le [README](../README.md) principal
+2. Suivez le [Guide de Démarrage](GUIDE-DEMARRAGE.md)
+3. Explorez le [Guide Utilisateur](GUIDE-UTILISATEUR.md)
+4. Consultez le [Dépannage](DEPANNAGE.md) si nécessaire
 
-Project overview with:
-- What is Morpheus?
-- Key features
-- Technology stack
-- Key statistics
-- Current status
-- Project timeline
+### Pour les Développeurs
+1. Lisez le [README](../README.md) principal
+2. Configurez l'environnement avec [Guide de Démarrage](GUIDE-DEMARRAGE.md)
+3. Étudiez le [Guide Développeur](GUIDE-DEVELOPPEUR.md)
+4. Consultez la [Référence API](REFERENCE-API.md)
+5. Contribuez en suivant les directives
 
----
-
-## ✅ **Project Status Summary**
-
-👉 Read [COMPLETION-REPORT.md](COMPLETION-REPORT.md)
-
-Final completion report with:
-- All deliverables listed
-- Code statistics
-- Test results
-- Performance metrics
-- Quality assurance
-- Completion checklist
+### Pour les Intégrateurs Système
+1. Parcourez le [Guide de Démarrage](GUIDE-DEMARRAGE.md)
+2. Étudiez en détail la [Référence API](REFERENCE-API.md)
+3. Consultez le [Guide Développeur](GUIDE-DEVELOPPEUR.md) pour l'architecture
+4. Implémentez en utilisant les exemples de code
 
 ---
 
-## 🎯 **Quick Navigation**
+## 🌟 Fonctionnalités Principales
 
-| Need | Document |
-|------|----------|
-| Start now | [01-QUICK-START.md](01-QUICK-START.md) |
-| Daily work | [02-DEVELOPER-GUIDE.md](02-DEVELOPER-GUIDE.md) |
-| Architecture | [03-TECHNICAL-DETAILS.md](03-TECHNICAL-DETAILS.md) |
-| API docs | [API-REFERENCE.md](API-REFERENCE.md) |
-| Testing | [TESTING-GUIDE.md](TESTING-GUIDE.md) |
-| File locations | [FILES-STRUCTURE.md](FILES-STRUCTURE.md) |
-| Troubleshooting | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
-| Future plans | [04-IMPROVEMENTS-ROADMAP.md](04-IMPROVEMENTS-ROADMAP.md) |
-| Overview | [00-OVERVIEW.md](00-OVERVIEW.md) |
-| Status | [COMPLETION-REPORT.md](COMPLETION-REPORT.md) |
+### ✅ Fonctionnalités Disponibles
 
----
+- **Surveillance en Temps Réel** : Mises à jour WebSocket en direct
+- **Multi-utilisateurs** : Authentification sécurisée et gestion des rôles
+- **Multi-capteurs** : Support de capteurs multiples avec configuration individuelle
+- **Analyses** : Graphiques, statistiques et insights ML
+- **Alertes** : Notifications email, navigateur et in-app
+- **Export** : CSV, Excel, JSON avec exports programmés
+- **Admin** : Tableau de bord complet de gestion système
+- **API** : REST et WebSocket pour intégrations
+- **Performance** : Mise en cache, pagination, optimisation
 
-## 📞 **Still Can't Find What You Need?**
+### 🔜 Feuille de Route
 
-1. **Use browser search**: Ctrl+F (Cmd+F on Mac) to search within any document
-2. **Check TROUBLESHOOTING.md**: 20+ common issues covered
-3. **Review DEVELOPER-GUIDE.md**: Common tasks section
-4. **Check code comments**: All code has inline documentation
+- Application mobile
+- Support multi-sites
+- Prédictions ML avancées
+- Alertes SMS
+- Intégration IoT étendue
 
 ---
 
-## 🌟 **Key Highlights**
+## 📞 Support & Communauté
 
-✅ **25+ REST API endpoints** - Complete API reference in [API-REFERENCE.md](API-REFERENCE.md)
+### Obtenir de l'Aide
 
-✅ **8+ WebSocket handlers** - Real-time monitoring with SocketIO
+1. **Documentation** : Vous y êtes ! Cherchez dans les guides ci-dessus
+2. **Dépannage** : [Guide de Dépannage](DEPANNAGE.md) pour les problèmes courants
+3. **Issues GitHub** : Cherchez dans les tickets existants
+4. **Nouveau Ticket** : Créez un ticket avec les infos de diagnostic
 
-✅ **87% test coverage** - 25+ test cases documented in [TESTING-GUIDE.md](TESTING-GUIDE.md)
+### Contribuer
 
-✅ **10-100x performance boost** - Caching and optimization details in [02-DEVELOPER-GUIDE.md](02-DEVELOPER-GUIDE.md)
-
-✅ **Production-ready** - Security, error handling, and best practices throughout
-
----
-
-## 💡 **Pro Tips**
-
-1. **First time?** Start with [01-QUICK-START.md](01-QUICK-START.md) - takes 5 minutes
-2. **Working daily?** Keep [02-DEVELOPER-GUIDE.md](02-DEVELOPER-GUIDE.md) handy
-3. **Getting stuck?** Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) first
-4. **Integrating?** Jump to [API-REFERENCE.md](API-REFERENCE.md)
-5. **Need tests?** See [TESTING-GUIDE.md](TESTING-GUIDE.md) for running tests
+Nous accueillons les contributions ! Voir :
+- [Guide Développeur](GUIDE-DEVELOPPEUR.md) pour commencer
+- [Directives de Contribution](GUIDE-DEVELOPPEUR.md#directives-de-contribution)
+- [Style de Code](GUIDE-DEVELOPPEUR.md#style-de-code)
 
 ---
 
-## 📚 **Documentation Statistics**
+## 📝 Notes de Version
 
-- **Total files**: 11 comprehensive guides
-- **Total lines**: 2,500+ documentation lines
-- **Code examples**: 50+ throughout
-- **Diagrams**: 10+ architecture diagrams
-- **Coverage**: Every aspect of the project
-
----
-
-**Ready to start? 👇**
-
-- **New developer?** → [01-QUICK-START.md](01-QUICK-START.md)
-- **Need to fix something?** → [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-- **Building an integration?** → [API-REFERENCE.md](API-REFERENCE.md)
-- **Want the full picture?** → [00-OVERVIEW.md](00-OVERVIEW.md)
+### Version 2.0 (Janvier 2026)
+- ✅ Refonte complète de la documentation
+- ✅ Support multi-capteurs amélioré
+- ✅ Optimisations de performance
+- ✅ API REST et WebSocket complètes
+- ✅ Fonctionnalités admin avancées
+- ✅ Analyses ML intégrées
 
 ---
 
-*Last updated: 2024*  
-*Project: Morpheus CO₂ Monitoring System*  
-*Status: Production Ready ✅*
+## 🙏 Remerciements
+
+Merci d'utiliser Morpheus ! Pour toute question, suggestion ou rapport de bug, n'hésitez pas à :
+
+- Ouvrir un ticket sur GitHub
+- Consulter la documentation
+- Contribuer au projet
+
+---
+
+**Bonne surveillance !** 🌱 **Profitez d'un air de meilleure qualité !**
