@@ -22,7 +22,9 @@ from database import (get_db, init_db, get_user_by_username, create_user, get_us
                       grant_permission, revoke_permission, has_permission, get_user_permissions, get_users_with_permission,
                       import_csv_readings, get_csv_import_stats,
                       create_sensor, get_user_sensors, get_sensor_by_id, update_sensor, delete_sensor,
-                      get_active_sensors, update_sensor_availability, update_sensor_last_read)
+                      get_active_sensors, update_sensor_availability, update_sensor_last_read,
+                      log_sensor_reading, get_sensor_readings, get_sensor_latest_reading,
+                      update_sensor_thresholds, get_sensor_thresholds, check_sensor_threshold_status)
 import json
 from flask import send_file
 try:
@@ -1469,6 +1471,97 @@ def test_sensor_connection():
             'success': False,
             'error': f'Erreur de test: {str(e)}'
         }), 500
+
+# ================================================================================
+#                    SENSOR READINGS & THRESHOLDS
+# ================================================================================
+
+@app.route("/api/sensor/<int:sensor_id>/readings")
+@login_required
+def get_sensor_readings_endpoint(sensor_id):
+    """Get readings for a specific sensor (last 24 hours)"""
+    try:
+        user_id = session.get('user_id')
+        hours = request.args.get('hours', 24, type=int)
+        
+        # Verify ownership
+        sensor = get_sensor_by_id(sensor_id, user_id)
+        if not sensor:
+            return jsonify({'error': 'Sensor not found'}), 404
+        
+        readings = get_sensor_readings(sensor_id, hours)
+        latest = get_sensor_latest_reading(sensor_id)
+        
+        return jsonify({
+            'sensor_id': sensor_id,
+            'sensor_name': sensor['name'],
+            'readings': readings,
+            'latest': latest,
+            'count': len(readings)
+        })
+    except Exception as e:
+        print(f"Error getting readings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route("/api/sensor/<int:sensor_id>/thresholds", methods=["GET"])
+@login_required
+def get_sensor_thresholds_endpoint(sensor_id):
+    """Get thresholds for a specific sensor"""
+    try:
+        user_id = session.get('user_id')
+        
+        # Verify ownership
+        sensor = get_sensor_by_id(sensor_id, user_id)
+        if not sensor:
+            return jsonify({'error': 'Sensor not found'}), 404
+        
+        thresholds = {
+            'good': sensor.get('good_threshold', 800),
+            'warning': sensor.get('warning_threshold', 1000),
+            'critical': sensor.get('critical_threshold', 1200)
+        }
+        
+        return jsonify(thresholds)
+    except Exception as e:
+        print(f"Error getting thresholds: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route("/api/sensor/<int:sensor_id>/thresholds", methods=["PUT"])
+@login_required
+def update_sensor_thresholds_endpoint(sensor_id):
+    """Update thresholds for a specific sensor"""
+    try:
+        user_id = session.get('user_id')
+        data = request.get_json()
+        
+        # Verify ownership
+        sensor = get_sensor_by_id(sensor_id, user_id)
+        if not sensor:
+            return jsonify({'error': 'Sensor not found'}), 404
+        
+        good = data.get('good')
+        warning = data.get('warning')
+        critical = data.get('critical')
+        
+        success = update_sensor_thresholds(
+            sensor_id, user_id,
+            good=good, warning=warning, critical=critical
+        )
+        
+        if success:
+            # Log the change
+            try:
+                log_audit(user_id, 'SENSOR_THRESHOLDS_UPDATED', 'sensor', sensor_id,
+                         None, f'{sensor["name"]}: {good}/{warning}/{critical}', request.remote_addr)
+            except:
+                pass
+            
+            return jsonify({'success': True, 'message': 'Thresholds updated'})
+        else:
+            return jsonify({'error': 'Failed to update thresholds'}), 400
+    except Exception as e:
+        print(f"Error updating thresholds: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # ================================================================================
 #                        ANALYTICS ROUTES (ENHANCED)

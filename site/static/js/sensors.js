@@ -12,9 +12,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const sensorInterfaceSelect = document.getElementById("sensor-interface");
   const i2cConfig = document.getElementById("i2c-config");
   const serialConfig = document.getElementById("serial-config");
+  const toggleThresholdsBtn = document.getElementById("toggle-thresholds-btn");
+  const thresholdsSection = document.getElementById("thresholds-section");
+  const thresholdGoodInput = document.getElementById("sensor-threshold-good");
+  const thresholdWarningInput = document.getElementById("sensor-threshold-warning");
+  const thresholdCriticalInput = document.getElementById("sensor-threshold-critical");
 
   let currentSensorId = null;
   let sensors = [];
+
+  // Toggle thresholds section
+  toggleThresholdsBtn.addEventListener("click", () => {
+    const isOpen = thresholdsSection.style.display !== "none";
+    thresholdsSection.style.display = isOpen ? "none" : "block";
+    toggleThresholdsBtn.textContent = isOpen ? "▶ Seuils CO₂ personnalisés" : "▼ Seuils CO₂ personnalisés";
+  });
 
   // Show/hide protocol configs based on interface selection
   sensorInterfaceSelect.addEventListener("change", () => {
@@ -34,6 +46,20 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("Error loading sensors:", error);
       showToast("❌ Erreur lors du chargement des capteurs", 2000);
+    }
+  }
+
+  // Load sensor thresholds for modal
+  async function loadSensorThresholds(sensorId) {
+    try {
+      const response = await fetch(`/api/sensor/${sensorId}/thresholds`);
+      if (!response.ok) return;
+      const thresholds = await response.json();
+      thresholdGoodInput.value = thresholds.good || 800;
+      thresholdWarningInput.value = thresholds.warning || 1000;
+      thresholdCriticalInput.value = thresholds.critical || 1200;
+    } catch (error) {
+      console.error("Error loading thresholds:", error);
     }
   }
 
@@ -112,10 +138,15 @@ document.addEventListener("DOMContentLoaded", () => {
     sensorInterfaceSelect.value = "i2c";
     i2cConfig.style.display = "block";
     serialConfig.style.display = "none";
+    thresholdsSection.style.display = "none";
+    toggleThresholdsBtn.textContent = "▶ Seuils CO₂ personnalisés";
     document.getElementById("sensor-i2c-bus").value = "1";
     document.getElementById("sensor-i2c-addr").value = "0x61";
     document.getElementById("sensor-port").value = "/dev/ttyUSB0";
     document.getElementById("sensor-baudrate").value = "9600";
+    thresholdGoodInput.value = "800";
+    thresholdWarningInput.value = "1000";
+    thresholdCriticalInput.value = "1200";
     sensorModal.style.display = "flex";
   });
 
@@ -139,6 +170,10 @@ document.addEventListener("DOMContentLoaded", () => {
     sensorTypeSelect.value = sensor.type;
     sensorInterfaceSelect.value = sensor.interface;
 
+    // Close thresholds section by default
+    thresholdsSection.style.display = "none";
+    toggleThresholdsBtn.textContent = "▶ Seuils CO₂ personnalisés";
+
     if (sensor.interface === "i2c") {
       document.getElementById("sensor-i2c-bus").value = sensor.config?.bus || "1";
       document.getElementById("sensor-i2c-addr").value = sensor.config?.address || "0x61";
@@ -150,6 +185,9 @@ document.addEventListener("DOMContentLoaded", () => {
       i2cConfig.style.display = "none";
       serialConfig.style.display = "block";
     }
+
+    // Load thresholds
+    loadSensorThresholds(sensorId);
 
     sensorModal.style.display = "flex";
   };
@@ -209,6 +247,27 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!response.ok) throw new Error("Save failed");
+
+      const savedSensor = await response.json();
+      
+      // Save thresholds if sensor was created/updated successfully
+      if (savedSensor.id) {
+        const thresholdData = {
+          good: parseInt(thresholdGoodInput.value) || 800,
+          warning: parseInt(thresholdWarningInput.value) || 1000,
+          critical: parseInt(thresholdCriticalInput.value) || 1200
+        };
+        
+        try {
+          await fetch(`/api/sensor/${savedSensor.id}/thresholds`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(thresholdData)
+          });
+        } catch (err) {
+          console.warn("Warning: Thresholds might not have been saved", err);
+        }
+      }
 
       closeModal();
       await loadSensors();

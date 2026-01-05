@@ -3,6 +3,7 @@
 
 import sys
 import os
+import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'site'))
 
 from database import (
@@ -22,8 +23,9 @@ def test_complete_sensor_workflow():
     print("\n✓ Database initialized")
     init_db()
     
-    # Create test user
-    user_id = create_user("sensor_test_user", "sensor@test.local", generate_password_hash("test"))
+    # Create test user with unique username
+    unique_user = f"sensor_test_{int(time.time())}"
+    user_id = create_user(unique_user, f"{unique_user}@test.local", generate_password_hash("test"))
     print(f"✓ Test user created (ID: {user_id})")
     
     # Test POST /api/sensors (create)

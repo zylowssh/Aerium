@@ -361,6 +361,9 @@ def init_db():
             config TEXT NOT NULL,
             active BOOLEAN DEFAULT 1,
             available BOOLEAN DEFAULT 0,
+            good_threshold INTEGER DEFAULT 800,
+            warning_threshold INTEGER DEFAULT 1000,
+            critical_threshold INTEGER DEFAULT 1200,
             last_read DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -377,6 +380,45 @@ def init_db():
     cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_user_sensors_active 
         ON user_sensors(user_id, active)
+    """)
+
+    # Add threshold columns if they don't exist (for existing databases)
+    try:
+        cur.execute("ALTER TABLE user_sensors ADD COLUMN good_threshold INTEGER DEFAULT 800")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    try:
+        cur.execute("ALTER TABLE user_sensors ADD COLUMN warning_threshold INTEGER DEFAULT 1000")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    try:
+        cur.execute("ALTER TABLE user_sensors ADD COLUMN critical_threshold INTEGER DEFAULT 1200")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    # Sensor readings - per-sensor CO2 history
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS sensor_readings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sensor_id INTEGER NOT NULL,
+            co2 INTEGER NOT NULL,
+            temperature REAL,
+            humidity REAL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(sensor_id) REFERENCES user_sensors(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sensor_readings_sensor_id 
+        ON sensor_readings(sensor_id)
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sensor_readings_timestamp 
+        ON sensor_readings(sensor_id, timestamp DESC)
     """)
 
     db.commit()
@@ -1557,3 +1599,143 @@ def get_available_sensors_count(user_id):
     
     db.close()
     return count
+
+# ================================================================================
+#                      SENSOR READINGS (PER-SENSOR DATA)
+# ================================================================================
+
+def log_sensor_reading(sensor_id, co2, temperature=None, humidity=None):
+    """Log a CO2 reading for a specific sensor"""
+    db = get_db()
+    
+    db.execute(
+        """INSERT INTO sensor_readings (sensor_id, co2, temperature, humidity)
+           VALUES (?, ?, ?, ?)""",
+        (sensor_id, co2, temperature, humidity)
+    )
+    
+    db.commit()
+    db.close()
+
+def get_sensor_readings(sensor_id, hours=24):
+    """Get sensor readings from last N hours"""
+    db = get_db()
+    
+    readings = db.execute(
+        """SELECT * FROM sensor_readings 
+           WHERE sensor_id = ? AND timestamp > datetime('now', '-' || ? || ' hours')
+           ORDER BY timestamp DESC""",
+        (sensor_id, hours)
+    ).fetchall()
+    
+    db.close()
+    return [dict(r) for r in readings]
+
+def get_sensor_latest_reading(sensor_id):
+    """Get the most recent reading for a sensor"""
+    db = get_db()
+    
+    reading = db.execute(
+        """SELECT * FROM sensor_readings 
+           WHERE sensor_id = ? 
+           ORDER BY timestamp DESC 
+           LIMIT 1""",
+        (sensor_id,)
+    ).fetchone()
+    
+    db.close()
+    return dict(reading) if reading else None
+
+def cleanup_old_sensor_readings(days_to_keep=90):
+    """Remove sensor readings older than N days"""
+    db = get_db()
+    
+    deleted = db.execute(
+        """DELETE FROM sensor_readings 
+           WHERE timestamp < datetime('now', '-' || ? || ' days')""",
+        (days_to_keep,)
+    ).rowcount
+    
+    db.commit()
+    db.close()
+    return deleted
+
+# ================================================================================
+#                      SENSOR THRESHOLD MANAGEMENT
+# ================================================================================
+
+def update_sensor_thresholds(sensor_id, user_id, good=None, warning=None, critical=None):
+    """Update CO2 thresholds for a specific sensor"""
+    db = get_db()
+    
+    updates = []
+    values = []
+    
+    if good is not None:
+        updates.append("good_threshold = ?")
+        values.append(good)
+    if warning is not None:
+        updates.append("warning_threshold = ?")
+        values.append(warning)
+    if critical is not None:
+        updates.append("critical_threshold = ?")
+        values.append(critical)
+    
+    if not updates:
+        db.close()
+        return False
+    
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+    values.append(sensor_id)
+    values.append(user_id)
+    
+    try:
+        db.execute(
+            f"""UPDATE user_sensors 
+               SET {', '.join(updates)} 
+               WHERE id = ? AND user_id = ?""",
+            values
+        )
+        db.commit()
+        db.close()
+        return True
+    except Exception as e:
+        print(f"Error updating thresholds: {e}")
+        db.close()
+        return False
+
+def get_sensor_thresholds(sensor_id, user_id):
+    """Get thresholds for a specific sensor"""
+    db = get_db()
+    
+    sensor = db.execute(
+        """SELECT good_threshold, warning_threshold, critical_threshold 
+           FROM user_sensors WHERE id = ? AND user_id = ?""",
+        (sensor_id, user_id)
+    ).fetchone()
+    
+    db.close()
+    
+    if sensor:
+        return {
+            'good': sensor['good_threshold'],
+            'warning': sensor['warning_threshold'],
+            'critical': sensor['critical_threshold']
+        }
+    return None
+
+def check_sensor_threshold_status(ppm_value, sensor_id, user_id):
+    """Check if reading exceeds sensor thresholds, return status"""
+    thresholds = get_sensor_thresholds(sensor_id, user_id)
+    
+    if not thresholds:
+        return 'unknown'
+    
+    if ppm_value <= thresholds['good']:
+        return 'good'
+    elif ppm_value <= thresholds['warning']:
+        return 'warning'
+    elif ppm_value <= thresholds['critical']:
+        return 'warning_high'
+    else:
+        return 'critical'
