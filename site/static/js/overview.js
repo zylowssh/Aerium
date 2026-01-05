@@ -176,6 +176,9 @@ async function loadOverviewStats() {
 
     const useSim = overviewSource === "sim";
     const simulationActive = useSim; // only user toggle controls sim view
+    
+    // Update global simulation state for navbar
+    window.simulationActive = simulationActive;
 
     // Fetch latest payload to detect no-sensor state (real path)
     const live = simulationActive ? null : await fetchLatestData();
@@ -183,7 +186,8 @@ async function loadOverviewStats() {
 
     const isRunning = settings.analysis_running !== false && !simulationActive && !noSensor;
 
-    updateNavAnalysisState(isRunning);
+    const pauseReason = noSensor ? "no_sensor" : (isRunning ? null : "paused");
+    updateNavAnalysisState(isRunning, pauseReason);
 
     if (analysisEl) {
       if (simulationActive) analysisEl.textContent = "Simulation";

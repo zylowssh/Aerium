@@ -42,12 +42,26 @@ from advanced_features_routes import register_advanced_features
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'morpheus-co2-secret-key'
 
-# Initialize rate limiter
-limiter = Limiter(
-    app=app,
-    key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
-)
+# Initialize rate limiter - disabled for live data polling
+# Uncomment and configure if you need rate limiting in production
+# limiter = Limiter(
+#     app=app,
+#     key_func=get_remote_address,
+#     default_limits=["500 per day", "150 per hour"],
+#     storage_uri="memory://"
+# )
+
+# Create a dummy limiter for compatibility with existing routes
+class DummyLimiter:
+    def limit(self, *args, **kwargs):
+        def decorator(f):
+            return f
+        return decorator
+    
+    def exempt(self, f):
+        return f
+
+limiter = DummyLimiter()
 
 # Email configuration (using development/testing settings)
 # In production, use environment variables for credentials
@@ -58,7 +72,15 @@ app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', '')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', '')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@morpheus-co2.local')
 
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(
+    app, 
+    cors_allowed_origins="*",
+    async_mode='threading',
+    logger=False,
+    engineio_logger=False,
+    ping_timeout=60,
+    ping_interval=25
+)
 
 init_db()
 
@@ -1616,6 +1638,7 @@ def build_live_payload(settings=None):
 
 
 @app.route("/api/live/latest")
+@limiter.exempt
 def api_live_latest():
     _, payload = build_live_payload()
     resp = make_response(jsonify(payload))
@@ -1738,6 +1761,7 @@ def get_today_history(db_source="live"):
     return [dict(r) for r in rows]
 
 
+@limiter.exempt
 @app.route("/api/settings", methods=["GET", "POST", "DELETE"])
 def api_settings():
     if request.method == "POST":

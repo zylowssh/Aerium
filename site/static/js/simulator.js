@@ -360,6 +360,13 @@ function stopSimIntervals() {
 
 // Bootstrap simulator page
 window.addEventListener("DOMContentLoaded", () => {
+  // Mark simulation as active for navbar status
+  window.simulationActive = true;
+  // Update navbar status
+  if (window.updateNavAnalysisState) {
+    window.updateNavAnalysisState(true);
+  }
+  
   initSimChart();
   wireSimulatorButtons();
   updatePauseUI();
@@ -379,4 +386,9 @@ document.addEventListener("visibilitychange", () => {
     simDataInterval = setInterval(fetchSimulatorLatest, 1000);
     simStatusInterval = setInterval(loadSimulatorStatus, 5000);
   }
+});
+
+// Reset simulation flag when leaving the page
+window.addEventListener("beforeunload", () => {
+  window.simulationActive = false;
 });

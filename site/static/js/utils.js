@@ -17,7 +17,7 @@ const DEFAULT_GOOD_THRESHOLD = 800;
 const DEFAULT_MEDIUM_THRESHOLD = 1200;
 const DEFAULT_BAD_THRESHOLD = 1200;
 const POLLING_INTERVAL = 1000; // ms
-const STATE_SYNC_INTERVAL = 2000; // ms
+const STATE_SYNC_INTERVAL = 5000; // ms - Reduced from 2s to avoid status badge flickering
 const OVERVIEW_REFRESH_INTERVAL = 5000; // ms
 const CHART_ANIMATION_DURATION = 450; // ms
 const VALUE_ANIMATION_DURATION = 500; // ms
@@ -37,6 +37,7 @@ let prevBadThreshold = badThreshold;
 let analysisRunning = true;
 let bgFade = 1;
 let sharedSettings = null; // Cached settings from WebSocket (populated by websocket.js)
+let simulationActive = false; // Track if simulation mode is active
 
 // Theme management
 let darkMode = localStorage.getItem("theme") !== "light";
@@ -236,60 +237,148 @@ function getAirQuality(ppm) {
 ================================================================================
 */
 
-function updateNavAnalysisState(isRunning) {
+function updateNavAnalysisState(isRunning, reason = null) {
   // Navbar
   const nav = document.getElementById("nav-analysis");
   const label = document.getElementById("nav-analysis-label");
+  const sublabel = document.getElementById("nav-transport-label");
 
   // Overview system pill
   const pill = document.querySelector(".system-pill");
 
   // Navbar update
   if (nav && label) {
-    nav.classList.remove("is-running", "is-paused");
+    nav.classList.remove("is-running", "is-paused", "is-warning");
 
-    if (isRunning) {
+    // Check window.simulationActive instead of local variable
+    const isSimulating = window.simulationActive === true;
+    
+    // Check if we're in fallback/polling mode (not using WebSocket)
+    const isConnected = typeof isWSConnected === 'function' && isWSConnected();
+    const isFallback = isRunning && !isConnected && !isSimulating;
+    const isNoSensor = !isRunning && reason === "no_sensor";
+
+    if (isSimulating) {
+      nav.classList.add("is-running");
+      label.textContent = "Simulation active";
+      if (sublabel) {
+        sublabel.textContent = "Mode test";
+      }
+    } else if (isNoSensor) {
+      nav.classList.add("is-warning");
+      label.textContent = "Erreur capteur";
+      if (sublabel) {
+        sublabel.textContent = "Aucun capteur connecté";
+      }
+    } else if (isFallback) {
+      nav.classList.add("is-warning");
+      label.textContent = "Mode dégradé";
+      if (sublabel) {
+        sublabel.textContent = "Fallback · Polling";
+      }
+    } else if (isRunning) {
       nav.classList.add("is-running");
       label.textContent = "Analyse active";
+      if (sublabel) {
+        sublabel.textContent = "Live via WS";
+      }
     } else {
       nav.classList.add("is-paused");
       label.textContent = "Analyse en pause";
+      if (sublabel) {
+        sublabel.textContent = "Paused";
+      }
+    }
+    
+    // Clear any inline styles that might override CSS classes
+    const dot = nav.querySelector('.dot');
+    if (dot) {
+      dot.style.backgroundColor = '';
+      dot.style.animation = '';
+    }
+    if (sublabel) {
+      sublabel.style.color = '';
     }
   }
 
   // Overview pill update (safe even if not on overview page)
+  const isSimulating = window.simulationActive === true;
+  const isConnected = typeof isWSConnected === 'function' && isWSConnected();
+  const isFallback = isRunning && !isConnected && !isSimulating;
+  const isNoSensor = !isRunning && reason === "no_sensor";
+  
   if (pill) {
-    pill.classList.toggle("running", isRunning);
-    pill.classList.toggle("paused", !isRunning);
-    pill.innerHTML = `<span class="dot"></span> ${
-      isRunning ? "Analyse active" : "Analyse en pause"
-    }`;
+    pill.classList.remove("running", "paused", "warning");
+    
+    if (isSimulating) {
+      pill.classList.add("running");
+      pill.innerHTML = `<span class="dot"></span> Simulation active`;
+    } else if (isNoSensor) {
+      pill.classList.add("warning");
+      pill.innerHTML = `<span class="dot"></span> Erreur capteur`;
+    } else if (isFallback) {
+      pill.classList.add("warning");
+      pill.innerHTML = `<span class="dot"></span> Mode dégradé`;
+    } else if (isRunning) {
+      pill.classList.add("running");
+      pill.innerHTML = `<span class="dot"></span> Analyse active`;
+    } else {
+      pill.classList.add("paused");
+      pill.innerHTML = `<span class="dot"></span> Analyse en pause`;
+    }
   }
 }
 
+// Export for WebSocket and other modules
+window.updateNavAnalysisState = updateNavAnalysisState;
+
 function startSystemStateWatcher() {
-  setInterval(async () => {
-    try {
-      const state = await loadSystemState();
-      updateNavAnalysisState(state.analysis_running);
-    } catch {
-      console.warn("Failed to refresh system state");
-    }
-  }, STATE_SYNC_INTERVAL);
+  // ⚠️ DEPRECATED: Use initGlobalState() instead
+  // This function is kept for backward compatibility but does nothing
+  // since initGlobalState() already sets up the state refresh interval
 }
 
 async function refreshSystemState() {
   try {
-    const state = await loadSystemState();
-    updateNavAnalysisState(state.analysis_running);
+    // Don't override if simulation is active
+    if (window.simulationActive) {
+      return;
+    }
+    // Fetch the actual data payload to get the reason field
+    const data = await fetchLatestData();
+    const reason = data?.reason || null;
+    const isRunning = data?.analysis_running !== false && reason !== "no_sensor";
+    updateNavAnalysisState(isRunning, reason);
   } catch {
     console.warn("State sync failed");
   }
 }
 
+let stateRefreshInterval = null;
+
+function pauseStateRefresh() {
+  if (stateRefreshInterval) {
+    clearInterval(stateRefreshInterval);
+    stateRefreshInterval = null;
+  }
+}
+
+function resumeStateRefresh() {
+  // Only resume if not already running
+  if (stateRefreshInterval) return;
+  stateRefreshInterval = setInterval(refreshSystemState, STATE_SYNC_INTERVAL);
+}
+
+window.pauseStateRefresh = pauseStateRefresh;
+window.resumeStateRefresh = resumeStateRefresh;
+
 function initGlobalState() {
   refreshSystemState();
-  setInterval(refreshSystemState, STATE_SYNC_INTERVAL);
+  // Only start the state refresh interval if WebSocket is not connected
+  // WebSocket will push updates automatically, so we don't need polling
+  if (!isWSConnected || !isWSConnected()) {
+    stateRefreshInterval = setInterval(refreshSystemState, STATE_SYNC_INTERVAL);
+  }
 }
 
 /*

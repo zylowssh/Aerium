@@ -597,7 +597,7 @@ window.handleCO2Update = function(data) {
   /* ⏸ PAUSE HANDLING */
   if (data.analysis_running === false || data.reason === "no_sensor") {
     analysisRunningLocal = false;
-    updateNavAnalysisState(false);
+    updateNavAnalysisState(false, data.reason || "no_sensor");
     hidePausedOverlay();
     showPausedOverlay(data.reason || "no_sensor");
     stopPolling();
@@ -706,7 +706,7 @@ async function poll() {
   /* ⏸ PAUSE HANDLING */
   if (data.analysis_running === false || data.reason === "no_sensor") {
     analysisRunningLocal = false;
-    updateNavAnalysisState(false);
+    updateNavAnalysisState(false, data.reason || "no_sensor");
     hidePausedOverlay();
     showPausedOverlay(data.reason || "no_sensor");
     stopPolling();
