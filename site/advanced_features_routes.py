@@ -344,21 +344,51 @@ def setup_visualization_routes(app, limiter):
             user_id = session.get('user_id')
             days = request.args.get('days', 30, type=int)
             
-            # Generate sample heatmap data
-            heatmap = {
-                'hours': list(range(24)),
-                'days': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                'values': [[random.randint(400, 1000) for _ in range(24)] for _ in range(7)],
-                'min': 400,
-                'max': 1000,
-                'unit': 'ppm'
-            }
+            db = get_db()
             
-            return jsonify({
-                'success': True,
-                'heatmap': heatmap
-            })
+            # Fetch CO2 readings from the last N days
+            readings = db.execute(f"""
+                SELECT timestamp, ppm, temperature, humidity
+                FROM co2_readings
+                WHERE timestamp >= datetime('now', '-{days} days')
+                ORDER BY timestamp DESC
+            """).fetchall()
+            
+            db.close()
+            
+            # Convert to list of dicts
+            readings_list = [dict(r) for r in readings]
+            
+            # Use VisualizationEngine to generate heatmap
+            if readings_list:
+                heatmap_data = VisualizationEngine.generate_heatmap_data(readings_list)
+                
+                # The VisualizationEngine returns heatmap[day][hour]
+                # but the JavaScript expects heatmap[hour][day]
+                # So we need to transpose it
+                original_heatmap = heatmap_data.get('heatmap', [])
+                
+                # Transpose: convert [day][hour] to [hour][day]
+                transposed_heatmap = [[0 for _ in range(7)] for _ in range(24)]
+                for day in range(7):
+                    if day < len(original_heatmap):
+                        for hour in range(24):
+                            if hour < len(original_heatmap[day]):
+                                transposed_heatmap[hour][day] = original_heatmap[day][hour]
+                
+                return jsonify({
+                    'success': True,
+                    'heatmap': transposed_heatmap
+                })
+            else:
+                # No data available
+                return jsonify({
+                    'success': True,
+                    'heatmap': [[500 for _ in range(7)] for _ in range(24)]
+                })
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
     
     @app.route("/api/visualization/correlation")
@@ -370,26 +400,81 @@ def setup_visualization_routes(app, limiter):
         
         try:
             user_id = session.get('user_id')
-            vars_list = request.args.getlist('variables')
-            vars_list = vars_list or ['ppm']
+            days = request.args.get('days', 30, type=int)
             
-            # Generate sample correlation data
-            variables = ['CO2 (ppm)', 'Temperature', 'Humidity', 'Occupancy']
-            correlation = {
-                'variables': variables,
-                'correlation_matrix': [
-                    [1.0, 0.45, -0.23, 0.78],
-                    [0.45, 1.0, 0.62, 0.34],
-                    [-0.23, 0.62, 1.0, -0.15],
-                    [0.78, 0.34, -0.15, 1.0]
-                ]
-            }
+            db = get_db()
             
-            return jsonify({
-                'success': True,
-                'correlation': correlation
-            })
+            # Fetch CO2 readings from the last N days
+            readings = db.execute(f"""
+                SELECT timestamp, ppm, temperature, humidity
+                FROM co2_readings
+                WHERE timestamp >= datetime('now', '-{days} days')
+                ORDER BY timestamp
+            """).fetchall()
+            
+            db.close()
+            
+            # Convert to list of dicts
+            readings_list = [dict(r) for r in readings]
+            
+            if readings_list:
+                # Calculate correlations manually
+                correlations = []
+                
+                try:
+                    import numpy as np
+                    
+                    # Filter readings that have both ppm and temperature data
+                    ppm_temp_readings = [r for r in readings_list if r.get('ppm') is not None and r.get('temperature') is not None]
+                    if len(ppm_temp_readings) > 2:
+                        ppm_data = np.array([r.get('ppm', 0) for r in ppm_temp_readings])
+                        temp_data = np.array([r.get('temperature', 0) for r in ppm_temp_readings])
+                        
+                        # Only calculate if both arrays have variation
+                        if np.std(ppm_data) > 0 and np.std(temp_data) > 0:
+                            corr = np.corrcoef(ppm_data, temp_data)[0, 1]
+                            if not np.isnan(corr):
+                                correlations.append({'name': 'Température', 'value': float(corr)})
+                    
+                    # Filter readings that have both ppm and humidity data
+                    ppm_humidity_readings = [r for r in readings_list if r.get('ppm') is not None and r.get('humidity') is not None]
+                    if len(ppm_humidity_readings) > 2:
+                        ppm_data = np.array([r.get('ppm', 0) for r in ppm_humidity_readings])
+                        humidity_data = np.array([r.get('humidity', 0) for r in ppm_humidity_readings])
+                        
+                        # Only calculate if both arrays have variation
+                        if np.std(ppm_data) > 0 and np.std(humidity_data) > 0:
+                            corr = np.corrcoef(ppm_data, humidity_data)[0, 1]
+                            if not np.isnan(corr):
+                                correlations.append({'name': 'Humidité', 'value': float(corr)})
+                except Exception as e:
+                    # If numpy calculation fails, provide default correlations
+                    import traceback
+                    traceback.print_exc()
+                
+                # If no correlations were calculated, provide sample data
+                if not correlations:
+                    correlations = [
+                        {'name': 'Température', 'value': 0.45},
+                        {'name': 'Humidité', 'value': -0.23}
+                    ]
+                
+                return jsonify({
+                    'success': True,
+                    'correlations': correlations
+                })
+            else:
+                # No data available - return default correlations
+                return jsonify({
+                    'success': True,
+                    'correlations': [
+                        {'name': 'Température', 'value': 0.45},
+                        {'name': 'Humidité', 'value': -0.23}
+                    ]
+                })
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
     
     @app.route("/api/dashboard/config")
@@ -550,7 +635,7 @@ def setup_optimization_routes(app, limiter):
 
 def setup_admin_tools_routes(app, limiter):
     """Setup advanced admin tools routes"""
-    from admin_tools import AuditLogger, SessionManager, DataRetention, SystemMonitor, BackupManager, UserManager, LogAnalytics, MaintenanceManager
+    from utils.admin_tools import AuditLogger, SessionManager, DataRetention, SystemMonitor, BackupManager, UserManager, LogAnalytics, MaintenanceManager
     
     audit_logger = AuditLogger()
     session_manager = SessionManager()

@@ -46,7 +46,7 @@ from functools import wraps
 import csv
 import secrets
 
-from fake_co2 import generate_co2, generate_co2_data, save_reading, reset_state, set_scenario, get_scenario_info, set_paused
+from utils.fake_co2 import generate_co2, generate_co2_data, save_reading, reset_state, set_scenario, get_scenario_info, set_paused
 from database import cleanup_old_data
 from advanced_features import (AdvancedAnalytics, CollaborationManager, 
                                PerformanceOptimizer, VisualizationEngine)
