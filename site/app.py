@@ -720,7 +720,7 @@ def advanced_features_page():
 @login_required
 def analytics_feature():
     """Analytics & Insights feature page"""
-    return render_template("analytics/analytics-feature.html")
+    return render_template("analytics/analytics-enhanced.html")
 
 @app.route("/visualizations")
 @login_required
@@ -732,13 +732,13 @@ def visualizations_feature():
 @login_required
 def collaboration_feature():
     """Collaboration & Sharing feature page"""
-    return render_template("collaboration/team.html")
+    return render_template("collaboration/collaboration-enhanced.html")
 
 @app.route("/export")
 @login_required
 def export_manager():
     """Data Export Manager - Export readings to CSV, Excel, PDF"""
-    return render_template("data-export/export-manager.html")
+    return render_template("data-export/export-enhanced.html")
 
 @app.route("/organizations")
 @login_required

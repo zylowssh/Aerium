@@ -523,42 +523,156 @@ def setup_sharing_routes(app, limiter):
             data = request.get_json()
             user_id = session.get('user_id')
             
-            team = {
-                'id': f'team_{user_id}_{int(time.time())}',
-                'name': data.get('team_name', 'New Team'),
-                'owner_id': user_id,
-                'members': [{'user_id': user_id, 'role': 'admin'}],
-                'created_at': datetime.now().isoformat()
-            }
+            # Accept both 'name' and 'team_name' for flexibility
+            team_name = data.get('name') or data.get('team_name', 'New Team')
+            description = data.get('description', '')
+            
+            # Insert into database
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute('''
+                INSERT INTO teams (team_name, owner_id, description, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (team_name, user_id, description, datetime.now().isoformat(), datetime.now().isoformat()))
+            db.commit()
+            team_id = cursor.lastrowid
             
             return jsonify({
                 'success': True,
-                'team': team
+                'team_id': team_id,
+                'team': {
+                    'id': team_id,
+                    'name': team_name,
+                    'description': description,
+                    'owner_id': user_id,
+                    'members': [],
+                    'created_at': datetime.now().isoformat()
+                }
             })
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
     
-    @app.route("/api/teams/<team_id>/members", methods=['POST'])
+    @app.route("/api/teams/<int:team_id>", methods=['DELETE'])
+    @limiter.limit("20 per hour")
+    def delete_team(team_id):
+        """Delete a team"""
+        if not is_logged_in():
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+        
+        try:
+            user_id = session.get('user_id')
+            db = get_db()
+            cursor = db.cursor()
+            
+            # Check if user is team owner
+            cursor.execute('SELECT owner_id FROM teams WHERE id = ?', (team_id,))
+            result = cursor.fetchone()
+            
+            if not result or result[0] != user_id:
+                return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+            
+            # Delete team members first
+            cursor.execute('DELETE FROM team_members WHERE team_id = ?', (team_id,))
+            # Delete team
+            cursor.execute('DELETE FROM teams WHERE id = ?', (team_id,))
+            db.commit()
+            
+            return jsonify({'success': True, 'message': 'Team deleted'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route("/api/teams/<int:team_id>/members", methods=['POST'])
     @limiter.limit("30 per hour")
     def invite_team_member(team_id):
-        """Invite a member to team"""
+        """Add a member to team"""
         if not is_logged_in():
             return jsonify({'success': False, 'error': 'Unauthorized'}), 401
         
         try:
             data = request.get_json()
             user_id = session.get('user_id')
+            email = data.get('email', '')
+            role = data.get('role', 'viewer')
+            
+            db = get_db()
+            cursor = db.cursor()
+            
+            # Check if user is team owner
+            cursor.execute('SELECT owner_id FROM teams WHERE id = ?', (team_id,))
+            result = cursor.fetchone()
+            
+            if not result or result[0] != user_id:
+                return jsonify({'success': False, 'error': 'Not team owner'}), 403
+            
+            # Find user by email
+            cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
+            user_result = cursor.fetchone()
+            
+            if not user_result:
+                return jsonify({'success': False, 'error': 'User not found'}), 404
+            
+            member_user_id = user_result[0]
+            
+            # Add member to team (ignore if already exists)
+            try:
+                cursor.execute('''
+                    INSERT INTO team_members (team_id, user_id, role, joined_at)
+                    VALUES (?, ?, ?, ?)
+                ''', (team_id, member_user_id, role, datetime.now().isoformat()))
+                db.commit()
+            except:
+                # Member already exists, just update role
+                cursor.execute('''
+                    UPDATE team_members SET role = ? WHERE team_id = ? AND user_id = ?
+                ''', (role, team_id, member_user_id))
+                db.commit()
             
             return jsonify({
                 'success': True,
-                'message': f"Invitation sent to {data.get('email')}",
-                'invitation': {
-                    'team_id': team_id,
-                    'email': data.get('email'),
-                    'role': data.get('role', 'member'),
-                    'sent_at': datetime.now().isoformat()
+                'message': f"Member added to team",
+                'member': {
+                    'user_id': member_user_id,
+                    'email': email,
+                    'role': role,
+                    'joined_at': datetime.now().isoformat()
                 }
             })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route("/api/teams/members/<int:member_id>", methods=['DELETE'])
+    @limiter.limit("20 per hour")
+    def remove_team_member(member_id):
+        """Remove a member from team"""
+        if not is_logged_in():
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+        
+        try:
+            user_id = session.get('user_id')
+            db = get_db()
+            cursor = db.cursor()
+            
+            # Get the team_id for this member
+            cursor.execute('SELECT team_id FROM team_members WHERE id = ?', (member_id,))
+            result = cursor.fetchone()
+            
+            if not result:
+                return jsonify({'success': False, 'error': 'Member not found'}), 404
+            
+            team_id = result[0]
+            
+            # Check if user is team owner
+            cursor.execute('SELECT owner_id FROM teams WHERE id = ?', (team_id,))
+            team_result = cursor.fetchone()
+            
+            if not team_result or team_result[0] != user_id:
+                return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+            
+            # Remove member
+            cursor.execute('DELETE FROM team_members WHERE id = ?', (member_id,))
+            db.commit()
+            
+            return jsonify({'success': True, 'message': 'Member removed'})
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -1685,17 +1799,60 @@ def register_advanced_features(app, limiter):
     @app.route("/api/teams", methods=['GET'])
     @limiter.limit("30 per hour")
     def get_teams():
-        """Get all teams"""
+        """Get all teams for current user"""
         if not is_logged_in():
             return jsonify({'success': False, 'error': 'Unauthorized'}), 401
         
-        return jsonify({
-            'success': True,
-            'teams': [
-                {'id': 1, 'name': 'Équipe CO₂', 'members': 3, 'created': '2024-01-01'},
-                {'id': 2, 'name': 'Monitoring', 'members': 2, 'created': '2024-01-15'}
-            ]
-        })
+        try:
+            user_id = session.get('user_id')
+            db = get_db()
+            cursor = db.cursor()
+            
+            # Get teams where user is owner or member
+            cursor.execute('''
+                SELECT DISTINCT t.id, t.team_name, t.description, t.owner_id, t.created_at
+                FROM teams t
+                LEFT JOIN team_members tm ON t.id = tm.team_id
+                WHERE t.owner_id = ? OR tm.user_id = ?
+                ORDER BY t.created_at DESC
+            ''', (user_id, user_id))
+            
+            team_rows = cursor.fetchall()
+            teams = []
+            
+            for row in team_rows:
+                team_id, team_name, description, owner_id, created_at = row
+                
+                # Get members count
+                cursor.execute('SELECT COUNT(*) FROM team_members WHERE team_id = ?', (team_id,))
+                member_count = cursor.fetchone()[0]
+                
+                # Get member details
+                cursor.execute('''
+                    SELECT user_id, role FROM team_members WHERE team_id = ?
+                ''', (team_id,))
+                members = [{'user_id': m[0], 'role': m[1]} for m in cursor.fetchall()]
+                
+                teams.append({
+                    'id': team_id,
+                    'name': team_name,
+                    'description': description,
+                    'owner_id': owner_id,
+                    'members': members,
+                    'member_count': member_count,
+                    'created_at': created_at
+                })
+            
+            return jsonify({
+                'success': True,
+                'teams': teams
+            })
+        except Exception as e:
+            print(f"Error getting teams: {e}")
+            return jsonify({
+                'success': True,
+                'teams': []
+            })
     
     @app.route("/api/advanced/collaboration/stats")
     @limiter.limit("30 per hour")

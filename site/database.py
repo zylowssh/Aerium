@@ -421,6 +421,105 @@ def init_db():
         ON sensor_readings(sensor_id, timestamp DESC)
     """)
 
+    # Teams and collaboration tables
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS teams (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_name TEXT NOT NULL UNIQUE,
+            owner_id INTEGER NOT NULL,
+            description TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_teams_owner_id 
+        ON teams(owner_id)
+    """)
+
+    # Team members table
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS team_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            role TEXT DEFAULT 'member',
+            joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(team_id, user_id),
+            FOREIGN KEY(team_id) REFERENCES teams(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_team_members_team_id 
+        ON team_members(team_id)
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_team_members_user_id 
+        ON team_members(user_id)
+    """)
+
+    # Team shares table
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS team_shares (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            shared_with_user_id INTEGER NOT NULL,
+            share_type TEXT DEFAULT 'view',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(team_id, shared_with_user_id),
+            FOREIGN KEY(team_id) REFERENCES teams(id) ON DELETE CASCADE,
+            FOREIGN KEY(shared_with_user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_team_shares_team_id 
+        ON team_shares(team_id)
+    """)
+
+    # Team activity table
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS team_activity (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            description TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(team_id) REFERENCES teams(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_team_activity_team_id 
+        ON team_activity(team_id)
+    """)
+
+    # Team comments table
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS team_comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            comment_text TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(team_id) REFERENCES teams(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_team_comments_team_id 
+        ON team_comments(team_id)
+    """)
+
     db.commit()
     db.close()
 
