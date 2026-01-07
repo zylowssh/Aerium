@@ -169,13 +169,50 @@
     font-weight: 600;
     margin-top: 10px;
   }
+  
+  kbd {
+    display: inline-block;
+    padding: 3px 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85em;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin: 0 2px;
+  }
 </style>
 
 <section class="card">
   <div class="onboarding-container">
-    <!-- Progress Bar -->
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+    <!-- Progress Tracker with Step Indicators -->
+    <div style="margin-bottom: 30px;">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+        <div id="step-indicator-1" class="step-indicator" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; transition: all 0.3s;">
+          <div style="font-size: 0.75rem; color: #888;">Étape 1</div>
+          <div style="font-size: 0.85rem; font-weight: 600; color: #3dd98f;">Bienvenue</div>
+        </div>
+        <div id="step-indicator-2" class="step-indicator" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; transition: all 0.3s;">
+          <div style="font-size: 0.75rem; color: #888;">Étape 2</div>
+          <div style="font-size: 0.85rem; font-weight: 600;">Tableau de bord</div>
+        </div>
+        <div id="step-indicator-3" class="step-indicator" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; transition: all 0.3s;">
+          <div style="font-size: 0.75rem; color: #888;">Étape 3</div>
+          <div style="font-size: 0.85rem; font-weight: 600;">Surveillance</div>
+        </div>
+        <div id="step-indicator-4" class="step-indicator" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; transition: all 0.3s;">
+          <div style="font-size: 0.75rem; color: #888;">Étape 4</div>
+          <div style="font-size: 0.85rem; font-weight: 600;">Données</div>
+        </div>
+        <div id="step-indicator-5" class="step-indicator" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; transition: all 0.3s;">
+          <div style="font-size: 0.75rem; color: #888;">Étape 5</div>
+          <div style="font-size: 0.85rem; font-weight: 600;">Terminé</div>
+        </div>
+      </div>
     </div>
     
     <!-- Step 1: Welcome -->
@@ -188,15 +225,40 @@
         Aerium est un système intelligent de surveillance du CO₂ qui suit la qualité de l'air en temps réel. 
         Cette visite rapide vous montrera toutes les fonctionnalités exceptionnelles disponibles.
       </p>
+      
+      <!-- Interactive Demo Preview -->
+      <div style="background: linear-gradient(135deg, rgba(61,217,143,0.05), rgba(77,184,255,0.05)); border: 2px solid rgba(61,217,143,0.2); border-radius: 12px; padding: 24px; margin: 20px 0; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 12px;">🌬️</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-top: 20px;">
+          <div style="padding: 16px; background: rgba(61,217,143,0.1); border-radius: 8px;">
+            <div style="font-size: 2rem; color: #3dd98f;">📊</div>
+            <div style="margin-top: 8px; font-size: 0.85rem; color: #9ca3af;">Temps réel</div>
+          </div>
+          <div style="padding: 16px; background: rgba(77,184,255,0.1); border-radius: 8px;">
+            <div style="font-size: 2rem; color: #4db8ff;">📈</div>
+            <div style="margin-top: 8px; font-size: 0.85rem; color: #9ca3af;">Analytics</div>
+          </div>
+          <div style="padding: 16px; background: rgba(147,51,234,0.1); border-radius: 8px;">
+            <div style="font-size: 2rem; color: #9333ea;">🔔</div>
+            <div style="margin-top: 8px; font-size: 0.85rem; color: #9ca3af;">Alertes</div>
+          </div>
+          <div style="padding: 16px; background: rgba(251,146,60,0.1); border-radius: 8px;">
+            <div style="font-size: 2rem; color: #fb923c;">💾</div>
+            <div style="margin-top: 8px; font-size: 0.85rem; color: #9ca3af;">Export</div>
+          </div>
+        </div>
+      </div>
+      
       <ul class="feature-list">
-        <li>Surveillance du CO₂ en temps réel avec mises à jour en direct</li>
-        <li>Analyses avancées et analyse des tendances</li>
-        <li>Alertes et notifications personnalisées</li>
-        <li>Export de données dans plusieurs formats</li>
-        <li>Interface optimisée pour les appareils mobiles</li>
+        <li>Surveillance du CO₂ en temps réel avec mises à jour en direct via WebSocket</li>
+        <li>Analyses avancées avec visualisations interactives et tendances</li>
+        <li>Alertes et notifications personnalisées basées sur vos seuils</li>
+        <li>Export de données dans plusieurs formats (CSV, JSON, Excel, PDF)</li>
+        <li>Interface responsive optimisée pour desktop, tablette et mobile</li>
+        <li>Raccourcis clavier pour une navigation rapide (appuyez sur <kbd>?</kbd>)</li>
       </ul>
       <div class="step-actions">
-        <button class="btn-next" onclick="goToStep(2)">Commencer →</button>
+        <button class="btn-next" onclick="goToStep(2)">Commencer la visite →</button>
         <button class="btn-skip" onclick="skipOnboarding()">Ignorer la visite</button>
       </div>
     </div>
@@ -208,16 +270,41 @@
         <h2 class="step-title">📊 Votre Tableau de Bord</h2>
       </div>
       <p class="step-description">
-        Le tableau de bord vous donne un aperçu de vos niveaux de CO₂ en un coup d'œil. Vous verrez:
+        Le tableau de bord vous donne un aperçu complet de vos niveaux de CO₂ en un coup d'œil.
       </p>
+      
+      <!-- Interactive Dashboard Preview -->
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin: 20px 0;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+          <div style="background: linear-gradient(135deg, rgba(61,217,143,0.2), rgba(46,204,113,0.2)); padding: 20px; border-radius: 10px; border-left: 4px solid #3dd98f;">
+            <div style="font-size: 0.8rem; color: #9ca3af; margin-bottom: 4px;">PPM Actuel</div>
+            <div style="font-size: 2.2rem; font-weight: 700; color: #3dd98f;">432</div>
+            <div style="font-size: 0.75rem; color: #3dd98f; margin-top: 4px;">✓ Excellent</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 10px; border-left: 4px solid #4db8ff;">
+            <div style="font-size: 0.8rem; color: #9ca3af; margin-bottom: 4px;">Moyenne 24h</div>
+            <div style="font-size: 2.2rem; font-weight: 700; color: #4db8ff;">487</div>
+            <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 4px;">↑ +5.2%</div>
+          </div>
+        </div>
+        <div style="height: 80px; background: rgba(61,217,143,0.1); border-radius: 8px; display: flex; align-items: flex-end; padding: 8px; gap: 2px;">
+          <div style="flex: 1; background: #3dd98f; height: 60%; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; background: #3dd98f; height: 45%; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; background: #3dd98f; height: 70%; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; background: #3dd98f; height: 55%; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; background: #4db8ff; height: 80%; border-radius: 2px 2px 0 0; box-shadow: 0 -2px 8px rgba(77,184,255,0.3);"></div>
+        </div>
+      </div>
+      
       <ul class="feature-list">
-        <li><strong>PPM Actuel:</strong> Concentration de CO₂ en temps réel</li>
-        <li><strong>Indicateur de Qualité:</strong> Statut visuel (Vert/Jaune/Rouge)</li>
-        <li><strong>Graphique de Tendance:</strong> Visualisation des données historiques</li>
-        <li><strong>Statistiques Rapides:</strong> Lectures Min/Max/Moyenne</li>
+        <li><strong>PPM Actuel:</strong> Concentration de CO₂ en temps réel avec indicateur de qualité</li>
+        <li><strong>Indicateur de Statut:</strong> Code couleur visuel (Vert=Bon, Jaune=Attention, Rouge=Critique)</li>
+        <li><strong>Graphiques en Direct:</strong> Visualisation des tendances avec mise à jour automatique</li>
+        <li><strong>Statistiques Rapides:</strong> Min/Max/Moyenne sur différentes périodes</li>
+        <li><strong>Recherche Rapide:</strong> Utilisez <kbd>/</kbd> ou <kbd>Ctrl+K</kbd> pour chercher</li>
       </ul>
       <div class="tooltip-hint">
-        💡 <strong>Conseil:</strong> Cliquez sur le bouton thème (🌙/☀️) en haut à droite pour basculer entre les modes sombre et clair
+        💡 <strong>Astuce:</strong> Survolez les éléments avec votre souris pour voir des infobulles d'aide. Appuyez sur <kbd>?</kbd> pour voir tous les raccourcis clavier disponibles.
       </div>
       <div class="step-actions">
         <button class="btn-next" onclick="goToStep(3)">Suivant →</button>
@@ -358,6 +445,28 @@ function goToStep(step) {
   currentStep = step;
   const progress = (step / maxSteps) * 100;
   document.getElementById('progressFill').style.width = progress + '%';
+  
+  // Update step indicators
+  for (let i = 1; i <= maxSteps; i++) {
+    const indicator = document.getElementById(`step-indicator-${i}`);
+    if (indicator) {
+      if (i < step) {
+        // Completed step
+        indicator.style.background = 'rgba(61, 217, 143, 0.2)';
+        indicator.style.borderLeft = '3px solid #3dd98f';
+      } else if (i === step) {
+        // Current step
+        indicator.style.background = 'rgba(77, 184, 255, 0.2)';
+        indicator.style.borderLeft = '3px solid #4db8ff';
+        indicator.style.transform = 'scale(1.05)';
+      } else {
+        // Future step
+        indicator.style.background = 'transparent';
+        indicator.style.borderLeft = 'none';
+        indicator.style.transform = 'scale(1)';
+      }
+    }
+  }
   
   // Mark feature as seen
   markFeatureAsSeen(`step_${step}`);

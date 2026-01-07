@@ -520,6 +520,128 @@ def init_db():
         ON team_comments(team_id)
     """)
 
+    # Shared Dashboards for real-time collaboration
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS shared_dashboards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            owner_id INTEGER NOT NULL,
+            dashboard_name TEXT NOT NULL,
+            description TEXT,
+            share_token TEXT UNIQUE,
+            is_public BOOLEAN DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_shared_dashboards_owner_id 
+        ON shared_dashboards(owner_id)
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_shared_dashboards_share_token 
+        ON shared_dashboards(share_token)
+    """)
+
+    # Dashboard Collaborators with permission levels
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS shared_dashboard_collaborators (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dashboard_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            permission_level TEXT DEFAULT 'viewer',
+            added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(dashboard_id, user_id),
+            FOREIGN KEY(dashboard_id) REFERENCES shared_dashboards(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_dashboard_collab_dashboard_id 
+        ON shared_dashboard_collaborators(dashboard_id)
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_dashboard_collab_user_id 
+        ON shared_dashboard_collaborators(user_id)
+    """)
+
+    # Dashboard State (layout, widgets, filters, etc.)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS dashboard_states (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dashboard_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            state_data TEXT,
+            saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(dashboard_id, user_id),
+            FOREIGN KEY(dashboard_id) REFERENCES shared_dashboards(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_dashboard_states_dashboard_id 
+        ON dashboard_states(dashboard_id)
+    """)
+
+    # Dashboard Comments and Annotations
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS dashboard_comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dashboard_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            comment_text TEXT NOT NULL,
+            data_point TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(dashboard_id) REFERENCES shared_dashboards(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_dashboard_comments_dashboard_id 
+        ON dashboard_comments(dashboard_id)
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_dashboard_comments_user_id 
+        ON dashboard_comments(user_id)
+    """)
+
+    # Collaboration Activity Log
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS collaboration_activity (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dashboard_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            activity_type TEXT NOT NULL,
+            activity_data TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(dashboard_id) REFERENCES shared_dashboards(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_collab_activity_dashboard_id 
+        ON collaboration_activity(dashboard_id)
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_collab_activity_user_id 
+        ON collaboration_activity(user_id)
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_collab_activity_timestamp 
+        ON collaboration_activity(created_at DESC)
+    """)
+
     db.commit()
     db.close()
 

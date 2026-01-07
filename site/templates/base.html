@@ -6,6 +6,12 @@
     <meta name="theme-color" content="#0b0d12" />
     <title>Aerium - Qualité de l'air CO₂</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Morpheus" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/icon-192.png') }}" />
     <!-- Critical inline styles to prevent flash - applied before any external CSS -->
     <link
       rel="stylesheet"
@@ -28,9 +34,38 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
     <!-- Apply saved theme immediately to prevent flash of wrong theme -->
     <script src="{{ url_for('static', filename='js/theme-init.js') }}"></script>
+    <!-- UX Enhancements -->
+    <script src="{{ url_for('static', filename='js/keyboard-shortcuts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tooltips.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/form-validation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global-search.js') }}"></script>
+    <script>
+      // Simple loader: show during navigation and form submits
+      (function(){
+        const loader = document.getElementById('global-loader');
+        function show(){ if(loader) { loader.style.display='flex'; } }
+        function hide(){ if(loader) { loader.style.display='none'; } }
+        window.addEventListener('beforeunload', show);
+        document.addEventListener('click', function(evt){
+          const a = evt.target.closest('a');
+          if(a && a.href && a.target !== '_blank') { show(); }
+        });
+        document.addEventListener('submit', function(){ show(); });
+        window.addEventListener('load', hide);
+      })();
+      
+      // Register Service Worker for PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registered'))
+            .catch(err => console.log('SW registration failed:', err));
+        });
+      }
+    </script>
   </head>
   <body>
-    <nav class="navbar">
+    <nav class="navbar" role="navigation" aria-label="Navigation principale">
       <div class="nav-left">
         <img
           id="nav-logo-img"
@@ -38,6 +73,20 @@
           alt="Aerium"
           class="nav-logo"
         />
+        
+        <!-- Global Search (Left Side) -->
+        <div style="position:relative; margin-left:20px;">
+          <input 
+            type="text" 
+            id="global-search-input" 
+            placeholder="Rechercher... (/)" 
+            data-tooltip="Appuyez sur / ou Ctrl+K pour rechercher"
+            style="width:280px; padding:9px 38px 9px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:#fff; font-size:0.9rem; transition:all 0.3s;"
+            onfocus="this.style.background='rgba(255,255,255,0.12)'; this.style.borderColor='rgba(77,184,255,0.5)'"
+            onblur="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,255,255,0.2)'"
+          />
+          <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); opacity:0.6; pointer-events:none; font-size:1.1rem;">🔍</span>
+        </div>
       </div>
 
       <div class="nav-center">
@@ -47,21 +96,23 @@
         
         <!-- Data & Monitoring Dropdown -->
         <div class="nav-dropdown">
-          <button class="nav-dropdown-btn">📈 Données</button>
-          <div class="nav-dropdown-menu">
-            <a href="/sensors">📡 Capteurs</a>
-            <a href="/visualization">📊 Visualisations</a>
-            <a href="/export">📤 Export</a>
+          <button class="nav-dropdown-btn" aria-haspopup="true" aria-expanded="false">📈 Données</button>
+          <div class="nav-dropdown-menu" role="menu">
+            <a href="/sensors" role="menuitem">📡 Capteurs</a>
+            <a href="/visualization" role="menuitem">📊 Visualisations</a>
+            <a href="/export" role="menuitem">📤 Export</a>
+            <a href="/data-export" role="menuitem">📥 Export Avancé</a>
+            <a href="/gdpr/profile" role="menuitem">🔒 Mes Données (GDPR)</a>
           </div>
         </div>
 
         <!-- Insights Dropdown -->
         <div class="nav-dropdown">
-          <button class="nav-dropdown-btn">💡 Insights</button>
-          <div class="nav-dropdown-menu">
-            <a href="/analytics">📊 Analytics</a>
-            <a href="/health">💚 Santé</a>
-            <a href="/performance">⚡ Performance</a>
+          <button class="nav-dropdown-btn" aria-haspopup="true" aria-expanded="false">💡 Insights</button>
+          <div class="nav-dropdown-menu" role="menu">
+            <a href="/analytics" role="menuitem">📊 Analytics</a>
+            <a href="/health" role="menuitem">💚 Santé</a>
+            <a href="/performance" role="menuitem">⚡ Performance</a>
           </div>
         </div>
 
@@ -69,7 +120,7 @@
         <a href="/settings">⚙️ Paramètres</a>
         
         {% if session.get('username') %}
-        <a href="{{ url_for('onboarding_page') }}">📖 Guide</a>
+        <a href="{{ url_for('main.onboarding_page') }}">📖 Guide</a>
         {% endif %}
         {% if session.get('username') and current_user_is_admin %}
         <a href="/admin-tools">🛠️ Admin</a>
@@ -79,11 +130,11 @@
 
       <div class="nav-right">
         <!-- Mobile Menu Toggle -->
-        <button class="mobile-menu-toggle" aria-label="Menu" aria-expanded="false">☰</button>
-        <button id="theme-toggle-btn" class="theme-toggle" title="Basculer le thème">
-          <span class="theme-icon">🌙</span>
+        <button class="mobile-menu-toggle" aria-label="Ouvrir le menu" aria-expanded="false" data-tooltip="Menu">☰</button>
+        <button id="theme-toggle-btn" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème sombre/clair" data-tooltip="Thème sombre/clair">
+          <span class="theme-icon" aria-hidden="true">🌙</span>
         </button>
-        <div class="nav-status" id="nav-analysis">
+        <div class="nav-status" id="nav-analysis" data-tooltip="État de connexion en temps réel">
           <span class="dot"></span>
           <div class="nav-status-text">
             <span class="label" id="nav-analysis-label">Analyse active</span>
@@ -96,15 +147,22 @@
         </div>
         {% if session.get('username') %}
         <div class="nav-user">
-          <a href="{{ url_for('profile') }}" class="nav-profile-link" title="Profil">👤 {{ session.get('username') }}</a>
-          <a href="{{ url_for('logout') }}" class="nav-logout" title="Déconnexion">🚪</a>
+          <a href="{{ url_for('auth.profile') }}" class="nav-profile-link" title="Profil" data-tooltip="Voir mon profil">👤 {{ session.get('username') }}</a>
+          <a href="{{ url_for('auth.logout') }}" class="nav-logout" title="Déconnexion" data-tooltip="Se déconnecter">🚪</a>
         </div>
         {% endif %}
       </div>
     </nav>
 
+    <!-- Global Loading Overlay -->
+    <div id="global-loader" aria-live="polite" aria-busy="true" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:#0b0d12; color:#fff; padding:16px 24px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+        Chargement...
+      </div>
+    </div>
+
     <!-- Mobile Navigation Menu -->
-    <div class="mobile-menu">
+    <div class="mobile-menu" role="dialog" aria-label="Menu mobile">
       <a href="/">🏠 Vue d'ensemble</a>
       <a href="/live">📊 Live</a>
       <a href="/simulator">🔬 Simulateur</a>
@@ -113,19 +171,23 @@
       <a href="/analytics">📊 Analytics</a>
       <a href="/health">💚 Santé</a>
       <a href="/export">📤 Export</a>
+      <a href="/data-export">📥 Export Avancé</a>
+      <a href="/gdpr/profile">🔒 Mes Données (GDPR)</a>
       <a href="/collaboration">👥 Collaboration</a>
       <a href="/performance">⚡ Performance</a>
+      <a href="/api/v2/docs">📖 Documentation API</a>
       {% if session.get('username') %}
       <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 10px 0;">
-      <a href="{{ url_for('onboarding_page') }}">📖 Guide</a>
+      <a href="{{ url_for('main.onboarding_page') }}">📖 Guide</a>
       {% if current_user_is_admin %}
       <a href="/admin-tools">🛠️ Outils Admin</a>
+      <a href="/gdpr/admin">🔒 GDPR Admin</a>
       {% endif %}
-      <a href="{{ url_for('profile') }}">👤 Profil</a>
-      <a href="{{ url_for('logout') }}">🚪 Déconnexion</a>
+      <a href="{{ url_for('auth.profile') }}">👤 Profil</a>
+      <a href="{{ url_for('auth.logout') }}">🚪 Déconnexion</a>
       {% else %}
-      <a href="{{ url_for('login_page') }}">🔐 Se connecter</a>
-      <a href="{{ url_for('register_page') }}">📝 S'inscrire</a>
+      <a href="{{ url_for('auth.login_page') }}">🔐 Se connecter</a>
+      <a href="{{ url_for('auth.register_page') }}">📝 S'inscrire</a>
       {% endif %}
     </div>
 

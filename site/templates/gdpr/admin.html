@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+.admin-gdpr-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #1e1e3f, #2a2a5a);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.stat-card.warning {
+  border-color: rgba(255, 107, 107, 0.5);
+}
+
+.stat-label {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.deletion-list {
+  display: grid;
+  gap: 15px;
+}
+
+.deletion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+}
+
+.deletion-info h3 {
+  color: #e5e7eb;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.deletion-details {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.btn-process {
+  padding: 10px 20px;
+  background: rgba(255, 107, 107, 0.2);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  border-radius: 6px;
+  color: #ff6b6b;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-process:hover {
+  background: rgba(255, 107, 107, 0.3);
+}
+
+.policy-form {
+  display: grid;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.form-input, .form-select {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 8px;
+  color: #e5e7eb;
+}
+
+.btn-primary {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #4db8ff, #667eea);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(77, 184, 255, 0.3);
+}
+</style>
+
+<div class="admin-gdpr-container">
+  <h1 style="color: #e5e7eb; margin-bottom: 30px;">🔒 Administration GDPR</h1>
+
+  <div class="admin-stats">
+    <div class="stat-card">
+      <div class="stat-label">Utilisateurs Totaux</div>
+      <div class="stat-value">{{ stats.total_users }}</div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-label">Demandes de Suppression</div>
+      <div class="stat-value" style="color: #ff6b6b;">{{ stats.pending_deletions }}</div>
+    </div>
+  </div>
+
+  <!-- Deletion Requests -->
+  <div class="card">
+    <h2>🗑️ Demandes de Suppression en Attente</h2>
+    <p style="color: #9ca3af; margin-bottom: 25px;">Traitez les demandes de suppression de compte utilisateur</p>
+
+    <div class="deletion-list">
+      {% if deletion_requests %}
+        {% for req in deletion_requests %}
+        <div class="deletion-item">
+          <div class="deletion-info">
+            <h3>{{ req.username }} ({{ req.email }})</h3>
+            <div class="deletion-details">
+              Demandé le: {{ req.requested_at }}<br>
+              Suppression prévue: {{ req.scheduled_date }}
+            </div>
+          </div>
+          <button class="btn-process" onclick="processDeletion({{ req.id }})">
+            Traiter Maintenant
+          </button>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="color: #9ca3af; text-align: center; padding: 40px 0;">Aucune demande en attente</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Data Retention Policies -->
+  <div class="card">
+    <h2>⏱️ Politiques de Conservation des Données</h2>
+    <p style="color: #9ca3af; margin-bottom: 25px;">Configurez les durées de conservation des données</p>
+
+    <form class="policy-form" id="retention-form">
+      <div class="form-row">
+        <select id="data-type" class="form-select" required>
+          <option value="">Type de données</option>
+          <option value="co2_readings">Lectures CO₂</option>
+          <option value="login_history">Historique de connexion</option>
+          <option value="export_history">Historique d'exports</option>
+        </select>
+
+        <input type="number" id="retention-days" class="form-input" placeholder="Jours de conservation" min="1" required>
+
+        <label style="display: flex; align-items: center; color: #9ca3af; gap: 10px;">
+          <input type="checkbox" id="auto-delete" style="width: 18px; height: 18px;">
+          Suppression automatique
+        </label>
+      </div>
+
+      <button type="submit" class="btn-primary">Enregistrer la Politique</button>
+    </form>
+
+    <div style="margin-top: 30px;">
+      <h3 style="color: #e5e7eb; margin-bottom: 15px;">Politiques Actuelles</h3>
+      {% if policies %}
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; color: #e5e7eb;">
+            <thead>
+              <tr style="border-bottom: 2px solid rgba(102, 126, 234, 0.3);">
+                <th style="text-align: left; padding: 12px; color: #9ca3af;">Type de Données</th>
+                <th style="text-align: left; padding: 12px; color: #9ca3af;">Conservation (jours)</th>
+                <th style="text-align: left; padding: 12px; color: #9ca3af;">Suppression Auto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for policy in policies %}
+              <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                <td style="padding: 12px;">{{ policy.data_type }}</td>
+                <td style="padding: 12px;">{{ policy.retention_days }}</td>
+                <td style="padding: 12px;">
+                  {% if policy.auto_delete %}
+                    <span style="color: #3dd98f;">✓ Activé</span>
+                  {% else %}
+                    <span style="color: #ff6b6b;">✗ Désactivé</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p style="color: #9ca3af;">Aucune politique configurée</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Cleanup Actions -->
+  <div class="card">
+    <h2>🧹 Actions de Nettoyage</h2>
+    <p style="color: #9ca3af; margin-bottom: 25px;">Nettoyez les données anciennes selon les politiques</p>
+
+    <button onclick="cleanupOldData()" class="btn-primary">
+      <span>🧹</span> Nettoyer les Données Anciennes
+    </button>
+  </div>
+
+</div>
+
+<script>
+async function processDeletion(requestId) {
+  if (!confirm('Confirmer la suppression définitive de ce compte et de toutes ses données?')) {
+    return;
+  }
+
+  const response = await fetch(`/gdpr/admin/process-deletion/${requestId}`, {
+    method: 'POST'
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    alert('✅ Compte supprimé avec succès');
+    location.reload();
+  } else {
+    alert('❌ Erreur: ' + result.error);
+  }
+}
+
+document.getElementById('retention-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const data = {
+    data_type: document.getElementById('data-type').value,
+    retention_days: parseInt(document.getElementById('retention-days').value),
+    auto_delete: document.getElementById('auto-delete').checked
+  };
+
+  const response = await fetch('/gdpr/admin/retention-policy', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    alert('✅ Politique enregistrée');
+    location.reload();
+  } else {
+    alert('❌ Erreur lors de l\'enregistrement');
+  }
+});
+
+async function cleanupOldData() {
+  if (!confirm('Nettoyer les données anciennes selon les politiques de conservation?')) {
+    return;
+  }
+
+  const response = await fetch('/gdpr/admin/cleanup-old-data', {
+    method: 'POST'
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    const counts = result.deleted_counts;
+    let message = '✅ Nettoyage terminé:\\n\\n';
+    for (const [type, count] of Object.entries(counts)) {
+      message += `${type}: ${count} entrées supprimées\\n`;
+    }
+    alert(message);
+  } else {
+    alert('❌ Erreur lors du nettoyage');
+  }
+}
+</script>
+
+{% endblock %}

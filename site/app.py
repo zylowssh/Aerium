@@ -55,7 +55,12 @@ from advanced_features_routes import register_advanced_features
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'morpheus-co2-secret-key'
+from config import get_config
+app.config.from_object(get_config())
+from utils.logger import configure_logging
+logger = configure_logging()
+from error_handlers import register_error_handlers
+register_error_handlers(app, logger)
 
 # Initialize rate limiter - disabled for live data polling
 # Uncomment and configure if you need rate limiting in production
@@ -88,7 +93,7 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', '')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@morpheus-co2.local')
 
 socketio = SocketIO(
-    app, 
+    app,
     cors_allowed_origins="*",
     async_mode='threading',
     logger=False,
@@ -132,9 +137,22 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdn.socket.io; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdn.socket.io unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' cdn.jsdelivr.net cdn.socket.io unpkg.com ws: wss:; font-src 'self' data:;"
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    try:
+        user_id = session.get('user_id')
+        logger.info(f"{request.method} {request.path} -> {response.status_code} user={user_id}")
+    except Exception:
+        pass
     return response
+
+@app.before_request
+def log_request():
+    try:
+        user_id = session.get('user_id')
+        logger.info(f"REQ {request.method} {request.path} user={user_id}")
+    except Exception:
+        pass
 
 def send_verification_email(email, username, token):
     """Send email verification link"""
@@ -300,463 +318,33 @@ def save_settings(data):
     db.commit()
     db.close()
 
-# ================================================================================
-#                        AUTHENTICATION DECORATOR
-# ================================================================================
+from utils.auth_decorators import login_required, admin_required, permission_required
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login_page', next=request.url))
-        return f(*args, **kwargs)
-    return decorated_function
+from blueprints.auth import auth_bp
+from blueprints.main import main_bp
+from blueprints.data_export import export_bp, initialize_export_tables
+from blueprints.gdpr import gdpr_bp, initialize_gdpr_tables
+from blueprints.api import api_bp
+# from blueprints.collaboration import collab_bp, register_collab_sockets  # Temporarily disabled - needs implementation
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login_page', next=request.url))
-        if not is_admin(session['user_id']):
-            return render_template("error.html", 
-                error="Access Denied",
-                message="You need administrator privileges to access this page."), 403
-        return f(*args, **kwargs)
-    return decorated_function
+app.register_blueprint(auth_bp)
+app.register_blueprint(main_bp)
+app.register_blueprint(export_bp)
+app.register_blueprint(gdpr_bp)
+app.register_blueprint(api_bp)
+# app.register_blueprint(collab_bp)  # Temporarily disabled
 
-def permission_required(permission):
-    """Decorator to check if user has a specific permission"""
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if 'user_id' not in session:
-                return redirect(url_for('login_page', next=request.url))
-            if not has_permission(session['user_id'], permission):
-                return render_template("error.html",
-                    error="Access Denied",
-                    message=f"You do not have the '{permission}' permission."), 403
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
+# Initialize database tables for new features
+try:
+    initialize_export_tables()
+    initialize_gdpr_tables()
+except Exception as e:
+    logger.warning(f"Could not initialize new feature tables: {e}")
 
-# ================================================================================
-#                        AUTHENTICATION ROUTES
-# ================================================================================
+# Register real-time collaboration WebSocket handlers
+# register_collab_sockets(socketio)  # Temporarily disabled
 
-@app.route("/login", methods=["GET", "POST"])
-@limiter.limit("5 per minute")
-def login_page():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        remember_me = request.form.get("remember_me") == "on"
-        
-        if not username or not password:
-            return render_template("auth/login.html", error="Nom d'utilisateur et mot de passe requis")
-        
-        user = get_user_by_username(username)
-        
-        if user and check_password_hash(user['password_hash'], password):
-            # Login successful
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            
-            # Log successful login
-            ip_address = request.remote_addr
-            user_agent = request.headers.get('User-Agent', 'Unknown')
-            log_login(user['id'], ip_address, user_agent, success=True)
-            
-            # Handle "Remember Me" - extend session duration
-            if remember_me:
-                session.permanent = True
-                app.permanent_session_lifetime = timedelta(days=30)
-            
-            # Check if user has completed onboarding
-            onboarding = get_onboarding_status(user['id'])
-            if not onboarding or not onboarding.get('completed'):
-                return redirect(url_for('onboarding_page'))
-            
-            next_page = request.args.get('next')
-            if next_page and next_page.startswith('/'):
-                return redirect(next_page)
-            return redirect(url_for('index'))
-        else:
-            return render_template("auth/login.html", error="Identifiants invalides")
-
-    return render_template("auth/login.html")
-
-@app.route("/forgot-password", methods=["GET", "POST"])
-@limiter.limit("3 per minute")
-def forgot_password_page():
-    """Request password reset"""
-    if request.method == "POST":
-        email = request.form.get("email")
-        
-        if not email:
-            return render_template("auth/recovery.html", forgot_error="Veuillez entrer votre email")
-        
-        user = get_user_by_email(email)
-        
-        if user:
-            # Generate reset token
-            token = secrets.token_urlsafe(32)
-            expires_at = datetime.now(UTC) + timedelta(hours=1)
-            create_password_reset_token(user['id'], token, expires_at)
-            
-            # Send reset email
-            email_sent = send_password_reset_email(email, user['username'], token)
-            
-            if email_sent:
-                return render_template("auth/recovery.html",
-                    forgot_success=True)
-            else:
-                # Email service not configured, still show success for security
-                return render_template("auth/recovery.html",
-                    forgot_success=True)
-        else:
-            # Don't reveal if email exists (security best practice)
-            return render_template("auth/recovery.html",
-                forgot_success=True)
-    
-    return render_template("auth/recovery.html")
-
-@app.route("/reset-password/<token>", methods=["GET", "POST"])
-def reset_password_page(token):
-    """Reset password with token"""
-    user_id = verify_reset_token(token)
-    
-    if not user_id:
-        return render_template("auth/recovery.html", 
-            reset_error="Lien de réinitialisation invalide ou expiré.", 
-            token=token), 400
-    
-    if request.method == "POST":
-        new_password = request.form.get("new_password")
-        confirm_password = request.form.get("confirm_password")
-        
-        # Validation
-        if not new_password or not confirm_password:
-            return render_template("auth/recovery.html", reset_error="Tous les champs sont requis", token=token)
-        
-        if len(new_password) < 6:
-            return render_template("auth/recovery.html", 
-                reset_error="Le mot de passe doit contenir au moins 6 caractères", 
-                token=token)
-        
-        if new_password != confirm_password:
-            return render_template("auth/recovery.html", 
-                reset_error="Les mots de passe ne correspondent pas", 
-                token=token)
-        
-        # Reset password
-        new_password_hash = generate_password_hash(new_password)
-        reset_password(user_id, new_password_hash, token)
-        
-        return render_template("auth/recovery.html", 
-            reset_success=True)
-    
-    return render_template("auth/recovery.html", token=token)
-
-@app.route("/register", methods=["GET", "POST"])
-@limiter.limit("3 per minute")
-def register_page():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        email = request.form.get("email", "").strip()
-        password = request.form.get("password", "")
-        confirm_password = request.form.get("confirm_password", "")
-        
-        # Validation
-        if not all([username, email, password, confirm_password]):
-            return render_template("auth/register.html", error="Tous les champs sont requis")
-        
-        if len(username) < 3:
-            return render_template("auth/register.html", error="Le nom d'utilisateur doit contenir au moins 3 caractères")
-        
-        if len(password) < 6:
-            return render_template("auth/register.html", error="Le mot de passe doit contenir au moins 6 caractères")
-        
-        if password != confirm_password:
-            return render_template("auth/register.html", error="Les mots de passe ne correspondent pas")
-        
-        # Check if username or email already exists
-        if get_user_by_username(username):
-            return render_template("auth/register.html", error="Ce nom d'utilisateur existe déjà")
-        
-        # Create user
-        password_hash = generate_password_hash(password)
-        user_id = create_user(username, email, password_hash)
-        
-        if not user_id:
-            return render_template("auth/register.html", error="Cet email existe déjà")
-        
-        # Generate verification token
-        token = secrets.token_urlsafe(32)
-        expires_at = datetime.now(UTC) + timedelta(hours=24)
-        create_verification_token(user_id, token, expires_at)
-        
-        # Send verification email
-        email_sent = send_verification_email(email, username, token)
-        
-        if email_sent:
-            return render_template("register.html", 
-                success=True,
-                message=f"Inscription réussie! Vérifiez votre email ({email}) pour confirmer votre compte.")
-        else:
-            # Email service not configured, allow login without verification
-            session['user_id'] = user_id
-            session['username'] = username
-            # Redirect to onboarding for new users
-            return redirect(url_for('onboarding_page'))
-    
-    return render_template("auth/register.html")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for('login_page'))
-
-@app.route("/verify/<token>")
-def verify_email(token):
-    """Verify user email with token"""
-    user_id = verify_email_token(token)
-    
-    if user_id:
-        user = get_user_by_id(user_id)
-        if user:
-            return render_template("auth/email_verified.html", username=user['username'], success=True)
-        else:
-            return render_template("email_verified.html", 
-                error="Lien de vérification invalide ou expiré. Veuillez vous réinscrire.",
-                success=False), 400
-    else:
-        return render_template("email_verified.html", 
-            error="Lien de vérification invalide ou expiré. Veuillez vous réinscrire.",
-            success=False), 400
-
-@app.route("/profile", methods=["GET", "POST"])
-@login_required
-def profile():
-    user_id = session.get('user_id')
-    user = get_user_by_id(user_id)
-    user_settings = get_user_settings(user_id)
-    login_history = get_login_history(user_id, limit=5)  # Get last 5 logins
-    admin_stats = None
-    admin_users = None
-    
-    # Check if user is admin to load admin dashboard data
-    if is_admin(user_id):
-        admin_stats = get_admin_stats()
-        admin_users = get_all_users()
-    
-    # Note: CO₂ threshold settings are now handled in /settings page
-    # Profile page is only for user info and admin dashboard
-    if request.method == "POST":
-        # This route no longer handles form submissions
-        # CO₂ settings go to /api/settings
-        pass
-    
-    return render_template("profile.html", 
-                         user=user, 
-                         settings=user_settings, 
-                         login_history=login_history,
-                         is_admin=is_admin(user_id),
-                         admin_stats=admin_stats,
-                         admin_users=admin_users)
-
-@app.route("/change-password", methods=["GET", "POST"])
-@login_required
-def change_password():
-    user_id = session.get('user_id')
-    user = get_user_by_id(user_id)
-    
-    if not user:
-        session.clear()
-        return redirect(url_for('login_page'))
-    
-    if request.method == "POST":
-        current_password = request.form.get('current_password', "")
-        new_password = request.form.get('new_password', "")
-        confirm_password = request.form.get('confirm_password', "")
-        
-        error = None
-        
-        # Validation
-        if not all([current_password, new_password, confirm_password]):
-            error = "Tous les champs sont requis"
-        elif not check_password_hash(user['password_hash'], current_password):
-            error = "Mot de passe actuel incorrect"
-        elif len(new_password) < 6:
-            error = "Le nouveau mot de passe doit contenir au moins 6 caractères"
-        elif new_password != confirm_password:
-            error = "Les mots de passe ne correspondent pas"
-        
-        if error:
-            return render_template("auth/change_password.html", error=error)
-        
-        # Update password
-        db = get_db()
-        new_password_hash = generate_password_hash(new_password)
-        db.execute(
-            "UPDATE users SET password_hash = ? WHERE id = ?",
-            (new_password_hash, user_id)
-        )
-        db.commit()
-        db.close()
-        
-        return render_template("auth/change_password.html", success=True)
-    
-    return render_template("auth/change_password.html", user=user)
-    return render_template("user-management/profile.html", user=user, settings=user_settings)
-
-# 1. ROOT ROUTE - DASHBOARD (MUST BE FIRST!)
-@app.route("/")
-@login_required
-def index():
-    return render_template("index.html")  # Overview/vue d'ensemble page
-
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    """Unified landing page - shows admin dashboard for admins, user info for others"""
-    user_id = session.get('user_id')
-    
-    if is_admin(user_id):
-        # Show admin dashboard with stats
-        admin_stats = get_admin_stats()
-        admin_users = get_all_users()
-        return render_template("dashboard.html", 
-                             is_admin=True,
-                             admin_stats=admin_stats,
-                             admin_users=admin_users)
-    else:
-        # Show regular user dashboard with user-specific stats
-        user = get_user_by_id(user_id)
-        user_settings = get_user_settings(user_id)
-        login_history = get_login_history(user_id, limit=10)
-        
-        # Calculate user statistics from database
-        db = get_db()
-        cursor = db.cursor()
-        
-        # Get today's reading stats
-        cursor.execute("""
-            SELECT 
-                COUNT(*) as total_readings,
-                AVG(ppm) as avg_ppm,
-                MAX(ppm) as max_ppm,
-                MIN(ppm) as min_ppm
-            FROM readings
-            WHERE DATE(timestamp) = CURRENT_DATE
-        """)
-        today_stats = cursor.fetchone()
-        
-        # Get this week's stats
-        cursor.execute("""
-            SELECT 
-                COUNT(*) as total_readings,
-                AVG(ppm) as avg_ppm
-            FROM readings
-            WHERE DATE(timestamp) >= DATE('now', '-7 days')
-        """)
-        week_stats = cursor.fetchone()
-        
-        # Get high CO2 events (above threshold)
-        user_threshold = user_settings.get('co2_threshold', 800) if user_settings else 800
-        cursor.execute("""
-            SELECT COUNT(*) as bad_events
-            FROM readings
-            WHERE DATE(timestamp) = CURRENT_DATE AND ppm > ?
-        """, (user_threshold,))
-        bad_events = cursor.fetchone()
-        
-        db.close()
-        
-        return render_template("dashboard.html", 
-                             is_admin=False,
-                             user=user,
-                             user_settings=user_settings,
-                             login_history=login_history,
-                             today_stats=today_stats,
-                             week_stats=week_stats,
-                             bad_events=bad_events)
-
-@app.route("/live")
-@login_required
-def live_page():
-    return render_template("monitoring/live.html")  # Live monitoring with visualizations
-
-# 2. SETTINGS ROUTE
-@app.route("/settings")
-@login_required
-def settings_page():
-    return render_template("user-management/settings.html")  # Settings page
-
-@app.route("/sensors")
-@login_required
-def sensors_page():
-    """Sensor management and configuration page"""
-    return render_template("system/sensors.html")
-
-@app.route("/simulator")
-@login_required
-def simulator_page():
-    """Simulator control page for testing scenarios - accessible to all users"""
-    return render_template("system/simulator.html")
-
-@app.route("/visualization")
-@login_required
-def visualization():
-    """Advanced data visualization dashboard with CSV import"""
-    return render_template("visualization/visualization.html")
-
-@app.route("/advanced-features")
-@login_required
-def advanced_features_page():
-    """Advanced features dashboard - Analytics, Insights, Visualizations, Collaboration, Performance"""
-    return render_template("features/advanced-features.html")
-
-@app.route("/analytics")
-@login_required
-def analytics_feature():
-    """Analytics & Insights feature page"""
-    return render_template("analytics/analytics-enhanced.html")
-
-@app.route("/visualizations")
-@login_required
-def visualizations_feature():
-    """Visualizations feature page"""
-    return render_template("visualization/visualizations-feature.html")
-
-@app.route("/collaboration")
-@login_required
-def collaboration_feature():
-    """Collaboration & Sharing feature page"""
-    return render_template("collaboration/collaboration-enhanced.html")
-
-@app.route("/export")
-@login_required
-def export_manager():
-    """Data Export Manager - Export readings to CSV, Excel, PDF"""
-    return render_template("data-export/export-enhanced.html")
-
-@app.route("/organizations")
-@login_required
-def organizations():
-    """Redirect to Collaboration page"""
-    return redirect(url_for('collaboration_feature'))
-
-@app.route("/team-collaboration")
-@login_required
-def team_collaboration():
-    """Redirect to Collaboration page"""
-    return redirect(url_for('collaboration_feature'))
-
-@app.route("/admin/performance")
-@login_required
-def performance_monitoring():
-    """Redirect to consolidated performance page"""
-    return redirect(url_for('performance_feature'))
+# Main routes moved to main blueprint
 
 @app.route("/performance")
 @login_required
@@ -770,13 +358,137 @@ def health_feature():
     """Health Recommendations feature page"""
     return render_template("features/health-feature.html")
 
+# ================================================================================
+#                    MOBILE PWA ROUTES
+# ================================================================================
+
+@app.route('/manifest.json')
+def manifest():
+    """PWA Manifest for installable app"""
+    return jsonify({
+        'name': 'Morpheus CO₂ Monitor',
+        'short_name': 'Morpheus',
+        'description': 'Surveillance professionnelle du CO₂ avec graphiques avancés',
+        'start_url': '/',
+        'scope': '/',
+        'display': 'standalone',
+        'orientation': 'portrait-primary',
+        'theme_color': '#3dd98f',
+        'background_color': '#ffffff',
+        'icons': [
+            {
+                'src': '/static/images/icon-192.png',
+                'sizes': '192x192',
+                'type': 'image/png',
+                'purpose': 'any'
+            },
+            {
+                'src': '/static/images/icon-512.png',
+                'sizes': '512x512',
+                'type': 'image/png',
+                'purpose': 'any'
+            }
+        ],
+        'screenshots': [
+            {
+                'src': '/static/images/screenshot-540.png',
+                'sizes': '540x720',
+                'type': 'image/png',
+                'form_factor': 'narrow'
+            },
+            {
+                'src': '/static/images/screenshot-1280.png',
+                'sizes': '1280x720',
+                'type': 'image/png',
+                'form_factor': 'wide'
+            }
+        ]
+    })
+
+@app.route('/sw.js')
+def service_worker():
+    """Service Worker for offline support and caching"""
+    response = make_response("""
+const CACHE_NAME = 'morpheus-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/static/css/style.css',
+  '/static/js/keyboard-shortcuts.js',
+  '/static/js/global-search.js'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(STATIC_ASSETS))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (request.method !== 'GET') return;
+
+  // Skip caching for external CDN resources
+  if (url.hostname.includes('cdn.jsdelivr.net') || 
+      url.hostname.includes('cdn.socket.io') ||
+      url.hostname.includes('unpkg.com')) {
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(request)
+        .catch(() => new Response('Offline', { status: 503 }))
+    );
+    return;
+  }
+
+  event.respondWith(
+    fetch(request)
+      .then(response => {
+        if (response.ok && url.origin === self.location.origin) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(request, clone);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(request)
+          .then(cached => cached || new Response('Offline', { status: 503 }));
+      })
+  );
+});
+""")
+    response.headers['Content-Type'] = 'application/javascript'
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
 @app.route("/admin-tools")
 @login_required
 def admin_tools():
     """Advanced admin tools - Audit logs, sessions, retention, backups"""
     user = get_user_by_id(session.get('user_id'))
     if not user or user['role'] != 'admin':
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('main.dashboard'))
     return render_template("admin/admin-tools.html")
 
 @app.route("/debug-session")
@@ -931,20 +643,8 @@ def admin_maintenance():
 # ================================================================================
 #                        ONBOARDING ROUTES
 # ================================================================================
-
-@app.route("/onboarding")
-@login_required
-def onboarding_page():
-    """Onboarding/tutorial page"""
-    user_id = session.get('user_id')
-    onboarding = get_onboarding_status(user_id)
-    
-    # Initialize if doesn't exist
-    if not onboarding:
-        init_onboarding(user_id)
-        onboarding = get_onboarding_status(user_id)
-    
-    return render_template("user-management/onboarding.html", onboarding=onboarding)
+# Main onboarding page moved to main blueprint
+# Keeping API routes here for centralized management
 
 @app.route("/api/onboarding/step/<int:step>", methods=["POST"])
 @login_required
@@ -1209,6 +909,97 @@ def import_stats():
     return jsonify(stats)
 
 # ================================================================================
+#                        GLOBAL SEARCH
+# ================================================================================
+
+@app.route("/api/search")
+@login_required
+def global_search():
+    """Global search across pages, sensors, users, and content"""
+    query = request.args.get('q', '').strip().lower()
+    if not query or len(query) < 2:
+        return jsonify({'results': []})
+    
+    results = []
+    user_id = session.get('user_id')
+    user_is_admin = is_admin(user_id)
+    
+    # Search pages/features
+    pages = [
+        {'name': 'Tableau de bord', 'url': url_for('main.dashboard'), 'category': 'page', 'icon': '📊'},
+        {'name': 'Surveillance en direct', 'url': url_for('main.live_page'), 'category': 'page', 'icon': '📡'},
+        {'name': 'Paramètres', 'url': url_for('main.settings_page'), 'category': 'page', 'icon': '⚙️'},
+        {'name': 'Capteurs', 'url': url_for('main.sensors_page'), 'category': 'page', 'icon': '🎛️'},
+        {'name': 'Visualisation', 'url': url_for('main.visualization_page'), 'category': 'page', 'icon': '📈'},
+        {'name': 'Export de données', 'url': url_for('main.data_export_page'), 'category': 'page', 'icon': '💾'},
+        {'name': 'Import de données', 'url': url_for('main.data_import_page'), 'category': 'page', 'icon': '📥'},
+        {'name': 'Profil utilisateur', 'url': url_for('auth.profile'), 'category': 'page', 'icon': '👤'},
+        {'name': 'Historique de connexion', 'url': url_for('auth.login_history'), 'category': 'page', 'icon': '📋'},
+    ]
+    
+    if user_is_admin:
+        pages.extend([
+            {'name': 'Administration', 'url': url_for('main.admin'), 'category': 'page', 'icon': '👨‍💼'},
+            {'name': 'Gestion des utilisateurs', 'url': url_for('main.user_management'), 'category': 'page', 'icon': '👥'},
+            {'name': 'Journal d\'audit', 'url': url_for('main.audit_log'), 'category': 'page', 'icon': '📜'},
+            {'name': 'Informations système', 'url': url_for('main.system_info'), 'category': 'page', 'icon': 'ℹ️'},
+            {'name': 'Simulateur', 'url': url_for('main.simulator'), 'category': 'page', 'icon': '🎮'},
+        ])
+    
+    for page in pages:
+        if query in page['name'].lower():
+            results.append({
+                'title': page['name'],
+                'url': page['url'],
+                'category': page['category'],
+                'icon': page['icon'],
+                'match': 'name'
+            })
+    
+    # Search user sensors
+    try:
+        sensors = get_user_sensors(user_id)
+        for sensor in sensors:
+            if query in sensor['name'].lower() or query in sensor.get('location', '').lower():
+                results.append({
+                    'title': sensor['name'],
+                    'url': url_for('main.sensors_page'),
+                    'category': 'sensor',
+                    'icon': '🎛️',
+                    'description': f"Capteur: {sensor.get('location', 'Sans emplacement')}",
+                    'match': 'sensor'
+                })
+    except Exception:
+        pass
+    
+    # Search keywords/terms for quick help
+    keywords = {
+        'co2': {'title': 'Niveau de CO₂', 'url': url_for('main.live_page'), 'desc': 'Voir les mesures en temps réel'},
+        'ppm': {'title': 'Parties par million', 'url': url_for('main.live_page'), 'desc': 'Unité de mesure CO₂'},
+        'export': {'title': 'Exporter les données', 'url': url_for('main.data_export_page'), 'desc': 'CSV, JSON, Excel, PDF'},
+        'import': {'title': 'Importer les données', 'url': url_for('main.data_import_page'), 'desc': 'Charger des données CSV'},
+        'seuil': {'title': 'Seuils d\'alerte', 'url': url_for('main.settings_page'), 'desc': 'Configurer les alertes'},
+        'historique': {'title': 'Historique des données', 'url': url_for('main.visualization_page'), 'desc': 'Visualiser l\'historique'},
+        'connexion': {'title': 'Historique de connexion', 'url': url_for('auth.login_history'), 'desc': 'Voir vos connexions'},
+        'mot de passe': {'title': 'Changer le mot de passe', 'url': url_for('auth.change_password'), 'desc': 'Mettre à jour votre mot de passe'},
+        'theme': {'title': 'Thème sombre/clair', 'url': url_for('main.settings_page'), 'desc': 'Changer l\'apparence'},
+    }
+    
+    for keyword, data in keywords.items():
+        if query in keyword:
+            results.append({
+                'title': data['title'],
+                'url': data['url'],
+                'category': 'help',
+                'icon': '❓',
+                'description': data['desc'],
+                'match': 'keyword'
+            })
+    
+    # Limit to top 10 results
+    return jsonify({'results': results[:10]})
+
+# ================================================================================
 #                        SENSOR MANAGEMENT ROUTES
 # ================================================================================
 
@@ -1323,8 +1114,8 @@ def get_sensors_list():
         sensors = get_user_sensors(user_id)
         return jsonify(sensors)
     except Exception as e:
-        print(f"Error getting sensors: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error("Error getting sensors: %s", e)
+        raise
 
 @app.route("/api/sensors", methods=["POST"])
 @login_required
@@ -1350,14 +1141,14 @@ def create_new_sensor():
         # Log action
         try:
             log_audit(user_id, 'SENSOR_CREATED', 'sensor', sensor_id, None, f'{name} ({sensor_type})', request.remote_addr)
-        except:
-            pass
+        except Exception as audit_err:
+            logger.warning("Audit log failed: %s", audit_err)
         
         sensor = get_sensor_by_id(sensor_id, user_id)
         return jsonify(sensor), 201
     except Exception as e:
-        print(f"Error creating sensor: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error("Error creating sensor: %s", e)
+        raise
 
 @app.route("/api/sensors/<int:sensor_id>", methods=["PUT"])
 @login_required
@@ -1588,34 +1379,39 @@ def analytics_week_compare():
     db_source = resolve_source_param(allow_sim=True, allow_import=True)
     source_clause, source_params = build_source_filter(db_source)
 
-    db = get_db()
-    
-    # Current week
-    current_week = db.execute(f"""
-        SELECT DATE(timestamp) as date, AVG(ppm) as avg_ppm, MAX(ppm) as max_ppm, MIN(ppm) as min_ppm, COUNT(*) as count
-        FROM co2_readings
-        WHERE timestamp >= datetime('now', '-7 days')
-        AND {source_clause}
-        GROUP BY DATE(timestamp)
-        ORDER BY date
-    """, source_params).fetchall()
-    
-    # Previous week
-    prev_week = db.execute(f"""
-        SELECT DATE(timestamp) as date, AVG(ppm) as avg_ppm, MAX(ppm) as max_ppm, MIN(ppm) as min_ppm, COUNT(*) as count
-        FROM co2_readings
-        WHERE timestamp >= datetime('now', '-14 days') AND timestamp < datetime('now', '-7 days')
-        AND {source_clause}
-        GROUP BY DATE(timestamp)
-        ORDER BY date
-    """, source_params).fetchall()
-    
-    db.close()
-    
-    return jsonify({
-        'current_week': [dict(row) for row in current_week],
-        'previous_week': [dict(row) for row in prev_week]
-    })
+    from utils.cache import TTLCache
+    cache = getattr(app, '_ttl_cache', None)
+    if cache is None:
+        cache = TTLCache()
+        setattr(app, '_ttl_cache', cache)
+
+    def load_data():
+        db = get_db()
+        current_week = db.execute(f"""
+            SELECT DATE(timestamp) as date, AVG(ppm) as avg_ppm, MAX(ppm) as max_ppm, MIN(ppm) as min_ppm, COUNT(*) as count
+            FROM co2_readings
+            WHERE timestamp >= datetime('now', '-7 days')
+            AND {source_clause}
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        """, source_params).fetchall()
+        prev_week = db.execute(f"""
+            SELECT DATE(timestamp) as date, AVG(ppm) as avg_ppm, MAX(ppm) as max_ppm, MIN(ppm) as min_ppm, COUNT(*) as count
+            FROM co2_readings
+            WHERE timestamp >= datetime('now', '-14 days') AND timestamp < datetime('now', '-7 days')
+            AND {source_clause}
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        """, source_params).fetchall()
+        db.close()
+        return {
+            'current_week': [dict(row) for row in current_week],
+            'previous_week': [dict(row) for row in prev_week]
+        }
+
+    key = f"weekcompare:{db_source}"
+    result = cache.cached(key, ttl_seconds=60, loader=load_data)
+    return jsonify(result)
 
 @app.route("/api/analytics/trend")
 @login_required
@@ -1623,48 +1419,52 @@ def analytics_trend():
     """Get trend analysis (rising/stable/falling)"""
     db_source = resolve_source_param(allow_sim=True, allow_import=True)
     source_clause, source_params = build_source_filter(db_source)
-    
-    db = get_db()
-    
-    # For imported data, show ALL data; for live/sim, show last 7 days
-    if db_source == 'import':
-        data = db.execute(f"""
-            SELECT 
-                strftime('%Y-%m-%d %H:00', timestamp) as hour,
-                AVG(ppm) as avg_ppm,
-                COUNT(*) as readings
-            FROM co2_readings
-            WHERE {source_clause}
-            GROUP BY hour
-            ORDER BY hour DESC
-            LIMIT 168
-        """, source_params).fetchall()
-    else:
-        data = db.execute(f"""
-            SELECT 
-                strftime('%Y-%m-%d %H:00', timestamp) as hour,
-                AVG(ppm) as avg_ppm,
-                COUNT(*) as readings
-            FROM co2_readings
-            WHERE timestamp >= datetime('now', '-7 days')
-            AND {source_clause}
-            GROUP BY hour
-            ORDER BY hour DESC
-            LIMIT 168
-        """, source_params).fetchall()
-    
-    db.close()
-    
+
+    from utils.cache import TTLCache
+    cache = getattr(app, '_ttl_cache', None)
+    if cache is None:
+        cache = TTLCache()
+        setattr(app, '_ttl_cache', cache)
+
+    def load_data():
+        db = get_db()
+        if db_source == 'import':
+            data = db.execute(f"""
+                SELECT 
+                    strftime('%Y-%m-%d %H:00', timestamp) as hour,
+                    AVG(ppm) as avg_ppm,
+                    COUNT(*) as readings
+                FROM co2_readings
+                WHERE {source_clause}
+                GROUP BY hour
+                ORDER BY hour DESC
+                LIMIT 168
+            """, source_params).fetchall()
+        else:
+            data = db.execute(f"""
+                SELECT 
+                    strftime('%Y-%m-%d %H:00', timestamp) as hour,
+                    AVG(ppm) as avg_ppm,
+                    COUNT(*) as readings
+                FROM co2_readings
+                WHERE timestamp >= datetime('now', '-7 days')
+                AND {source_clause}
+                GROUP BY hour
+                ORDER BY hour DESC
+                LIMIT 168
+            """, source_params).fetchall()
+        db.close()
+        return data
+
+    key = f"trend:{db_source}"
+    data = cache.cached(key, ttl_seconds=60, loader=load_data)
+
     if len(data) < 2:
         return jsonify({'trend': 'insufficient_data', 'data': []})
-    
-    # Calculate trend
+
     recent_avg = sum(d['avg_ppm'] for d in data[:24]) / min(24, len(data))
-    
-    # Check if we have enough older data
     older_data = data[24:48]
     if len(older_data) == 0:
-        # Not enough data for comparison
         return jsonify({
             'trend': 'insufficient_data',
             'recent_avg': round(recent_avg, 1),
@@ -1672,9 +1472,9 @@ def analytics_trend():
             'percent_change': 0,
             'data': [dict(d) for d in data]
         })
-    
+
     older_avg = sum(d['avg_ppm'] for d in older_data) / len(older_data)
-    
+
     if older_avg == 0:
         trend = 'insufficient_data'
     else:
@@ -1685,7 +1485,7 @@ def analytics_trend():
             trend = 'falling'
         else:
             trend = 'stable'
-    
+
     return jsonify({
         'trend': trend,
         'recent_avg': round(recent_avg, 1),
@@ -1698,11 +1498,9 @@ def analytics_trend():
 @login_required
 def analytics_custom_range():
     """Get data for custom date range"""
-    start_date = request.args.get('start')
-    end_date = request.args.get('end')
-    
-    if not start_date or not end_date:
-        return jsonify({'error': 'start and end dates required'}), 400
+    # Make start and end optional with defaults
+    end_date = request.args.get('end', date.today().isoformat())
+    start_date = request.args.get('start', (date.today() - timedelta(days=30)).isoformat())
     
     db_source = resolve_source_param(allow_sim=True, allow_import=True)
     source_clause, source_params = build_source_filter(db_source)

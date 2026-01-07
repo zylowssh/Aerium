@@ -69,6 +69,23 @@
   <p class="hint" style="margin-top: 12px;" id="source-description">
     📡 Affichage des données en temps réel depuis le capteur
   </p>
+  
+  <!-- CSV Drag and Drop Zone -->
+  <div id="csv-dropzone" style="display: none; margin-top: 20px; padding: 40px; border: 2px dashed rgba(255,255,255,0.3); border-radius: 12px; text-align: center; background: rgba(255,255,255,0.02); transition: all 0.3s;">
+    <div style="font-size: 3rem; margin-bottom: 12px;">📂</div>
+    <h4 style="margin: 0 0 8px 0; color: var(--text-color);">Glissez-déposez votre fichier CSV ici</h4>
+    <p style="margin: 0 0 16px 0; color: #aaa; font-size: 0.9rem;">ou cliquez pour parcourir</p>
+    <input type="file" id="csv-file-input" accept=".csv" style="display: none;" />
+    <button id="browse-csv-btn" class="btn btn-primary" style="padding: 10px 24px;">
+      Parcourir les fichiers
+    </button>
+    <div id="upload-progress" style="display: none; margin-top: 16px;">
+      <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+        <div id="upload-progress-bar" style="background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; width: 0%; transition: width 0.3s;"></div>
+      </div>
+      <p id="upload-status" style="margin-top: 8px; font-size: 0.85rem; color: #aaa;"></p>
+    </div>
+  </div>
 </section>
 
 <div class="analytics-controls" style="margin-bottom: 24px;">
@@ -984,5 +1001,8 @@ async function importCSV() {
   }
 }
 </script>
+
+<!-- CSV Drag and Drop Enhancement -->
+<script src="{{ url_for('static', filename='js/csv-dragdrop.js') }}"></script>
 
 {% endblock %}

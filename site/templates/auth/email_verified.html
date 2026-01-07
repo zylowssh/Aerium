@@ -13,7 +13,7 @@
             <p style="color: #7a8fa6; margin-bottom: 30px;">
                 You can now log in with your account and start monitoring CO₂ levels.
             </p>
-            <a href="{{ url_for('login_page') }}" class="btn btn-primary" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #3dd98f 0%, #4db8ff 100%); color: white; text-decoration: none; border-radius: 5px; font-weight: bold; transition: transform 0.2s;">
+            <a href="{{ url_for('auth.login_page') }}" class="btn btn-primary" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #3dd98f 0%, #4db8ff 100%); color: white; text-decoration: none; border-radius: 5px; font-weight: bold; transition: transform 0.2s;">
                 🔐 Go to Login
             </a>
         </div>
@@ -33,10 +33,10 @@
                     <li>Contact support if the issue persists</li>
                 </ul>
             </div>
-            <a href="{{ url_for('register_page') }}" class="btn btn-primary" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #3dd98f 0%, #4db8ff 100%); color: white; text-decoration: none; border-radius: 5px; font-weight: bold; transition: transform 0.2s; margin-right: 10px;">
+            <a href="{{ url_for('auth.register_page') }}" class="btn btn-primary" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #3dd98f 0%, #4db8ff 100%); color: white; text-decoration: none; border-radius: 5px; font-weight: bold; transition: transform 0.2s; margin-right: 10px;">
                 📝 Create New Account
             </a>
-            <a href="{{ url_for('login_page') }}" class="btn btn-secondary" style="display: inline-block; padding: 12px 30px; background: #4db8ff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; transition: transform 0.2s;">
+            <a href="{{ url_for('auth.login_page') }}" class="btn btn-secondary" style="display: inline-block; padding: 12px 30px; background: #4db8ff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; transition: transform 0.2s;">
                 🔐 Back to Login
             </a>
         </div>
