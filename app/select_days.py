@@ -14,7 +14,7 @@ class DaysDialog(Popup):
         self.state = True
         self.days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
         self.selected_days = []
-
+        
         main_layout = BoxLayout(orientation="vertical", spacing=10, padding=10)
         self.days_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint_y=None, height=50)
         main_layout.add_widget(self.days_layout)
@@ -60,4 +60,3 @@ class DaysDialog(Popup):
     
     def cancel(self, *args):
         self.dismiss()
-

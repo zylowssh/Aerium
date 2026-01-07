@@ -1,3 +1,4 @@
+
 import uuid
 #* KivyMD 
 from kivymd.app import MDApp
@@ -7,12 +8,12 @@ from kivymd.uix.button import MDFabButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.pickers import MDTimePickerDialVertical
+
 #* fichier projet
 from alarmcard import AlarmCard
 from select_days import DaysDialog
 from datamanager import DataManager
-
+from alarmprocess import StartAlarmProcess
 
 class MainApp(MDApp):
 
@@ -23,7 +24,7 @@ class MainApp(MDApp):
         self.dataManager = DataManager(self.user_data_dir)
         self.total_alarms = {}
         screen = MDScreen()
-        
+
         #* topBar
         topbar = MDTopAppBar(
             MDTopAppBarTitle(text="Aerium", halign="center"),
@@ -64,11 +65,12 @@ class MainApp(MDApp):
         fab = MDFabButton(
             icon="plus",
             pos_hint={"right": 0.95, "y": 0.04},
-            on_release=self.show_time_picker,
+            on_release=self.alarm_process,
         )
         screen.add_widget(fab)
 
         return screen
+    
     #* Des le lancement de l'application, charge toute les alarmes sauvegardees
     def on_start(self):
         self.total_alarms = self.dataManager.read()
@@ -80,35 +82,23 @@ class MainApp(MDApp):
             hour_min = data["hour_min"]
             days_list = data["selected_days"]
             active = data["active"]
-            selected_days = (
-                ", ".join(day[:3] for day in days_list)
-                if days_list else "Tous les jours"
-            )
-
+            selected_days = DataManager.format_days(days_list)
             self.add_alarm(hour_min, selected_days, alarm_id, data, active)
             
     #* lance le time picker
-    def show_time_picker(self, *args):
-        picker = MDTimePickerDialVertical()
-        picker.bind(on_ok=self.on_ok, on_cancel=self.on_cancel)
-        picker.open()
-
-    def on_ok(self, picker):
-        time = f"{picker.hour.zfill(2)}:{picker.minute.zfill(2)}"
-        picker.dismiss()
-        self.show_days_dialog(time)
-
-    def on_cancel(self, picker):
-        picker.dismiss()
-        
-    #* gere l'ouverture de la popup selection des jours
+    def alarm_process(self, *args):
+        self.alarmProcess = StartAlarmProcess()
+        self.alarmProcess.open()
+                
+    #* gere l'ouverture de la popup selection des jours  
     def show_days_dialog(self, time):
         dialog = DaysDialog()
+        #* fonction intermediaire pour passer le temps selectionne sinon kivy pleure
         dialog.bind(
-            on_dismiss=lambda instance: self.on_dialog_dismiss(instance, time)
+            on_dismiss=lambda dialog: self.on_dialog_dismiss(dialog, time)
         )
-        dialog.open()
-        
+        dialog.open()  
+
     #* gere la fermeture de la popup selection des jours
     def on_dialog_dismiss(self, dialog, time):
         if dialog.state is False:
@@ -127,10 +117,7 @@ class MainApp(MDApp):
             self.total_alarms = all_data
             
             #* formate les jours selectionnes pour l'affichage "Lun, Mar, Mer"
-            selected_days = (
-                ", ".join(day[:3] for day in dialog.selected_days)
-                if dialog.selected_days else "Tous les jours"
-            )
+            selected_days = DataManager.format_days(dialog.selected_days)
 
             self.add_alarm(time, selected_days, alarm_id, alarm_data, alarm_data["active"])
             
@@ -141,8 +128,7 @@ class MainApp(MDApp):
             self.label.parent.remove_widget(self.label)
 
         card = AlarmCard(time, selected_days, alarm_id, alarm_data, active)
-        self.alarms_layout.add_widget(card)
-
+        self.alarms_layout.add_widget(card)     
 
 if __name__ == "__main__":
     MainApp().run()
