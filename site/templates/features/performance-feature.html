@@ -139,11 +139,11 @@ function loadPerformance() {
                 
                 const metrics = [
                     { name: 'Temps de Réponse', value: perf.response_time_ms || '15ms', icon: '⏱️', good: true },
-                    { name: 'Requêtes BD', value: perf.queries_per_minute || '234/min', icon: '🗄️', good: true },
+                    { name: 'Requêtes BD', value: perf.queries_per_minute ? perf.queries_per_minute + '/min' : '200/min', icon: '🗄️', good: true },
                     { name: 'Taux de Cache', value: perf.cache_hit_ratio || '78%', icon: '✓', good: true },
                     { name: 'Disponibilité', value: perf.uptime_percent || '99.8%', icon: '🟢', good: true },
                     { name: 'Sessions Actives', value: perf.active_sessions || '5', icon: '👥', good: true },
-                    { name: 'Utilisation Mémoire', value: perf.memory_usage_percent + '%' || '45%', icon: '💾', good: true }
+                    { name: 'Utilisation Mémoire', value: (perf.memory_usage_percent ?? 45) + '%', icon: '💾', good: true }
                 ];
                 
                 metrics.forEach(metric => {
@@ -159,7 +159,7 @@ function loadPerformance() {
                 html += '<div class="performance-summary">';
                 html += '<h4>Résumé</h4>';
                 html += '<p>✓ La performance du système est ' + (perf.status || 'optimale') + '</p>';
-                html += '<p>✓ Base de données: ' + perf.total_records + ' enregistrements (' + perf.database_size_mb + 'MB)</p>';
+                html += '<p>✓ Base de données: ' + (perf.total_records ?? 'N/A') + ' enregistrements (' + (perf.database_size_mb ?? '0') + 'MB)</p>';
                 html += '<p>✓ État global: Système fonctionnant de manière optimale</p>';
                 html += '</div>';
                 html += '</div>';
@@ -172,34 +172,32 @@ function loadPerformance() {
             container.innerHTML = '<div class="error">Erreur: ' + e.message + '</div>';
         });
 }
-                });
-                
-                html += '</div>';
-                html += '<div class="performance-summary">';
-                html += '<h4>Résumé</h4>';
-                html += '<p>✓ La performance du système est optimale</p>';
-                html += '<p>✓ Toutes les métriques dans des plages saines</p>';
-                html += '<p>✓ Aucun goulot d\'étranglement détecté</p>';
-                html += '</div>';
-                html += '</div>';
-                container.innerHTML = html;
-            }
-        })
-        .catch(e => {
-            container.innerHTML = '<div class="error">Erreur: ' + e.message + '</div>';
-        });
-}
 
 function loadCacheStats() {
+    const container = document.getElementById('cache-container');
+    container.innerHTML = '<div class="loading">Chargement des informations de cache...</div>';
+    
     fetch('/api/system/cache/status')
         .then(r => r.json())
         .then(data => {
             if (data.success) {
                 document.getElementById('cache-status').textContent = data.cache_status || 'Actif';
                 document.getElementById('cache-size').textContent = data.cache_size || 'Chargement...';
+                container.innerHTML = `
+                    <div class="data-display">
+                        <h3>Statut du Cache</h3>
+                        <p><strong>Taille:</strong> ${data.cache_size || 'N/A'}</p>
+                        <p><strong>Éléments:</strong> ${data.items_cached || 'N/A'}</p>
+                        <p><strong>Taux de hit:</strong> ${data.hit_rate || 'N/A'}</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<div class="error">Erreur: ' + (data.error || 'Impossible de charger le cache') + '</div>';
             }
         })
-        .catch(e => console.error(e));
+        .catch(e => {
+            container.innerHTML = '<div class="error">Erreur: ' + e.message + '</div>';
+        });
 }
 
 function clearCache() {
@@ -219,7 +217,9 @@ function clearCache() {
                         <p class="info-text">La performance du système peut être légèrement ralentie jusqu'à la reconstruction du cache</p>
                     </div>
                 `;
-                setTimeout(() => loadCacheStats(), 1000);
+                setTimeout(() => loadCacheStats(), 800);
+            } else {
+                container.innerHTML = '<div class="error">Erreur: ' + (data.error || 'Impossible de vider le cache') + '</div>';
             }
         })
         .catch(e => {
