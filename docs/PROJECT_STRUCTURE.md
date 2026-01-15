@@ -14,17 +14,17 @@ Aerium/
 │   │
 │   ├── 📁 utils/                     # Utility modules
 │   │   ├── __init__.py
-│   │   ├── fake_co2.py              # CO2 data generator
-│   │   ├── admin_tools.py           # Admin utilities
-│   │   ├── collaboration.py         # Collaboration features
-│   │   ├── export_manager.py        # Export functionality
-│   │   ├── optimization.py          # Optimization tools
-│   │   ├── performance_optimizer.py # Performance tools
-│   │   ├── ai_recommender.py        # AI recommendations
-│   │   ├── ml_analytics.py          # ML analytics
-│   │   └── tenant_manager.py        # Tenant management
+│   │   ├── fake_co2.py               # CO2 data generator
+│   │   ├── admin_tools.py            # Admin utilities
+│   │   ├── collaboration.py          # Collaboration features
+│   │   ├── export_manager.py         # Export functionality
+│   │   ├── optimization.py           # Optimization tools
+│   │   ├── performance_optimizer.py  # Performance tools
+│   │   ├── ai_recommender.py         # AI recommendations
+│   │   ├── ml_analytics.py           # ML analytics
+│   │   └── tenant_manager.py         # Tenant management
 │   │
-│   ├── 📁 scripts/                  # Admin & setup scripts
+│   ├── 📁 scripts/                   # Admin & setup scripts
 │   │   ├── check_admin.py
 │   │   ├── check_db.py
 │   │   ├── debug_admin.py
@@ -34,22 +34,22 @@ Aerium/
 │   │   ├── promote_admin.py
 │   │   └── update_db.py
 │   │
-│   ├── 📁 tests/                    # Application tests
+│   ├── 📁 tests/                     # Application tests
 │   │   ├── test_auth.py
 │   │   ├── test_data_websocket.py
 │   │   ├── test_login_flow.py
 │   │   └── ...
 │   │
-│   ├── 📁 docs/                     # Documentation
+│   ├── 📁 docs/                      # Documentation
 │   │   ├── INTEGRATION_GUIDE.py
 │   │   ├── QUICKSTART_INTEGRATION.py
 │   │   └── OPTIMIZATION_LOG.md
 │   │
-│   ├── 📁 templates/                # HTML templates
-│   ├── 📁 static/                   # CSS, JS, images
-│   └── 📁 data/                     # Runtime data
+│   ├── 📁 templates/                 # HTML templates
+│   ├── 📁 static/                    # CSS, JS, images
+│   └── 📁 data/                      # Runtime data
 │
-├── 📁 tests/                        # Root-level tests
+├── 📁 tests/                         # Root-level tests
 │   ├── test_advanced_endpoints.py
 │   ├── test_api_endpoints.py
 │   ├── test_pages.py
@@ -63,31 +63,31 @@ Aerium/
 │   ├── verify_features.py
 │   └── verify_integration.py
 │
-├── 📁 docs/                         # Project documentation
+├── 📁 docs/                          # Project documentation
 │   ├── ARCHITECTURE_DIAGRAM.py
 │   └── ...
 │
-├── 📁 app/                          # Legacy app folder
-├── 📁 venv/                         # Python virtual environment
-├── 📁 data/                         # Project data
-├── 📁 .git/                         # Git repository
+├── 📁 app/                           # Legacy app folder
+├── 📁 venv/                          # Python virtual environment
+├── 📁 data/                          # Project data
+├── 📁 .git/                          # Git repository
 │
 ├── 📄 Configuration & Docs
-│   ├── README.md                    # Main documentation
-│   ├── requirements.txt             # Python dependencies
-│   ├── .gitignore                   # Git ignore rules
-│   ├── start_server.bat             # Server startup script
-│   └── app_output.txt              # Output log
+│   ├── README.md                     # Main documentation
+│   ├── requirements.txt              # Python dependencies
+│   ├── .gitignore                    # Git ignore rules
+│   ├── start_server.bat              # Server startup script
+│   └── app_output.txt                # Output log
 │
 └── 📄 Documentation Files
-    ├── API_REFERENCE.md            # API documentation
-    ├── CHANGELOG.md                # Change history
-    ├── DOCUMENTATION_INDEX.md      # Documentation index
-    ├── FIXES_COMPLETE.md           # Fix documentation
-    ├── IMPLEMENTATION_CHECKLIST.md # Implementation tracking
+    ├── API_REFERENCE.md              # API documentation
+    ├── CHANGELOG.md                  # Change history
+    ├── DOCUMENTATION_INDEX.md        # Documentation index
+    ├── FIXES_COMPLETE.md             # Fix documentation
+    ├── IMPLEMENTATION_CHECKLIST.md   # Implementation tracking
     ├── PROJECT_COMPLETION_SUMMARY.md # Summary
-    ├── QUICK_SUMMARY.md            # Quick reference
-    └── USER_GUIDE.md               # User guide
+    ├── QUICK_SUMMARY.md              # Quick reference
+    └── USER_GUIDE.md                 # User guide
 ```
 
 ## Organization Benefits
