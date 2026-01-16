@@ -1,8 +1,9 @@
 {% extends "base.html" %} {% block content %}
 
 <!-- ================= HERO ================= -->
-<section class="hero">
+<section class="hero" aria-label="Vue d'ensemble Aerium">
   <div class="hero-content">
+    <span class="hero-kicker">Qualité de l’air CO₂</span>
     <h1>Aerium</h1>
     <p class="hero-sub">
       Surveillance intelligente de la qualité de l’air en temps réel
@@ -13,23 +14,24 @@
       Analyse en pause
     </div>
 
-    <div class="hero-actions">
+    <div class="hero-actions" role="group" aria-label="Actions rapides">
       <a href="/live" class="link primary">📊 Voir le live</a>
-      <button id="export-day-csv" class="link">📥 Données en CSV</button>
-      <button id="export-day-pdf" class="link">📄 Rapport PDF</button>
+      <button id="export-day-csv" class="link" aria-label="Exporter la journée en CSV">📥 Données en CSV</button>
+      <button id="export-day-pdf" class="link" aria-label="Exporter le rapport PDF">📄 Rapport PDF</button>
       <div class="source-toggle">
-        <label for="overview-source">Source</label>
-        <select id="overview-source">
+        <label for="overview-source" class="source-label">Source</label>
+        <select id="overview-source" aria-describedby="source-help">
           <option value="real">Capteur réel</option>
           <option value="sim">Simulation</option>
         </select>
+        <span id="source-help" class="hint">Choisir la provenance des données</span>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ================= DAILY STATS ================= -->
-<section class="card">
+<section class="card" aria-label="Statistiques du jour">
   <h2>Aujourd’hui en chiffres</h2>
 
   <div class="overview-grid">
@@ -51,7 +53,7 @@
 </section>
 
 <!-- ================= SYSTEM STATUS ================= -->
-<section class="card">
+<section class="card" aria-label="État du système">
   <h2>État du système</h2>
 
   <div class="system-status-row">
@@ -96,7 +98,7 @@
 </section>
 
 <!-- ================= QUICK ACCESS ================= -->
-<section class="card">
+<section class="card" aria-label="Accès rapide">
   <h2>Accès rapide</h2>
 
   <div class="action-buttons">
@@ -106,7 +108,7 @@
 </section>
 
 <!-- ================= ABOUT ================= -->
-<section class="card">
+<section class="card" aria-label="À propos">
   <h2>À propos</h2>
   <p class="hint">
     Aerium est un projet démontrant la surveillance intelligente de la qualité de l’air à partir de données mesurées et analysées en temps réel.

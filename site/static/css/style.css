@@ -1271,17 +1271,17 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
 ──────────────────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
-  padding: 32px 28px;
+  padding: 36px 32px;
   margin-bottom: 28px;
   max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
   animation: heroFade 0.8s ease-out both;
 
-  background: var(--card);
+  background: linear-gradient(135deg, rgba(30,30,63,0.8) 0%, rgba(42,42,90,0.9) 100%);
   border-radius: 18px;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-dark);
+  box-shadow: var(--shadow-accent);
 }
 
 
@@ -1293,20 +1293,30 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
   border-radius: inherit;
   pointer-events: none;
 
-  background: linear-gradient(
-    180deg,
-    rgba(74, 222, 128, 0.9),
-    rgba(74, 222, 128, 0.0) 65%
-  );
-  mask: linear-gradient(#000 0 0) left / 5px 100% no-repeat;
+  background: linear-gradient(180deg, rgba(61, 217, 143, 0.65), rgba(61, 217, 143, 0.0) 60%);
+  mask: linear-gradient(#000 0 0) left / 4px 100% no-repeat;
 }
 
 .hero-content {
   max-width: 640px;
 }
 
+.hero-kicker {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--good);
+  background: rgba(61, 217, 143, 0.12);
+  border: 1px solid rgba(61, 217, 143, 0.35);
+  padding: 6px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
 .hero h1 {
-  font-size: 2.6rem;
+  font-size: 2.8rem;
   font-weight: 800;
   letter-spacing: -0.5px;
   margin-bottom: 8px;
@@ -1317,22 +1327,22 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
 }
 
 .hero-sub {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: var(--muted);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   font-weight: 500;
 }
 
 .hero-actions {
-  margin-top: 24px;
-  padding: 16px;
+  margin-top: 20px;
+  padding: 14px 16px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   margin-left: 0;
 
-  background: rgba(77, 184, 255, 0.05);
-  border: 1px solid rgba(77, 184, 255, 0.15);
+  background: rgba(77, 184, 255, 0.06);
+  border: 1px solid rgba(77, 184, 255, 0.12);
   border-radius: 14px;
 
   box-shadow: inset 0 1px 0 rgba(77, 184, 255, 0.08);
@@ -1343,15 +1353,44 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
 }
 
 .hero-actions .link:not(.primary) {
-  background: rgba(77, 184, 255, 0.08);
+  background: rgba(77, 184, 255, 0.07);
   color: var(--accent);
-  border: 1px solid rgba(77, 184, 255, 0.2);
+  border: 1px solid rgba(77, 184, 255, 0.18);
 }
 
 .hero-actions .link:not(.primary):hover {
   color: var(--accent);
-  background: rgba(77, 184, 255, 0.15);
-  border-color: rgba(77, 184, 255, 0.35);
+  background: rgba(77, 184, 255, 0.14);
+  border-color: rgba(77, 184, 255, 0.3);
+}
+
+/* Source Toggle */
+.source-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.source-toggle .source-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.source-toggle select {
+  appearance: none;
+  background: rgba(77, 184, 255, 0.08);
+  border: 1px solid rgba(77, 184, 255, 0.2);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.source-toggle .hint {
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 @keyframes heroFade {
@@ -1370,16 +1409,16 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
 ──────────────────────────────────────────────────────────────────────────── */
 .overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 15px;
-  margin-top: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
 }
 
 .overview-widget {
-  background: var(--card);  
+  background: var(--card);
   border-radius: 14px;
-  padding: 18px;
-  border: 1px solid var(--border-light);
+  padding: 20px;
+  border: 1px solid var(--border-dark);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1387,14 +1426,14 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
 }
 
 .overview-widget:hover {
-  border-color: var(--accent);
+  border-color: rgba(102, 126, 234, 0.35);
   background: var(--card);
   box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
 
 .overview-widget .label {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1402,7 +1441,7 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
 }
 
 .overview-widget .value {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
@@ -1413,13 +1452,13 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
 }
 
 .overview-widget.highlight {
-  border: 1.5px solid var(--good);
+  border: 1.5px solid rgba(61, 217, 143, 0.55);
   background: var(--card);
   box-shadow: var(--shadow-lg);
 }
 
 .overview-widget.highlight .value {
-  font-size: 1.7rem;
+  font-size: 1.6rem;
   color: var(--good);
 }
 
@@ -1581,7 +1620,7 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
 .system-status-row {
   display: flex;
   align-items: stretch;
-  gap: 24px;
+  gap: 22px;
 }
 
 .system-status-main {
@@ -1600,7 +1639,7 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
 .co2-track {
   width: 8px;
   height: 140px;
-  background: rgba(0, 0, 0, 0.15);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.18));
   border-radius: 999px;
   position: relative;
   overflow: hidden;
@@ -1611,15 +1650,24 @@ body[style*="--bg: #ffffff"] #alert-log-panel {
   bottom: 0;
   width: 100%;
   height: 0%;
-  background: var(--good);
+  background: linear-gradient(180deg, var(--good), rgba(61, 217, 143, 0.65));
   border-radius: 999px;
   transition: height 0.4s ease, background 0.3s ease;
 }
 
 .co2-value {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--muted);
   white-space: nowrap;
+}
+
+/* Responsive tweaks for home */
+@media (max-width: 768px) {
+  .hero { padding: 24px 20px; }
+  .hero h1 { font-size: 2.2rem; }
+  .hero-sub { font-size: 0.98rem; }
+  .system-status-row { flex-direction: column; }
+  .co2-thermo { flex-direction: row; gap: 10px; }
 }
 
 @keyframes statusPulse {
