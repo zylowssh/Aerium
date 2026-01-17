@@ -184,14 +184,20 @@ def setup_analytics_routes(app, limiter):
         building_type = request.args.get('building_type', 'office')
         occupancy = request.args.get('occupancy', 10, type=int)
 
-        recommender = AIRecommender()
+        try:
+            recommender = AIRecommender()
+            recs = recommender.get_recommendations(sensor_id=sensor_id, building_type=building_type, occupancy_count=occupancy)
+            return jsonify({'success': True, 'recommendations': recs, 'count': len(recs)})
+        except Exception as exc:
+            return jsonify({'success': False, 'error': str(exc)}), 500
+        finally:
             try:
-                recs = recommender.get_recommendations(sensor_id=sensor_id, building_type=building_type, occupancy_count=occupancy)
-                return jsonify({'success': True, 'recommendations': recs, 'count': len(recs)})
-            except Exception as exc:
-                return jsonify({'success': False, 'error': str(exc)}), 500
-            finally:
                 recommender.close()
+            except:
+                pass
+
+    @app.route("/api/insights")
+    def get_insights():
         """Get AI-generated insights about air quality"""
         if not is_logged_in():
             return jsonify({'success': False, 'error': 'Unauthorized'}), 401
@@ -407,7 +413,8 @@ def setup_analytics_routes(app, limiter):
             })
         except Exception as e:
             import traceback
-            logger.exception(f"Health recommendations failed: {e}"cess': False, 'error': str(e)}), 500
+            logger.exception(f"Health recommendations failed: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ================================================================================
@@ -793,7 +800,8 @@ def setup_visualization_routes(app, limiter):
                 })
         except Exception as e:
             import traceback
-            logger.exception(f"Correlation calculation failed: {e}"cess': False, 'error': str(e)}), 500
+            logger.exception(f"Correlation calculation failed: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
     
     @app.route("/api/dashboard/config")
     @limiter.limit("50 per hour")
@@ -926,7 +934,9 @@ def setup_optimization_routes(app, limiter):
         except Exception as e:
             import traceback
             traceback.print_exc()
-            logger.exception(f"Performance metrics failed: {e}"
+            logger.exception(f"Performance metrics failed: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.route("/api/system/cache/clear", methods=['POST'])
     @limiter.limit("10 per hour")
     def clear_cache():
@@ -990,7 +1000,8 @@ def setup_optimization_routes(app, limiter):
         except Exception as e:
             import traceback
             traceback.print_exc()
-            logger.exception(f"Archive operation failed: {e}"
+            logger.exception(f"Archive operation failed: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
 
 # ================================================================================
 #                    ROUTES INITIALIZATION
