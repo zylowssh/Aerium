@@ -632,12 +632,38 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .performance-header {
+        padding: 18px 15px;
+    }
+
     .performance-header h1 {
         font-size: 1.8rem;
     }
 
+    .performance-header p {
+        font-size: 1rem;
+    }
+
     .metrics-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .metric-card {
+        padding: 18px;
+    }
+
+    .metric-value {
+        font-size: 2rem;
+    }
+
+    .tab-navigation {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .tab-button {
@@ -647,31 +673,187 @@
     }
 
     .tab-content {
-        padding: 20px;
+        padding: 20px 15px;
     }
 
     .history-controls {
         flex-direction: column;
+        gap: 12px;
+    }
+
+    .history-controls label {
+        width: 100%;
+    }
+
+    .history-controls select {
+        width: 100%;
+        min-height: 44px;
     }
 
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .chart-container {
+        padding: 15px;
+    }
+
+    .status-table,
+    .queries-table,
+    .user-rate-limits,
+    .alerts-config {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .status-table table,
+    .queries-table table,
+    .user-rate-limits table,
+    .alerts-config table {
+        min-width: 600px;
+    }
+
+    .cache-controls,
+    .rate-limit-global,
+    .alert-history {
+        padding: 15px;
+    }
+
+    .btn,
+    .form-group input,
+    .form-group select {
+        min-height: 48px;
     }
 }
 
 @media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+
+    .performance-header {
+        padding: 15px 10px;
+    }
+
+    .performance-header h1 {
+        font-size: 1.5rem;
+    }
+
     .metrics-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .metric-card {
+        padding: 15px;
+    }
+
+    .metric-value {
+        font-size: 1.8rem;
     }
 
     .tab-navigation {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 0;
     }
 
     .tab-button {
         min-width: 100px;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    .tab-content {
+        padding: 15px 10px;
+    }
+
+    .tab-content h2 {
+        font-size: 1.3rem;
+    }
+
+    .tab-content h3 {
+        font-size: 1.1rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .chart-container {
+        padding: 12px;
+    }
+
+    .chart-container canvas {
+        max-height: 300px;
+    }
+
+    /* Make tables stack on mobile */
+    .status-table table,
+    .queries-table table,
+    .user-rate-limits table,
+    .alerts-config table {
+        display: block;
+        width: 100%;
+        min-width: unset;
+    }
+
+    .status-table thead,
+    .queries-table thead,
+    .user-rate-limits thead,
+    .alerts-config thead {
+        display: none;
+    }
+
+    .status-table tbody,
+    .queries-table tbody,
+    .user-rate-limits tbody,
+    .alerts-config tbody {
+        display: block;
+    }
+
+    .status-table tr,
+    .queries-table tr,
+    .user-rate-limits tr,
+    .alerts-config tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
         padding: 10px;
-        font-size: 0.8rem;
+    }
+
+    .status-table td,
+    .queries-table td,
+    .user-rate-limits td,
+    .alerts-config td {
+        display: block;
+        text-align: left;
+        padding: 8px 5px;
+        border: none;
+    }
+
+    .status-table td::before,
+    .queries-table td::before,
+    .user-rate-limits td::before,
+    .alerts-config td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: inline-block;
+        width: 120px;
+        margin-right: 10px;
+    }
+
+    .rate-limit-config form {
+        max-width: 100%;
+    }
+
+    .cache-controls button,
+    .btn {
+        width: 100%;
+        margin: 5px 0;
     }
 }
 

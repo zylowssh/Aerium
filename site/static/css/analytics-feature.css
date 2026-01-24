@@ -325,30 +325,125 @@
 }
 
 @media (max-width: 768px) {
+    .feature-page {
+        padding: 15px;
+    }
+
     .feature-content {
         gap: 20px;
     }
 
     .feature-section {
-        padding: 20px;
+        padding: 15px;
+    }
+
+    .feature-header {
+        margin-bottom: 25px;
+        padding-bottom: 20px;
     }
 
     .feature-header h1 {
-        font-size: 1.8em;
+        font-size: 1.6em;
+    }
+
+    .feature-header p {
+        font-size: 0.95em;
+    }
+
+    .control-group {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .control-group select,
+    .control-group input {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .btn {
+        width: 100%;
+        min-height: 48px;
+        font-size: 1.05em;
     }
 
     .prediction-item {
         flex-direction: column;
         align-items: flex-start;
+        padding: 15px;
+        gap: 10px;
+    }
+
+    .pred-time,
+    .pred-value {
+        font-size: 0.95em;
     }
 
     .anomaly-header {
         flex-direction: column;
+        gap: 10px;
+    }
+
+    .anomaly-item {
+        padding: 12px;
     }
 
     .insight-item,
     .recommendation-item {
         flex-direction: column;
         align-items: flex-start;
+        gap: 12px;
+    }
+
+    .insight-icon,
+    .rec-icon {
+        min-width: 36px;
+        height: 36px;
+        font-size: 1em;
+    }
+
+    .data-display h3 {
+        font-size: 1.1em;
+    }
+}
+
+@media (max-width: 480px) {
+    .feature-page {
+        padding: 10px;
+    }
+
+    .feature-header h1 {
+        font-size: 1.4em;
+    }
+
+    .feature-header p {
+        font-size: 0.9em;
+    }
+
+    .feature-section {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .feature-section h2 {
+        font-size: 1.3em;
+    }
+
+    .control-group label {
+        font-size: 0.9em;
+    }
+
+    .prediction-item,
+    .anomaly-item,
+    .insight-item,
+    .recommendation-item {
+        padding: 10px;
+    }
+
+    .anomaly-severity,
+    .rec-priority {
+        font-size: 0.8em;
+        padding: 3px 10px;
     }
 }

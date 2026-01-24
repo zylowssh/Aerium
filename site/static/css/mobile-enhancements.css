@@ -1,0 +1,538 @@
+/*
+================================================================================
+                     MOBILE-FIRST ENHANCEMENTS FOR AERIUM
+================================================================================
+This stylesheet provides additional mobile-specific optimizations
+that complement the existing responsive styles in other CSS files.
+================================================================================
+*/
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Utility Classes
+──────────────────────────────────────────────────────────────────────────── */
+
+.mobile-only {
+    display: none;
+}
+
+.desktop-only {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+    
+    .desktop-only {
+        display: none;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Touch-Friendly Enhancements
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    /* Increase touch target sizes for better mobile UX */
+    button,
+    a,
+    input[type="button"],
+    input[type="submit"],
+    .btn,
+    .link {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Better spacing for mobile interactions */
+    .button-group button,
+    .button-group a {
+        margin: 5px 0;
+    }
+
+    /* Improve form input touch targets */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="date"],
+    input[type="time"],
+    textarea,
+    select {
+        min-height: 48px;
+        font-size: 16px; /* Prevents iOS zoom on focus */
+    }
+
+    /* Better checkbox and radio button sizing */
+    input[type="checkbox"],
+    input[type="radio"] {
+        min-width: 24px;
+        min-height: 24px;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Navigation Improvements
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    /* Horizontal scrolling navigation */
+    .navbar,
+    .tab-navigation {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+    }
+
+    .navbar::-webkit-scrollbar,
+    .tab-navigation::-webkit-scrollbar {
+        display: none; /* Chrome, Safari */
+    }
+
+    /* Sticky navigation for mobile */
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: var(--bg-solid);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Typography Optimization
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    body {
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+        line-height: 1.3;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        line-height: 1.3;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+        line-height: 1.4;
+    }
+
+    h4 {
+        font-size: 1.1rem;
+        line-height: 1.4;
+    }
+
+    p {
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    /* Better reading width on mobile */
+    .content-text {
+        max-width: 100%;
+        padding: 0 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.3rem;
+    }
+
+    h3 {
+        font-size: 1.15rem;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Chart Improvements
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    /* Chart containers */
+    .chart-container {
+        position: relative;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    canvas {
+        max-width: 100%;
+        height: auto !important;
+        touch-action: pan-y pinch-zoom;
+    }
+
+    /* Chart legends on mobile */
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 12px;
+    }
+
+    .chart-legend-item {
+        font-size: 12px;
+        padding: 4px 8px;
+        white-space: nowrap;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Table Improvements
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    /* Horizontal scroll for tables */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-responsive table {
+        min-width: 600px;
+    }
+
+    /* Card-style tables for mobile */
+    table.mobile-cards {
+        display: block;
+        width: 100%;
+    }
+
+    table.mobile-cards thead {
+        display: none;
+    }
+
+    table.mobile-cards tbody {
+        display: block;
+    }
+
+    table.mobile-cards tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 12px;
+        background: var(--card);
+    }
+
+    table.mobile-cards td {
+        display: block;
+        text-align: left;
+        padding: 6px 0;
+        border: none;
+    }
+
+    table.mobile-cards td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: inline-block;
+        width: 120px;
+        margin-right: 10px;
+        color: var(--accent);
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Modal Improvements
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .modal {
+        padding: 10px;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-header {
+        position: sticky;
+        top: 0;
+        background: var(--card);
+        z-index: 10;
+        padding: 15px;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .modal-footer {
+        position: sticky;
+        bottom: 0;
+        background: var(--card);
+        z-index: 10;
+        padding: 15px;
+        border-top: 1px solid var(--border-light);
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Grid Improvements
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .grid,
+    .metrics-grid,
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .grid,
+    .metrics-grid,
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Dashboard Optimizations
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    /* Dashboard layout */
+    .dashboard {
+        padding: 10px;
+    }
+
+    .dashboard-header {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    /* Status indicators */
+    .status-indicator {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+    /* Metric cards */
+    .metric-card {
+        padding: 15px;
+    }
+
+    .metric-value {
+        font-size: 1.8rem;
+    }
+
+    .metric-label {
+        font-size: 0.85rem;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Form Improvements
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .form-group {
+        width: 100%;
+    }
+
+    .form-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-actions button {
+        width: 100%;
+    }
+
+    /* Better label positioning on mobile */
+    label {
+        display: block;
+        margin-bottom: 8px;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Toast/Notification Improvements
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    #toast-container,
+    .notification-container {
+        bottom: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+        max-width: none !important;
+    }
+
+    .toast,
+    .notification {
+        width: 100%;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Safe Areas (iPhone notch, etc.)
+──────────────────────────────────────────────────────────────────────────── */
+
+@supports (padding: max(0px)) {
+    @media (max-width: 768px) {
+        body {
+            padding-left: max(0px, env(safe-area-inset-left));
+            padding-right: max(0px, env(safe-area-inset-right));
+        }
+
+        .navbar {
+            padding-left: max(10px, env(safe-area-inset-left));
+            padding-right: max(10px, env(safe-area-inset-right));
+        }
+
+        .container {
+            padding-left: max(15px, env(safe-area-inset-left));
+            padding-right: max(15px, env(safe-area-inset-right));
+        }
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Pull-to-Refresh Indicator
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .pull-to-refresh {
+        position: relative;
+        padding-top: 10px;
+    }
+
+    .refresh-indicator {
+        text-align: center;
+        color: var(--muted);
+        font-size: 14px;
+        padding: 10px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .refresh-indicator.visible {
+        opacity: 1;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Performance Optimizations
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    /* Reduce animations on mobile for better performance */
+    * {
+        animation-duration: 0.2s !important;
+        transition-duration: 0.2s !important;
+    }
+
+    /* Optimize images on mobile */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Hardware acceleration for smooth scrolling */
+    .card,
+    .modal-content,
+    .chart-container {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Accessibility Improvements
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    /* Better focus indicators for keyboard navigation on mobile */
+    *:focus {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    /* Better skip links for screen readers */
+    .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--accent);
+        color: white;
+        padding: 10px;
+        z-index: 100;
+    }
+
+    .skip-link:focus {
+        top: 0;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── 
+   Mobile Loading States
+──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+}

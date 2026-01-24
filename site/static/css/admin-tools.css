@@ -614,21 +614,74 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .admin-tools-container {
+        padding: 15px;
+    }
+
+    .admin-header h1 {
+        font-size: 2rem;
+    }
+
+    .admin-header p {
+        font-size: 1rem;
+    }
+
     .admin-layout {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
 
     .admin-sidebar {
         position: static;
+        padding: 12px;
+    }
+
+    .tab-btn {
+        padding: 10px 12px;
+        font-size: 0.9em;
+    }
+
+    .section-card {
+        padding: 18px;
+    }
+
+    .section-header h2 {
+        font-size: 1.3em;
     }
 
     .stats-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .audit-summary,
     .session-stats {
         grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .stat-box {
+        padding: 12px;
+    }
+
+    .filters {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filters input,
+    .filters select {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .data-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table table {
+        min-width: 600px;
     }
 
     .policies-grid {
@@ -637,6 +690,7 @@
 
     .maintenance-status {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .maintenance-actions {
@@ -657,17 +711,152 @@
         gap: 10px;
     }
 
+    .refresh-btn,
+    .primary-btn,
+    .action-btn {
+        width: 100%;
+        min-height: 48px;
+    }
+
     .backup-item {
         flex-direction: column;
         gap: 10px;
         align-items: flex-start;
+        padding: 12px;
     }
 
     .backup-actions {
         width: 100%;
+        flex-wrap: wrap;
     }
 
     .backup-btn {
         flex: 1;
+        min-width: 100px;
+    }
+
+    .stats-details {
+        grid-template-columns: 1fr;
+    }
+
+    .input-group {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-tools-container {
+        padding: 10px;
+    }
+
+    .admin-header h1 {
+        font-size: 1.6rem;
+    }
+
+    .admin-header p {
+        font-size: 0.9rem;
+    }
+
+    .admin-sidebar {
+        padding: 10px;
+    }
+
+    .tab-btn {
+        padding: 8px 10px;
+        font-size: 0.85em;
+    }
+
+    .section-card {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+
+    .section-header h2 {
+        font-size: 1.2em;
+    }
+
+    .audit-summary,
+    .session-stats,
+    .simulator-status {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-box {
+        padding: 10px;
+    }
+
+    .stat-value {
+        font-size: 1.5em;
+    }
+
+    /* Make tables stack on mobile */
+    .data-table table {
+        display: block;
+        width: 100%;
+        min-width: unset;
+    }
+
+    .data-table thead {
+        display: none;
+    }
+
+    .data-table tbody {
+        display: block;
+    }
+
+    .data-table tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .data-table td {
+        display: block;
+        text-align: left;
+        padding: 8px 5px;
+        border: none;
+    }
+
+    .data-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: inline-block;
+        width: 100px;
+        margin-right: 10px;
+        color: var(--accent);
+    }
+
+    .backup-item {
+        padding: 10px;
+    }
+
+    .backup-actions {
+        gap: 8px;
+    }
+
+    .backup-btn {
+        font-size: 0.8em;
+        padding: 6px 10px;
+    }
+
+    .action-item {
+        padding: 15px;
+    }
+
+    .action-item h4 {
+        font-size: 1.1rem;
+    }
+
+    .policy-card {
+        padding: 12px;
+    }
+
+    .mini-btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 4px;
+        margin-right: 0;
     }
 }

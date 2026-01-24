@@ -485,12 +485,26 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .tenant-header {
+        padding: 18px 15px;
+    }
+
     .tenant-header h1 {
         font-size: 1.8rem;
     }
 
+    .tenant-header p {
+        font-size: 1rem;
+    }
+
     .tab-navigation {
         flex-wrap: wrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .tab-button {
@@ -500,12 +514,160 @@
         font-size: 0.9rem;
     }
 
+    .tab-content {
+        padding: 20px 15px;
+    }
+
+    .org-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .btn-new-org {
+        width: 100%;
+    }
+
     .org-grid {
         grid-template-columns: 1fr;
     }
 
+    .org-card {
+        padding: 18px;
+    }
+
+    .members-table,
+    .locations-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .members-table table,
+    .locations-table table {
+        min-width: 600px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px 15px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .btn {
+        min-height: 48px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+
+    .tenant-header {
+        padding: 15px 10px;
+    }
+
+    .tenant-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .tab-button {
+        min-width: 90px;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
     .tab-content {
-        padding: 20px;
+        padding: 15px 10px;
+    }
+
+    .tab-content h2 {
+        font-size: 1.3rem;
+    }
+
+    .org-card {
+        padding: 15px;
+    }
+
+    .org-card h3 {
+        font-size: 1.1rem;
+    }
+
+    .org-stats {
+        gap: 10px;
+    }
+
+    .org-stat span:first-child {
+        font-size: 0.85rem;
+    }
+
+    /* Stack tables on mobile */
+    .members-table table,
+    .locations-table table {
+        display: block;
+        width: 100%;
+        min-width: unset;
+    }
+
+    .members-table thead,
+    .locations-table thead {
+        display: none;
+    }
+
+    .members-table tbody,
+    .locations-table tbody {
+        display: block;
+    }
+
+    .members-table tr,
+    .locations-table tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px;
+        background: var(--card-bg);
+    }
+
+    .members-table td,
+    .locations-table td {
+        display: block;
+        text-align: left;
+        padding: 8px 5px;
+        border: none;
+    }
+
+    .members-table td::before,
+    .locations-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: inline-block;
+        width: 120px;
+        margin-right: 10px;
+        color: var(--primary-color);
+    }
+
+    .modal-content {
+        padding: 15px 10px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
+
+    .members-form,
+    .locations-form {
+        padding: 15px;
     }
 }
 
