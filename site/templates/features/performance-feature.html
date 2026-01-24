@@ -138,12 +138,12 @@ function loadPerformance() {
                 html += '<div class="metrics-grid">';
                 
                 const metrics = [
-                    { name: 'Temps de Réponse', value: perf.response_time_ms || '15ms', icon: '⏱️', good: true },
-                    { name: 'Requêtes BD', value: perf.queries_per_minute ? perf.queries_per_minute + '/min' : '200/min', icon: '🗄️', good: true },
-                    { name: 'Taux de Cache', value: perf.cache_hit_ratio || '78%', icon: '✓', good: true },
-                    { name: 'Disponibilité', value: perf.uptime_percent || '99.8%', icon: '🟢', good: true },
-                    { name: 'Sessions Actives', value: perf.active_sessions || '5', icon: '👥', good: true },
-                    { name: 'Utilisation Mémoire', value: (perf.memory_usage_percent ?? 45) + '%', icon: '💾', good: true }
+                    { name: 'Temps de Réponse', value: perf.response_time_ms !== undefined ? `${perf.response_time_ms} ms` : '15ms', icon: '⏱️', good: true },
+                    { name: 'Requêtes BD', value: perf.queries_per_minute !== undefined ? `${perf.queries_per_minute}/min` : '200/min', icon: '🗄️', good: true },
+                    { name: 'Taux de Cache', value: perf.cache_hit_ratio !== undefined ? `${perf.cache_hit_ratio}%` : '78%', icon: '✓', good: true },
+                    { name: 'Disponibilité', value: perf.uptime_percent !== undefined ? `${perf.uptime_percent}%` : '99.8%', icon: '🟢', good: true },
+                    { name: 'Sessions Actives', value: perf.active_sessions ?? '5', icon: '👥', good: true },
+                    { name: 'Utilisation Mémoire', value: `${perf.memory_usage_percent ?? 45}%`, icon: '💾', good: true }
                 ];
                 
                 metrics.forEach(metric => {

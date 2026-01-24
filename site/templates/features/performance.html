@@ -544,16 +544,17 @@ function loadPerformance() {
                 const p = data.performance;
                 const responseMs = parseInt(p.response_time_ms, 10) || 0;
                 const cacheHit = parseInt(p.cache_hit_ratio, 10) || 0;
-                const uptime = p.uptime_percent || 'N/A';
+                const uptime = p.uptime_percent !== undefined ? p.uptime_percent : 'N/A';
+                const uptimeStr = typeof uptime === 'number' ? `${uptime}%` : uptime;
                 const statusText = p.status === 'needs_optimization' ? 'À optimiser' : (p.status === 'good' ? 'Bon' : 'Optimal');
 
                 const metrics = [
-                    { name: 'Temps de Réponse', value: p.response_time_ms || '--', icon: '⏱️', good: responseMs < 120 },
-                    { name: 'Requêtes/min', value: p.queries_per_minute ? `${p.queries_per_minute}` : '--', icon: '🗄️', good: true },
-                    { name: 'Taux de Cache', value: p.cache_hit_ratio || '--', icon: '✓', good: cacheHit >= 75 },
-                    { name: 'Disponibilité', value: uptime, icon: '🟢', good: uptime.includes('99') },
+                    { name: 'Temps de Réponse', value: p.response_time_ms !== undefined ? `${p.response_time_ms} ms` : '--', icon: '⏱️', good: responseMs < 120 },
+                    { name: 'Requêtes/min', value: p.queries_per_minute !== undefined ? `${p.queries_per_minute}` : '--', icon: '🗄️', good: true },
+                    { name: 'Taux de Cache', value: p.cache_hit_ratio !== undefined ? `${p.cache_hit_ratio}%` : '--', icon: '✓', good: cacheHit >= 75 },
+                    { name: 'Disponibilité', value: uptimeStr, icon: '🟢', good: typeof uptime === 'number' ? uptime >= 99 : false },
                     { name: 'Sessions Actives', value: p.active_sessions ?? '--', icon: '👥', good: true },
-                    { name: 'Utilisation Mémoire', value: `${p.memory_usage_percent}%`, icon: '💾', good: (p.memory_usage_percent || 0) < 80 }
+                    { name: 'Utilisation Mémoire', value: p.memory_usage_percent !== undefined ? `${p.memory_usage_percent}%` : '--', icon: '💾', good: (p.memory_usage_percent || 0) < 80 }
                 ];
 
                 let html = '<div class="data-display">';
