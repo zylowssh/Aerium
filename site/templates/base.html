@@ -29,6 +29,11 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/profile-admin.css') }}"
     />
+    <!-- Enhanced UI Styles -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/enhanced-ui.css') }}"
+    />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
@@ -201,5 +206,7 @@
     <script defer src="{{ url_for('static', filename='js/live.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/overview.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Enhanced UI JavaScript -->
+    <script defer src="{{ url_for('static', filename='js/enhanced-ui.js') }}"></script>
   </body>
 </html>

@@ -279,63 +279,62 @@ def health_feature():
 
 @app.route('/manifest.json')
 def manifest():
-    """PWA Manifest for installable app"""
-    return jsonify({
-    'name': 'Aerium CO₂ Monitor',
-    'short_name': 'Aerium',
-        'description': 'Surveillance professionnelle du CO₂ avec graphiques avancés',
-        'start_url': '/',
-        'scope': '/',
-        'display': 'standalone',
-        'orientation': 'portrait-primary',
-        'theme_color': '#3dd98f',
-        'background_color': '#ffffff',
-        'icons': [
-            {
-                'src': '/static/images/icon-192.png',
-                'sizes': '192x192',
-                'type': 'image/png',
-                'purpose': 'any'
-            },
-            {
-                'src': '/static/images/icon-512.png',
-                'sizes': '512x512',
-                'type': 'image/png',
-                'purpose': 'any'
-            }
-        ],
-        'screenshots': [
-            {
-                'src': '/static/images/screenshot-540.png',
-                'sizes': '540x720',
-                'type': 'image/png',
-                'form_factor': 'narrow'
-            },
-            {
-                'src': '/static/images/screenshot-1280.png',
-                'sizes': '1280x720',
-                'type': 'image/png',
-                'form_factor': 'wide'
-            }
-        ]
-    })
+    """PWA Manifest for installable app - Enhanced Version"""
+    try:
+        with open(os.path.join(app.root_path, 'manifest.json'), 'r') as f:
+            manifest_data = json.load(f)
+        return jsonify(manifest_data)
+    except FileNotFoundError:
+        # Fallback to basic manifest if file not found
+        return jsonify({
+            'name': 'Aerium - Air Quality Monitor',
+            'short_name': 'Aerium',
+            'description': 'Real-time CO₂ air quality monitoring system with advanced analytics',
+            'start_url': '/',
+            'scope': '/',
+            'display': 'standalone',
+            'orientation': 'any',
+            'theme_color': '#0f0f23',
+            'background_color': '#0f0f23',
+            'icons': [
+                {
+                    'src': '/static/images/icon-192.png',
+                    'sizes': '192x192',
+                    'type': 'image/png',
+                    'purpose': 'any maskable'
+                },
+                {
+                    'src': '/static/images/icon-512.png',
+                    'sizes': '512x512',
+                    'type': 'image/png',
+                    'purpose': 'any maskable'
+                }
+            ]
+        })
 
 @app.route('/sw.js')
 def service_worker():
-    """Service Worker for offline support and caching"""
-    response = make_response("""
-const CACHE_NAME = 'aerium-v1';
+    """Service Worker for offline support and caching - Enhanced Version"""
+    try:
+        # Try to serve the enhanced service worker file
+        with open(os.path.join(app.root_path, 'sw.js'), 'r') as f:
+            sw_content = f.read()
+        response = make_response(sw_content)
+    except FileNotFoundError:
+        # Fallback to inline service worker if file not found
+        response = make_response("""
+// Fallback Service Worker for Aerium
+const CACHE_NAME = 'aerium-v1.0.0-fallback';
 const STATIC_ASSETS = [
   '/',
   '/static/css/style.css',
-  '/static/js/keyboard-shortcuts.js',
-  '/static/js/global-search.js'
+  '/static/js/enhanced-ui.js'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(STATIC_ASSETS))
+      .then(cache => cache.addAll(STATIC_ASSETS).catch(() => console.log('Some assets failed to cache')))
       .then(() => self.skipWaiting())
   );
 });
@@ -360,41 +359,50 @@ self.addEventListener('fetch', event => {
 
   if (request.method !== 'GET') return;
 
-  // Skip caching for external CDN resources
+  // Skip external CDN resources
   if (url.hostname.includes('cdn.jsdelivr.net') || 
       url.hostname.includes('cdn.socket.io') ||
       url.hostname.includes('unpkg.com')) {
     return;
   }
 
+  // Network first for API calls
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
-        .catch(() => new Response('Offline', { status: 503 }))
+        .then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then(cached => cached || new Response('Offline', { status: 503 })))
     );
     return;
   }
 
+  // Cache first for static assets
   event.respondWith(
-    fetch(request)
-      .then(response => {
-        if (response.ok && url.origin === self.location.origin) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, clone);
-          });
-        }
-        return response;
+    caches.match(request)
+      .then(cached => {
+        if (cached) return cached;
+        return fetch(request).then(response => {
+          if (response.ok && url.origin === self.location.origin) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
+          return response;
+        });
       })
-      .catch(() => {
-        return caches.match(request)
-          .then(cached => cached || new Response('Offline', { status: 503 }));
-      })
+      .catch(() => new Response('Offline', { status: 503 }))
   );
 });
 """)
+    
     response.headers['Content-Type'] = 'application/javascript'
-    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Service-Worker-Allowed'] = '/'
     return response
 
 # Admin routes moved to blueprints/admin_routes.py
