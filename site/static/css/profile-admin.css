@@ -318,3 +318,208 @@ All colors now use CSS variables for automatic light/dark mode support
   font-size: 0.95rem;
   margin: 0;
 }
+
+/* Responsive Mobile Styles */
+@media (max-width: 768px) {
+  .admin-tabs-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 5px;
+    margin-bottom: 20px;
+  }
+
+  .admin-tab {
+    padding: 10px 18px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .stat-card {
+    padding: 15px;
+  }
+
+  .stat-card .value {
+    font-size: 1.6rem;
+  }
+
+  .admin-table {
+    overflow-x: auto;
+    display: block;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-table table {
+    min-width: 600px;
+  }
+
+  .guide-container {
+    padding: 20px;
+    margin: 15px;
+  }
+
+  .guide-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .guide-header p {
+    font-size: 1rem;
+  }
+
+  .guide-section {
+    padding: 15px;
+  }
+
+  .guide-section h2 {
+    font-size: 1.2rem;
+  }
+
+  .guide-step {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .guide-step-number {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    font-size: 1rem;
+  }
+
+  .admin-input-group input,
+  .admin-input-group select,
+  .admin-input-group textarea,
+  .action-btn {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-tabs-container {
+    gap: 3px;
+    margin-bottom: 15px;
+  }
+
+  .admin-tab {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-card .label {
+    font-size: 0.75rem;
+  }
+
+  .stat-card .value {
+    font-size: 1.4rem;
+  }
+
+  .stat-card .subtext {
+    font-size: 0.75rem;
+  }
+
+  /* Stack table on very small screens */
+  .admin-table {
+    display: block;
+  }
+
+  .admin-table table {
+    display: block;
+    width: 100%;
+    min-width: unset;
+  }
+
+  .admin-table thead {
+    display: none;
+  }
+
+  .admin-table tbody {
+    display: block;
+  }
+
+  .admin-table tr {
+    display: block;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 10px;
+    background: var(--card);
+  }
+
+  .admin-table td {
+    display: block;
+    text-align: left;
+    padding: 8px 5px;
+    border: none;
+  }
+
+  .admin-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    display: inline-block;
+    width: 120px;
+    margin-right: 10px;
+    color: var(--accent);
+  }
+
+  .action-btn {
+    display: block;
+    width: 100%;
+    margin: 4px 0;
+    text-align: center;
+  }
+
+  .role-badge {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+  }
+
+  .guide-container {
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .guide-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .guide-header p {
+    font-size: 0.9rem;
+  }
+
+  .guide-section {
+    padding: 12px;
+    margin: 15px 0;
+  }
+
+  .guide-section h2 {
+    font-size: 1.1rem;
+  }
+
+  .guide-step {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .guide-step-number {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    font-size: 0.9rem;
+  }
+
+  .guide-step-content h3 {
+    font-size: 0.95rem;
+  }
+
+  .guide-step-content p {
+    font-size: 0.85rem;
+  }
+
+  .message-box {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,17 @@
+# Aerium Alarm Clock - Requirements
+
+# Core dependencies
+kivy>=2.3.0
+kivymd>=1.2.0
+
+# Network requests for API communication
+requests>=2.32.0
+
+# Android/iOS support (optional, for mobile builds)
+# plyer>=2.1.0  # For notifications and platform features
+
+# For Android builds
+# buildozer>=1.5.0
+
+# For iOS builds (macOS only)
+# kivy-ios>=1.4.0

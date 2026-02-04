@@ -553,12 +553,26 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .collaboration-header {
+        padding: 18px 15px;
+    }
+
     .collaboration-header h1 {
         font-size: 1.8rem;
     }
 
+    .collaboration-header p {
+        font-size: 1rem;
+    }
+
     .tab-navigation {
         flex-wrap: wrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .tab-button {
@@ -568,24 +582,187 @@
         font-size: 0.9rem;
     }
 
+    .tab-content {
+        padding: 20px 15px;
+    }
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
     }
 
     .share-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .share-card,
+    .member-card,
+    .alert-item {
+        padding: 15px;
+    }
+
+    .share-header,
+    .alerts-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .btn-share-dashboard,
+    .btn-create-alert {
+        width: 100%;
     }
 
     .activity-item {
         gap: 10px;
+        padding: 12px;
+    }
+
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
     }
 
     .comment-form {
         flex-direction: column;
     }
 
+    .comment-form textarea {
+        min-height: 60px;
+    }
+
     .btn-comment {
-        align-self: flex-start;
+        align-self: stretch;
+        width: 100%;
+    }
+
+    .comment-thread {
+        padding: 12px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px 15px;
+    }
+
+    .btn,
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        min-height: 48px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+
+    .collaboration-header {
+        padding: 15px 10px;
+    }
+
+    .collaboration-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .tab-button {
+        min-width: 90px;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    .tab-content {
+        padding: 15px 10px;
+    }
+
+    .tab-content h2 {
+        font-size: 1.3rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 15px;
+    }
+
+    .stat-card .stat-value {
+        font-size: 2rem;
+    }
+
+    .share-card,
+    .member-card,
+    .alert-item {
+        padding: 12px;
+    }
+
+    .share-card h3,
+    .member-card h4 {
+        font-size: 1.1rem;
+    }
+
+    .share-info span,
+    .member-info span {
+        font-size: 0.85rem;
+    }
+
+    .activity-item {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+
+    .activity-content h4 {
+        font-size: 0.95rem;
+    }
+
+    .activity-content p,
+    .activity-time {
+        font-size: 0.8rem;
+    }
+
+    .comment-thread {
+        padding: 10px;
+    }
+
+    .comment-header h4 {
+        font-size: 0.95rem;
+    }
+
+    .comment-meta,
+    .comment-text {
+        font-size: 0.85rem;
+    }
+
+    .filter-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    .modal-content {
+        padding: 15px 10px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
     }
 }
 
