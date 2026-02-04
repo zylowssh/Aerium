@@ -295,10 +295,10 @@ function initAlertLog() {
   `;
   alertPanel.appendChild(alertsContainer);
 
-  // Toggle button in bottom right as floating action button
+  // Toggle button in bottom left as floating action button
   const toggleBtn = document.createElement("button");
   toggleBtn.style.cssText = `
-    position: fixed; right: 24px; bottom: 24px; z-index: 9997;
+    position: fixed; left: 24px; bottom: 24px; z-index: 9997;
     background: linear-gradient(135deg, #4ade80, #22c55e);
     border: none; color: #0b0d12; padding: 14px 18px; border-radius: 50px;
     cursor: pointer; font-weight: 700; font-size: 0.9rem;
