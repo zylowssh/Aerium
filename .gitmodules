@@ -1,0 +1,3 @@
+[submodule "air-sense"]
+	path = air-sense
+	url = https://github.com/zylowssh/main
