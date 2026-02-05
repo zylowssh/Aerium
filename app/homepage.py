@@ -92,23 +92,35 @@ class MainApp(MDApp):
         self.alarmProcess.open()
                 
     #* gere l'ouverture de la popup selection des jours  
-    def show_days_dialog(self, time):
+    def show_days_dialog(self, time,thisalarm=None):
         dialog = DaysDialog()
         #* fonction intermediaire pour passer le temps selectionne sinon kivy pleure
         dialog.bind(
-            on_dismiss=lambda dialog: self.on_dialog_dismiss(dialog, time)
+            on_dismiss=lambda dialog: self.on_dialog_dismiss(dialog, time,thisalarm)
         )
         dialog.open()  
 
     #* gere la fermeture de la popup selection des jours
-    def on_dialog_dismiss(self, dialog, time):
+    def on_dialog_dismiss(self, dialog, time,thisalarm=None):
         if dialog.state is False:
             alarm_data = {
                 "hour_min": time,
                 "selected_days": dialog.selected_days,
                 "active": True
             }
-
+                        
+            #* formate les jours selectionnes pour l'affichage "Lun, Mar, Mer"
+            selected_days = DataManager.format_days(dialog.selected_days)
+            
+            if thisalarm is not None:
+                self.dataManager.change(thisalarm.alarm_id, alarm_data)
+                self.total_alarms[thisalarm.alarm_id] = alarm_data
+                print(self.total_alarms)
+                #* met a jour l'affichage de la carte
+                self.alarms_layout.clear_widgets()
+                self.on_start()
+                return
+            
             all_data = self.dataManager.read()
             #* genere un id unique pour chaque alarme
             alarm_id = str(uuid.uuid4())
@@ -116,9 +128,7 @@ class MainApp(MDApp):
 
             self.dataManager.write(all_data)
             self.total_alarms = all_data
-            
-            #* formate les jours selectionnes pour l'affichage "Lun, Mar, Mer"
-            selected_days = DataManager.format_days(dialog.selected_days)
+
 
             self.add_alarm(time, selected_days, alarm_id, alarm_data, alarm_data["active"])
             

@@ -1,8 +1,9 @@
 from kivymd.uix.pickers import MDTimePickerDialVertical
 from kivymd.app import MDApp
 class StartAlarmProcess(MDTimePickerDialVertical):
-    def __init__(self,):
+    def __init__(self,thisalarm=None):
         super().__init__()
+        self.thisalarm = thisalarm
         self.bind(on_ok=self.on_ok, on_cancel=self.on_cancel)
         self.bind(on_dismiss=self.on_dismiss)
         
@@ -19,5 +20,5 @@ class StartAlarmProcess(MDTimePickerDialVertical):
     def on_dismiss(self, *args):
         if self.time:
             #* ouvre la popup de selection des jours
-            MDApp.get_running_app().show_days_dialog(self.time)
+            MDApp.get_running_app().show_days_dialog(self.time, self.thisalarm)
             self.time = None

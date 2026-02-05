@@ -42,7 +42,7 @@ class DataManager:
         if id_alarm in all_data:
             del all_data[id_alarm]
             self.write(all_data)
-            
+             
     @staticmethod
     def format_days(days_list):
         return (

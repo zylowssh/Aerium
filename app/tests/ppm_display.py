@@ -13,14 +13,18 @@ from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
 from kivymd.uix.button import MDButton, MDButtonText
 from kivymd.uix.menu import MDDropdownMenu
-import socketio
 import threading
 from datetime import datetime
 import requests
+import logging
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 WEBSOCKET_URL = "http://localhost:5000"
 
@@ -29,7 +33,7 @@ TEST_EMAIL = "demo@aerium.app"
 TEST_PASSWORD = "demo123"
 
 # ============================================================================
-# WEBSOCKET CLIENT
+# WEBSOCKET CLIENT (FALLBACK VERSION)
 # ============================================================================
 
 class PPMWebSocketManager:
@@ -41,61 +45,85 @@ class PPMWebSocketManager:
         self.sio = None
         self.connected = False
         self.current_sensor_id = None
-        self.setup_websocket()
+        
+        # Try to import socketio, but handle if it's not available
+        try:
+            import socketio
+            self.socketio_available = True
+            self.setup_websocket()
+        except ImportError:
+            logger.warning("python-socketio not installed. WebSocket features disabled.")
+            self.socketio_available = False
+            if self.on_data_callback:
+                self.on_data_callback({'status': 'error', 'message': 'SocketIO not installed'})
     
     def setup_websocket(self):
         """Initialize WebSocket connection"""
-        print(f"🔌 Initializing WebSocket at {self.server_url}")
+        if not self.socketio_available:
+            return
+            
+        logger.info(f"Initializing WebSocket at {self.server_url}")
         
-        self.sio = socketio.Client(
-            reconnection=True,
-            reconnection_delay=1,
-            reconnection_delay_max=5,
-            logger=False,
-            engineio_logger=False
-        )
+        import socketio
         
-        # Register event handlers
-        self.sio.on('connect', self.on_connect)
-        self.sio.on('disconnect', self.on_disconnect)
-        self.sio.on('connect_error', self.on_connect_error)
-        self.sio.on('sensor_reading', self.on_sensor_reading)
-        
-        # Connect in background thread
-        threading.Thread(target=self.connect_to_server, daemon=True).start()
+        try:
+            self.sio = socketio.Client(
+                reconnection=True,
+                reconnection_delay=1,
+                reconnection_delay_max=5,
+                logger=False,
+                engineio_logger=False
+            )
+            
+            # Register event handlers
+            self.sio.on('connect', self.on_connect)
+            self.sio.on('disconnect', self.on_disconnect)
+            self.sio.on('connect_error', self.on_connect_error)
+            self.sio.on('sensor_reading', self.on_sensor_reading)
+            
+            # Connect in background thread
+            threading.Thread(target=self.connect_to_server, daemon=True).start()
+        except Exception as e:
+            logger.error(f"Failed to initialize WebSocket: {e}")
+            if self.on_data_callback:
+                self.on_data_callback({'status': 'error', 'message': str(e)})
     
     def connect_to_server(self):
         """Connect to WebSocket server"""
+        if not self.sio:
+            return
+            
         try:
-            print(f"📡 Attempting connection...")
-            if self.sio:
-                self.sio.connect(self.server_url)
+            logger.info("Attempting WebSocket connection...")
+            self.sio.connect(self.server_url, wait_timeout=5)
         except Exception as e:
-            print(f"❌ Connection error: {e}")
+            logger.error(f"WebSocket connection error: {e}")
+            if self.on_data_callback:
+                self.on_data_callback({'status': 'error', 'message': str(e)})
     
     def on_connect(self):
         """Called when connected"""
-        print("✅ Connected to WebSocket!")
+        logger.info("Connected to WebSocket!")
         self.connected = True
         if self.on_data_callback:
             self.on_data_callback({'status': 'connected'})
     
     def on_disconnect(self):
         """Called when disconnected"""
-        print("⚠️ Disconnected from WebSocket")
+        logger.warning("Disconnected from WebSocket")
         self.connected = False
         if self.on_data_callback:
             self.on_data_callback({'status': 'disconnected'})
     
     def on_connect_error(self, error):
         """Called on connection error"""
-        print(f"❌ Connection error: {error}")
+        logger.error(f"WebSocket connection error: {error}")
         if self.on_data_callback:
-            self.on_data_callback({'status': 'error'})
+            self.on_data_callback({'status': 'error', 'message': str(error)})
     
     def on_sensor_reading(self, data):
         """Called when sensor reading received"""
-        print(f"📊 Received data: {data}")
+        logger.info(f"Received sensor data: {data}")
         if self.on_data_callback:
             self.on_data_callback({
                 'status': 'data',
@@ -111,9 +139,9 @@ class PPMWebSocketManager:
             self.current_sensor_id = sensor_id
             try:
                 self.sio.emit('subscribe_sensor', {'sensor_id': sensor_id})
-                print(f"📌 Subscribed to sensor {sensor_id}")
+                logger.info(f"Subscribed to sensor {sensor_id}")
             except Exception as e:
-                print(f"Error subscribing to sensor: {e}")
+                logger.error(f"Error subscribing to sensor: {e}")
 
 # ============================================================================
 # MAIN SCREEN
@@ -132,11 +160,12 @@ class PPMDisplayScreen(MDScreen):
         self.sensors = []
         self.selected_sensor = None
         self.polling_event = None
-        self.polling_thread = None
         self.rate_limit_backoff = 0  # Backoff counter for rate limiting
+        self.demo_mode = False
+        self.demo_event = None
         self.build_ui()
-        self.authenticate()
         self.setup_websocket()
+        Clock.schedule_once(self.delayed_authenticate, 0.5)
     
     def build_ui(self):
         """Build the user interface"""
@@ -155,7 +184,7 @@ class PPMDisplayScreen(MDScreen):
         )
         
         self.status_label = MDLabel(
-            text="Connecting...",
+            text="Initializing...",
             halign="center",
             font_size="18sp"
         )
@@ -262,7 +291,18 @@ class PPMDisplayScreen(MDScreen):
         )
         main_layout.add_widget(self.timestamp_label)
         
+        # Add demo sensors by default
+        self.sensors = [
+            {'id': 'demo-1', 'name': 'Demo Sensor 1'},
+            {'id': 'demo-2', 'name': 'Demo Sensor 2'},
+            {'id': 'demo-3', 'name': 'Demo Sensor 3'}
+        ]
+        
         self.add_widget(main_layout)
+    
+    def delayed_authenticate(self, dt):
+        """Delayed authentication to let UI load first"""
+        threading.Thread(target=self.authenticate, daemon=True).start()
     
     def setup_websocket(self):
         """Setup WebSocket connection"""
@@ -273,7 +313,7 @@ class PPMDisplayScreen(MDScreen):
     
     def authenticate(self):
         """Authenticate with backend and get JWT token"""
-        print("Authenticating...")
+        logger.info("Authenticating...")
         try:
             response = requests.post(
                 f"{WEBSOCKET_URL}/api/auth/login",
@@ -283,18 +323,72 @@ class PPMDisplayScreen(MDScreen):
             if response.status_code == 200:
                 data = response.json()
                 self.access_token = data.get('access_token')
-                print("Authentication successful!")
+                logger.info("Authentication successful!")
                 # Fetch sensors after successful authentication
                 self.fetch_sensors()
             else:
-                print(f"Authentication failed: {response.text}")
+                logger.warning(f"Authentication failed: {response.status_code}")
+                Clock.schedule_once(lambda dt: self._update_status_display("Demo Mode (Auth Failed)"))
         except Exception as e:
-            print(f"Authentication error: {e}")
+            logger.error(f"Authentication error: {e}")
+            Clock.schedule_once(lambda dt: self._update_status_display("Demo Mode (Server Offline)"))
+    
+    def _update_status_display(self, text):
+        """Update status display on main thread"""
+        self.status_text = text
+        self.status_label.text = text
+    
+    def enable_demo_mode(self):
+        """Enable demo mode with simulated data"""
+        if not self.demo_mode:
+            self.demo_mode = True
+            logger.info("Running in demo mode")
+            
+            # Cancel any existing demo events
+            if self.demo_event:
+                self.demo_event.cancel()
+            
+            # Schedule demo data updates
+            self.demo_event = Clock.schedule_interval(self.update_demo_data, 2.0)
+    
+    def update_demo_data(self, dt):
+        """Update with demo data for testing"""
+        if not self.selected_sensor:
+            return
+            
+        # Simulate realistic CO2 data (400-2000 ppm)
+        import random
+        import time
+        
+        # Generate slowly changing values for realism
+        if not hasattr(self, 'last_co2'):
+            self.last_co2 = 600
+            self.last_temp = 22.0
+            self.last_humid = 50.0
+        
+        # Small random changes
+        self.last_co2 += random.randint(-20, 20)
+        self.last_co2 = max(400, min(2000, self.last_co2))
+        
+        self.last_temp += random.uniform(-0.5, 0.5)
+        self.last_temp = max(18.0, min(28.0, self.last_temp))
+        
+        self.last_humid += random.uniform(-2, 2)
+        self.last_humid = max(30.0, min(70.0, self.last_humid))
+        
+        data = {
+            'co2': self.last_co2,
+            'temperature': self.last_temp,
+            'humidity': self.last_humid,
+            'sensor_id': self.selected_sensor['id']
+        }
+        
+        self._update_display(data)
     
     def fetch_sensors(self):
         """Fetch sensors for the authenticated user"""
         if not self.access_token:
-            print("Not authenticated, cannot fetch sensors")
+            logger.warning("Not authenticated, cannot fetch sensors")
             return
         
         try:
@@ -308,17 +402,21 @@ class PPMDisplayScreen(MDScreen):
             )
             if response.status_code == 200:
                 data = response.json()
-                self.sensors = [
+                server_sensors = [
                     {'id': sensor['id'], 'name': sensor['name']}
                     for sensor in data.get('sensors', [])
                 ]
-                print(f"Fetched {len(self.sensors)} sensors")
-                for sensor in self.sensors:
-                    print(f"   - {sensor['name']} (ID: {sensor['id']})")
+                if server_sensors:
+                    self.sensors = server_sensors
+                    logger.info(f"Fetched {len(self.sensors)} sensors")
+                    for sensor in self.sensors:
+                        logger.info(f"   - {sensor['name']} (ID: {sensor['id']})")
+                else:
+                    logger.warning("No sensors found on server")
             else:
-                print(f"Error fetching sensors: {response.status_code}")
+                logger.warning(f"Error fetching sensors: {response.status_code}")
         except Exception as e:
-            print(f"Error fetching sensors: {e}")
+            logger.error(f"Error fetching sensors: {e}")
     
     def on_websocket_data(self, data):
         """Handle WebSocket data updates"""
@@ -331,8 +429,12 @@ class PPMDisplayScreen(MDScreen):
             self.status_text = "Disconnected"
             Clock.schedule_once(lambda dt: self._update_status())
         elif status == 'error':
-            self.status_text = "Error"
+            error_msg = data.get('message', 'Connection Error')
+            self.status_text = error_msg
             Clock.schedule_once(lambda dt: self._update_status())
+            # If it's a socketio not installed error, enable demo mode
+            if 'SocketIO' in error_msg:
+                self.enable_demo_mode()
         elif status == 'data' and self.selected_sensor:
             if data.get('sensor_id') == self.selected_sensor['id']:
                 Clock.schedule_once(lambda dt: self._update_display(data))
@@ -354,23 +456,32 @@ class PPMDisplayScreen(MDScreen):
         # Quality
         if co2 < 800:
             quality = "Good"
+            self.quality_label.theme_text_color = "Custom"
+            self.quality_label.text_color = (0, 1, 0, 1)  # Green
         elif co2 < 1200:
             quality = "Fair"
+            self.quality_label.theme_text_color = "Custom"
+            self.quality_label.text_color = (1, 1, 0, 1)  # Yellow
         else:
             quality = "Poor"
+            self.quality_label.theme_text_color = "Custom"
+            self.quality_label.text_color = (1, 0, 0, 1)  # Red
         
         self.quality_label.text = quality
         self.timestamp_label.text = f"Last: {datetime.now().strftime('%H:%M:%S')}"
     
     def show_sensor_menu(self, *args):
         """Show sensor selection menu"""
-        menu_items = [
-            {
-                "text": sensor['name'],
-                "on_release": lambda s=sensor: self.select_sensor(s),
-            }
-            for sensor in self.sensors
-        ]
+        if not self.sensors:
+            menu_items = [{"text": "No sensors available", "on_release": lambda: None}]
+        else:
+            menu_items = [
+                {
+                    "text": sensor['name'],
+                    "on_release": lambda s=sensor: self.select_sensor(s),
+                }
+                for sensor in self.sensors
+            ]
         
         menu = MDDropdownMenu(
             caller=self.sensor_button,
@@ -382,18 +493,26 @@ class PPMDisplayScreen(MDScreen):
         """Select a sensor"""
         self.selected_sensor = sensor
         self.sensor_button.text = sensor['name']
-        print(f"Selected: {sensor['name']} (ID: {sensor['id']})")
-        # Cancel previous polling
+        logger.info(f"Selected: {sensor['name']} (ID: {sensor['id']})")
+        
+        # Cancel any existing polling
         if self.polling_event:
             self.polling_event.cancel()
         
-        if self.ws_manager and self.ws_manager.connected:
-            self.ws_manager.subscribe_to_sensor(sensor['id'])
+        # Cancel demo mode if active
+        if self.demo_event:
+            self.demo_event.cancel()
+            self.demo_mode = False
+        
+        # If WebSocket is available, subscribe
+        if self.ws_manager and hasattr(self.ws_manager, 'socketio_available') and self.ws_manager.socketio_available:
+            if self.ws_manager.connected:
+                self.ws_manager.subscribe_to_sensor(sensor['id'])
         
         # Reset rate limit backoff
         self.rate_limit_backoff = 0
         
-        # Start polling for sensor data (every 5 seconds instead of 2)
+        # Start polling for sensor data
         self.poll_sensor_data()
         self.polling_event = Clock.schedule_interval(lambda dt: self.poll_sensor_data(), 5.0)
         
@@ -402,10 +521,18 @@ class PPMDisplayScreen(MDScreen):
         self.quality_label.text = "--"
         self.temp_label.text = "-- °C"
         self.humid_label.text = "-- %"
+        
+        # If we don't have WebSocket or server, enable demo mode
+        if not hasattr(self.ws_manager, 'socketio_available') or not self.ws_manager.socketio_available:
+            self.enable_demo_mode()
     
     def poll_sensor_data(self):
         """Poll sensor data from API"""
         if not self.selected_sensor:
+            return
+        
+        # If in demo mode, don't poll
+        if self.demo_mode:
             return
         
         threading.Thread(
@@ -417,7 +544,7 @@ class PPMDisplayScreen(MDScreen):
     def _fetch_sensor_data(self, sensor_id):
         """Fetch sensor data from API in background thread"""
         if not self.access_token:
-            print("Not authenticated")
+            logger.warning("Not authenticated")
             return
         
         # Skip if we're in rate limit backoff
@@ -443,10 +570,10 @@ class PPMDisplayScreen(MDScreen):
                 self.rate_limit_backoff = 0
             elif response.status_code == 429:
                 # Rate limited - back off for 30 seconds (6 polling cycles)
-                print(f"⏱️ Rate limited, backing off for 30s...")
+                logger.warning(f"Rate limited, backing off for 30s...")
                 self.rate_limit_backoff = 6
         except Exception as e:
-            print(f"Error fetching sensor data: {e}")
+            logger.error(f"Error fetching sensor data: {e}")
 
 # ============================================================================
 # MAIN APP
