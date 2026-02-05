@@ -8,6 +8,7 @@ venv/
 __pycache__/*
 *.py[cod]
 *$py.class
+site/
 
 # VS Code workspace storage (keep shared settings, but ignore local state)
 .vscode/*.code-workspace
