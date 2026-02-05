@@ -82,7 +82,7 @@ class MainApp(MDApp):
         for alarm_id, data in self.total_alarms.items():
             hour_min = data["hour_min"]
             days_list = data["selected_days"]
-            active = data["active"]
+            active = data["active"] 
             selected_days = DataManager.format_days(days_list)
             self.add_alarm(hour_min, selected_days, alarm_id, data, active)
             
