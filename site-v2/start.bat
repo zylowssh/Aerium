@@ -34,11 +34,7 @@ echo.
 
 REM ========== BACKEND ==========
 echo [INIT] Starting Flask backend...
-cd /d "%~dp0backend" || (
-    echo [ERROR] Backend directory not found
-    pause
-    exit /b 1
-)
+cd /d "%~dp0backend"
 
 if not exist "venv" (
     echo [INFO] Creating virtual environment...
@@ -47,13 +43,18 @@ if not exist "venv" (
         pause
         exit /b 1
     )
+    echo [OK] Virtual environment created
 )
 
 set "PYTHON=%cd%\venv\Scripts\python.exe"
-set "PIP=%cd%\venv\Scripts\pip.exe"
 
 echo [INFO] Installing Python packages...
-"%PIP%" install -q -r requirements.txt 2>nul || "%PIP%" install -q --upgrade -r requirements.txt 2>nul
+"%PYTHON%" -m pip install -r requirements.txt >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Package installation failed
+    pause
+    exit /b 1
+)
 
 if not exist "aerium.db" (
     echo [INFO] Creating database...
@@ -61,19 +62,28 @@ if not exist "aerium.db" (
 )
 
 echo [START] Launching backend...
-start "Aerium Backend" /B "%PYTHON%" app.py
-timeout /t 3 /nobreak >nul
+
+REM SOLUTION 1: Run in separate minimized window (cleanest)
+start "Aerium Backend" /MIN "%PYTHON%" app.py
+
+REM SOLUTION 2: If you really need it in background, use this instead:
+REM cmd /c "start /B "" "%PYTHON%" app.py >nul 2>&1"
+
+timeout /t 5 /nobreak >nul
 
 REM ========== FRONTEND ==========
 cd /d "%~dp0"
 
 if not exist "node_modules" (
     echo [INFO] Installing npm packages...
-    call npm install --silent
+    call npm install --silent >nul 2>&1
 )
 
 echo [START] Launching frontend...
-start "Aerium Frontend" /B npm run dev
+
+REM Frontend in separate minimized window too, or keep /B if you want to see Vite output
+start "Aerium Frontend" /MIN npm run dev
+
 timeout /t 3 /nobreak >nul
 
 REM ========== DONE ==========
@@ -83,7 +93,7 @@ echo ===========================================================================
 echo                        AERIUM IS NOW RUNNING!
 echo ================================================================================
 echo.
-echo  Frontend:  http://localhost:8080
+echo  Frontend:  http://localhost:5173
 echo  Backend:   http://localhost:5000
 echo  WebSocket: ws://localhost:5000
 echo.
@@ -91,7 +101,7 @@ echo  [Press any key to stop all services]
 echo.
 pause >nul
 
-REM Cleanup: Kill processes on exit
-taskkill /F /IM python.exe >nul 2>&1
-taskkill /F /IM node.exe >nul 2>&1
+REM Cleanup: Kill by window title (cleaner than killing all python/node)
+taskkill /F /FI "WINDOWTITLE eq Aerium Backend" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Aerium Frontend" >nul 2>&1
 echo [INFO] Services stopped.

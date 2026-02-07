@@ -9,12 +9,12 @@ import CTASection from '@/components/landing/CTASection';
 import Footer from '@/components/landing/Footer';
 
 const Landing = () => {
-  const featuresRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLDivElement>(null);
 
-  const scrollToFeatures = () => {
-    if (featuresRef.current) {
-      const navbarHeight = 100;
-      const elementPosition = featuresRef.current.getBoundingClientRect().top + window.scrollY;
+  const scrollToVideo = () => {
+    if (videoRef.current) {
+      const navbarHeight = 0;
+      const elementPosition = videoRef.current.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({
         top: elementPosition - navbarHeight,
         behavior: 'smooth',
@@ -24,15 +24,15 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <Navbar onScrollToSection={scrollToFeatures} />
+      <Navbar onScrollToSection={scrollToVideo} />
       
-      <HeroSection onScrollToSection={scrollToFeatures} />
+      <HeroSection onScrollToSection={scrollToVideo} />
       
-      <VideoSection />
-      
-      <div ref={featuresRef}>
-        <FeaturesSection />
+      <div ref={videoRef}>
+        <VideoSection />
       </div>
+      
+      <FeaturesSection />
       
       <HowItWorksSection />
       
