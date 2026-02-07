@@ -5,6 +5,15 @@ from datetime import datetime, timedelta
 
 maintenance_bp = Blueprint('maintenance', __name__)
 
+
+def parse_iso_datetime(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace('Z', '+00:00'))
+    except (TypeError, ValueError):
+        return None
+
 @maintenance_bp.route('', methods=['GET'])
 @jwt_required()
 def get_maintenance():
@@ -40,13 +49,6 @@ def get_maintenance():
         # Get tasks ordered by scheduled date
         tasks = query.order_by(Maintenance.scheduled_date).limit(limit).all()
         
-        # Check for overdue tasks
-        now = datetime.utcnow()
-        for task in tasks:
-            if task.status == 'scheduled' and task.scheduled_date < now:
-                task.status = 'overdue'
-                db.session.commit()
-        
         return jsonify({'maintenance': [task.to_dict() for task in tasks]}), 200
         
     except Exception as e:
@@ -72,6 +74,10 @@ def create_maintenance():
         # Validate required fields
         if not data.get('sensorId') or not data.get('type') or not data.get('scheduledDate'):
             return jsonify({'error': 'Missing required fields'}), 400
+
+        scheduled_date = parse_iso_datetime(data.get('scheduledDate'))
+        if not scheduled_date:
+            return jsonify({'error': 'Invalid scheduledDate format'}), 400
         
         sensor = Sensor.query.get(data['sensorId'])
         if not sensor or (user.role != 'admin' and sensor.user_id != current_user_id):
@@ -83,7 +89,7 @@ def create_maintenance():
             user_id=current_user_id,
             type=data['type'],
             status=data.get('status', 'scheduled'),
-            scheduled_date=datetime.fromisoformat(data['scheduledDate'].replace('Z', '+00:00')),
+            scheduled_date=scheduled_date,
             description=data.get('description'),
             notes=data.get('notes'),
             priority=data.get('priority', 'normal')
@@ -152,7 +158,10 @@ def update_maintenance(maintenance_id):
             if data['status'] == 'completed':
                 maintenance.completed_date = datetime.utcnow()
         if 'scheduledDate' in data:
-            maintenance.scheduled_date = datetime.fromisoformat(data['scheduledDate'].replace('Z', '+00:00'))
+            scheduled_date = parse_iso_datetime(data.get('scheduledDate'))
+            if not scheduled_date:
+                return jsonify({'error': 'Invalid scheduledDate format'}), 400
+            maintenance.scheduled_date = scheduled_date
         if 'description' in data:
             maintenance.description = data['description']
         if 'notes' in data:

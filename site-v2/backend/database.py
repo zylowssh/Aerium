@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import inspect
 from datetime import datetime
 
 db = SQLAlchemy()
@@ -210,3 +211,28 @@ def init_db():
     """Initialize the database and create tables"""
     db.create_all()
     print("Database initialized successfully")
+
+
+def check_sensor_threshold_columns(app):
+    """Warn if expected sensor threshold columns are missing (no auto-migration)."""
+    try:
+        with app.app_context():
+            inspector = inspect(db.engine)
+            if 'sensors' not in inspector.get_table_names():
+                return
+
+            columns = {col['name'] for col in inspector.get_columns('sensors')}
+            expected = {
+                'threshold_co2',
+                'threshold_temp_min',
+                'threshold_temp_max',
+                'threshold_humidity'
+            }
+            missing = sorted(expected - columns)
+            if missing:
+                app.logger.warning(
+                    '[DB] Missing sensor threshold columns: %s. Run migration or recreate DB.',
+                    ', '.join(missing)
+                )
+    except Exception as exc:
+        app.logger.warning('[DB] Schema check failed: %s', exc)

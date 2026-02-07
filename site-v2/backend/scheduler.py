@@ -1,5 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from database import db, Sensor, SensorReading, Alert
+from database import db, Sensor, Maintenance
 from datetime import datetime
 import random
 
@@ -127,8 +127,9 @@ def simulate_sensor_readings(app, socketio):
                     }
                 }
                 
-                # Emit to all connected clients (broadcast is default behavior)
-                socketio.emit('sensor_update', reading_data)
+                # Emit to owning user and admins only
+                socketio.emit('sensor_update', reading_data, room=f'user_{sensor.user_id}')
+                socketio.emit('sensor_update', reading_data, room='admin')
                 
             except Exception as e:
                 print(f"Error generating reading for sensor {sensor.name}: {e}")
@@ -146,8 +147,31 @@ def init_scheduler(app, socketio):
         name='Real-time sensor simulation',
         replace_existing=True
     )
+
+    scheduler.add_job(
+        func=mark_overdue_maintenance,
+        trigger='interval',
+        minutes=10,
+        args=[app],
+        id='maintenance_overdue_check',
+        name='Maintenance overdue check',
+        replace_existing=True
+    )
     
     scheduler.start()
     print("✓ Scheduler initialized - Real-time sensor updates active (every 5 seconds)")
     print("✓ WebSocket emissions enabled for simulated sensors")
+
+
+def mark_overdue_maintenance(app):
+    """Mark scheduled maintenance tasks as overdue if past due date."""
+    with app.app_context():
+        now = datetime.utcnow()
+        updated = Maintenance.query.filter(
+            Maintenance.status == 'scheduled',
+            Maintenance.scheduled_date < now
+        ).update({Maintenance.status: 'overdue'}, synchronize_session=False)
+
+        if updated:
+            db.session.commit()
 

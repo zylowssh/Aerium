@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, Response, stream_with_context
 from flask_cors import CORS
-from flask_socketio import SocketIO
-from flask_jwt_extended import JWTManager
+from flask_socketio import SocketIO, join_room
+from flask_jwt_extended import JWTManager, decode_token
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
@@ -12,7 +12,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import urllib.request
 
-from database import db, init_db
+from database import db, init_db, check_sensor_threshold_columns, User
 from routes.auth import auth_bp
 from routes.sensors import sensors_bp
 from routes.readings import readings_bp
@@ -96,31 +96,31 @@ def create_app():
     db.init_app(app)
     jwt = JWTManager(app)
     init_email(app)
+
     
     # CORS Configuration - must be initialized early
-    CORS(app, 
-         origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:8080", 
-                  "http://127.0.0.1:5173", "http://127.0.0.1:3000", "http://127.0.0.1:8080"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-         allow_headers=["Content-Type", "Authorization", "Accept"],
-         expose_headers=["Content-Type", "Authorization"],
-         supports_credentials=True,
-         max_age=3600,
-         send_wildcard=False,
-         vary_header=True,
-         resources={r"/api/*": {"origins": "*"}})
-    
-    # Add after_request handler to manually ensure CORS headers are present
-    @app.after_request
-    def after_request_handler(response):
-        origin = request.headers.get('Origin', 'http://localhost:8080')
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept'
-        response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization'
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers['Access-Control-Max-Age'] = '3600'
-        return response
+    allowed_origins = list({
+        app.config.get('FRONTEND_URL', 'http://localhost:5173'),
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:8080',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:8080'
+    })
+
+    CORS(
+        app,
+        origins=allowed_origins,
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_headers=["Content-Type", "Authorization", "Accept"],
+        expose_headers=["Content-Type", "Authorization"],
+        supports_credentials=True,
+        max_age=3600,
+        send_wildcard=False,
+        vary_header=True,
+        resources={r"/api/*": {"origins": allowed_origins}}
+    )
     
     # Initialize rate limiter only if enabled
     if app.config.get('ENABLE_RATE_LIMITING'):
@@ -149,13 +149,49 @@ def create_app():
     })
     app.logger.info('[OK] Caching initialized')
     
-    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', logger=False, engineio_logger=False)
+    socketio = SocketIO(app, cors_allowed_origins=allowed_origins, async_mode='threading', logger=False, engineio_logger=False)
     app.logger.info('[OK] WebSocket (Socket.IO) initialized')
+
+    @jwt.user_identity_loader
+    def user_identity_lookup(identity):
+        return int(identity)
+
+    @jwt.user_lookup_loader
+    def user_lookup_callback(_jwt_header, jwt_data):
+        identity = jwt_data.get('sub')
+        if identity is None:
+            return None
+        return User.query.get(identity)
 
     # WebSocket event handlers
     @socketio.on('connect')
-    def handle_connect():
+    def handle_connect(auth):
         """Handle client connection"""
+        token = None
+        if isinstance(auth, dict):
+            token = auth.get('token')
+        if not token:
+            token = request.args.get('token')
+
+        if not token:
+            app.logger.warning('[WebSocket] Missing token for client %s', request.sid)
+            return False
+
+        try:
+            decoded = decode_token(token)
+            user_id = decoded.get('sub')
+            user = User.query.get(user_id) if user_id is not None else None
+            if not user:
+                app.logger.warning('[WebSocket] Invalid user for client %s', request.sid)
+                return False
+
+            join_room(f'user_{user.id}')
+            if user.role == 'admin':
+                join_room('admin')
+        except Exception as exc:
+            app.logger.warning('[WebSocket] Token validation failed for client %s: %s', request.sid, exc)
+            return False
+
         app.logger.info(f'[WebSocket] Client connected: {request.sid}')
     
     @socketio.on('disconnect')
@@ -274,6 +310,7 @@ def create_app():
     # Initialize database
     with app.app_context():
         init_db()
+        check_sensor_threshold_columns(app)
     app.logger.info('[OK] Database initialized')
     
     # Initialize scheduler for sensor simulation

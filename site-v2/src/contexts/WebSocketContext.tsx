@@ -14,8 +14,16 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const token = localStorage.getItem('access_token');
+
+    if (!token) {
+      setSocket(null);
+      setIsConnected(false);
+      return;
+    }
 
     const newSocket = io(SOCKET_URL, {
+      auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 500,

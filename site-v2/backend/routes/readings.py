@@ -395,22 +395,27 @@ def get_latest_reading(sensor_id):
             sensor_id=sensor_id
         ).order_by(SensorReading.recorded_at.desc()).first()
         
-        # For simulated sensors, generate fresh reading if none exists or if reading is older than 5 seconds
+        # For simulated sensors, generate fresh reading on-demand without persisting
         if sensor.sensor_type == 'simulation':
-            if not latest_reading or (datetime.utcnow() - latest_reading.recorded_at).total_seconds() > 5:
-                # Generate new simulated reading
-                simulated_data = generate_current_simulated_reading(sensor.name)
-                
-                # Store it in the database so it's consistent across requests
-                new_reading = SensorReading(
-                    sensor_id=sensor_id,
-                    co2=simulated_data['co2'],
-                    temperature=simulated_data['temperature'],
-                    humidity=simulated_data['humidity']
-                )
-                db.session.add(new_reading)
-                db.session.commit()
-                latest_reading = new_reading
+            if latest_reading and (datetime.utcnow() - latest_reading.recorded_at).total_seconds() <= 60:
+                return jsonify({
+                    'reading': latest_reading.to_dict(),
+                    'sensor': sensor.to_dict()
+                }), 200
+
+            simulated_data = generate_current_simulated_reading(sensor.name)
+            simulated_reading = {
+                'id': 0,
+                'sensor_id': sensor_id,
+                'co2': simulated_data['co2'],
+                'temperature': simulated_data['temperature'],
+                'humidity': simulated_data['humidity'],
+                'recorded_at': datetime.utcnow().isoformat()
+            }
+            return jsonify({
+                'reading': simulated_reading,
+                'sensor': sensor.to_dict()
+            }), 200
         
         if not latest_reading:
             return jsonify({'error': 'No readings found for this sensor'}), 404
