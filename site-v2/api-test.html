@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Aerium</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-top: 0; }
+        .test-section { margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 8px; }
+        .test-section h3 { margin-top: 0; color: #555; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 5px 0;
+        }
+        button:hover { background: #2563eb; }
+        .result {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+        .error { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+        .info { background: #dbeafe; color: #1e40af; border: 1px solid #3b82f6; }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background: #10b981; }
+        .status-offline { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Aerium API Test</h1>
+        <p>Test de connectivité pour mobile</p>
+        
+        <div class="test-section">
+            <h3><span class="status-indicator" id="apiStatus"></span>État de l'API</h3>
+            <div id="apiUrl" class="info result"></div>
+            <button onclick="testHealth()">Tester /api/health</button>
+            <div id="healthResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test de connexion</h3>
+            <input type="email" id="email" placeholder="Email" value="admin@aerium.app">
+            <input type="password" id="password" placeholder="Mot de passe" value="admin123">
+            <button onclick="testLogin()">Tester LOGIN</button>
+            <div id="loginResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Informations réseau</h3>
+            <button onclick="showNetworkInfo()">Afficher les infos</button>
+            <div id="networkInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://172.20.10.4:5000/api';
+        
+        document.getElementById('apiUrl').textContent = 'API URL: ' + API_URL;
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            const statusIndicator = document.getElementById('apiStatus');
+            resultDiv.innerHTML = '<div class="info result">Test en cours...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/health`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusIndicator.className = 'status-indicator status-online';
+                    resultDiv.innerHTML = `<div class="success result">✓ API accessible!
+Status: ${response.status}
+Data: ${JSON.stringify(data, null, 2)}</div>`;
+                } else {
+                    statusIndicator.className = 'status-indicator status-offline';
+                    resultDiv.innerHTML = `<div class="error result">✗ Erreur HTTP ${response.status}
+${JSON.stringify(data, null, 2)}</div>`;
+                }
+            } catch (error) {
+                statusIndicator.className = 'status-indicator status-offline';
+                resultDiv.innerHTML = `<div class="error result">✗ Erreur réseau: ${error.message}
+
+Vérifiez:
+1. Backend est démarré sur http://172.20.10.4:5000
+2. Même réseau WiFi
+3. Firewall Windows autorise le port 5000</div>`;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            resultDiv.innerHTML = '<div class="info result">Test de connexion...</div>';
+            
+            try {
+                console.log('Login attempt:', email);
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', response.status, data);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success result">✓ Connexion réussie!
+User: ${data.user.email}
+Role: ${data.user.role}
+Token: ${data.access_token.substring(0, 50)}...</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error result">✗ Échec de connexion
+Status: ${response.status}
+Error: ${data.error || 'Unknown error'}
+Response: ${JSON.stringify(data, null, 2)}</div>`;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                resultDiv.innerHTML = `<div class="error result">✗ Erreur: ${error.message}
+
+Stack: ${error.stack}</div>`;
+            }
+        }
+
+        function showNetworkInfo() {
+            const resultDiv = document.getElementById('networkInfo');
+            const info = {
+                'User Agent': navigator.userAgent,
+                'Platform': navigator.platform,
+                'Online': navigator.onLine,
+                'Cookie Enabled': navigator.cookieEnabled,
+                'Language': navigator.language,
+                'Window Location': window.location.href,
+                'Referrer': document.referrer || 'None'
+            };
+            
+            resultDiv.innerHTML = `<div class="info result">${JSON.stringify(info, null, 2)}</div>`;
+        }
+
+        // Auto-test on load
+        window.onload = () => {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

@@ -67,6 +67,9 @@ const Auth = () => {
 
     setIsLoading(true);
     try {
+      console.log('Attempting login with:', loginEmail);
+      console.log('API URL:', import.meta.env.VITE_API_URL);
+      
       await apiClient.login(loginEmail, loginPassword);
       
       // Handle remember me functionality
@@ -79,9 +82,15 @@ const Auth = () => {
       toast.success('Connexion réussie !');
       window.location.href = '/dashboard';
     } catch (error: any) {
-      const errorMsg = error.response?.data?.error || 'Une erreur est survenue';
+      console.error('Login error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      
+      const errorMsg = error.response?.data?.error || error.message || 'Une erreur est survenue';
       if (errorMsg.includes('Invalid login credentials')) {
         toast.error('Email ou mot de passe incorrect');
+      } else if (error.message === 'Network Error') {
+        toast.error('Erreur réseau - Vérifiez que le backend est accessible');
       } else {
         toast.error(errorMsg);
       }

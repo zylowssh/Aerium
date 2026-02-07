@@ -52,29 +52,36 @@ def login():
     try:
         data = request.get_json()
         
+        if not data:
+            print("Login error: No JSON data received")
+            return jsonify({'error': 'No data provided'}), 400
+        
         email = data.get('email')
         password = data.get('password')
         
+        print(f"Login attempt for: {email}")
+        
         if not email or not password:
+            print("Login error: Missing email or password")
             return jsonify({'error': 'Email and password are required'}), 400
         
         # Find user
         user = User.query.filter_by(email=email).first()
         
         if not user:
+            print(f"Login error: User not found - {email}")
             return jsonify({'error': 'Invalid login credentials'}), 401
         
         # Verify password
         if not bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
+            print(f"Login error: Invalid password for {email}")
             return jsonify({'error': 'Invalid login credentials'}), 401
         
         # Create tokens with explicit identity
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
         
-        print(f"Login successful for user {user.id}: {user.email}")
-        print(f"Access token created: {access_token[:50]}...")
-        print(f"Refresh token created: {refresh_token[:50]}...")
+        print(f"✓ Login successful for user {user.id}: {user.email}")
         
         return jsonify({
             'access_token': access_token,
@@ -83,8 +90,10 @@ def login():
         }), 200
         
     except Exception as e:
-        print(f"Login error: {e}")
-        return jsonify({'error': str(e)}), 500
+        print(f"✗ Login exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 
 @auth_bp.route('/refresh', methods=['POST'])

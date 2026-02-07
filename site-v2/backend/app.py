@@ -100,6 +100,14 @@ def create_app():
 
     
     # CORS Configuration - must be initialized early
+    # Get local IP for mobile access
+    import socket
+    try:
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+    except:
+        local_ip = '192.168.1.1'  # fallback
+    
     allowed_origins = list({
         app.config.get('FRONTEND_URL', 'http://localhost:5173'),
         'http://localhost:3000',
@@ -107,20 +115,30 @@ def create_app():
         'http://localhost:8080',
         'http://127.0.0.1:5173',
         'http://127.0.0.1:3000',
-        'http://127.0.0.1:8080'
+        'http://127.0.0.1:8080',
+        # Mobile access - add your local network IPs
+        f'http://{local_ip}:5173',
+        f'http://{local_ip}:3000',
+        'http://172.20.10.4:5173',  # Your main IP
+        'http://192.168.127.1:5173',
+        'http://192.168.42.1:5173',
+        # Allow common private network ranges for mobile testing
+        'http://192.168.1.1:5173',
+        'http://10.0.0.1:5173'
     })
+    
+    app.logger.info(f'[CORS] Local IP detected: {local_ip}')
+    app.logger.info(f'[CORS] Mobile access enabled on: http://{local_ip}:5173')
 
     CORS(
         app,
-        origins=allowed_origins,
+        origins=['*'],  # Allow all origins for development/mobile testing
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["Content-Type", "Authorization", "Accept"],
         expose_headers=["Content-Type", "Authorization"],
-        supports_credentials=True,
+        supports_credentials=False,  # Changed to False - using localStorage, not cookies
         max_age=3600,
-        send_wildcard=False,
-        vary_header=True,
-        resources={r"/api/*": {"origins": allowed_origins}}
+        resources={r"/api/*": {"origins": "*"}}
     )
     
     # Initialize rate limiter only if enabled

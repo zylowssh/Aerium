@@ -10,30 +10,47 @@ class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
+    console.log('ApiClient initialized with base URL:', API_BASE_URL);
+    
     this.client = axios.create({
       baseURL: API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
       },
-      withCredentials: true,
+      withCredentials: false, // Changed to false for mobile - using localStorage, not cookies
+      timeout: 10000, // 10 second timeout
     });
 
     // Request interceptor to add auth token
     this.client.interceptors.request.use(
       (config) => {
+        console.log('API Request:', config.method?.toUpperCase(), config.url);
         const token = localStorage.getItem('access_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => {
+        console.error('Request interceptor error:', error);
+        return Promise.reject(error);
+      }
     );
 
     // Response interceptor for error handling
     this.client.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        console.log('API Response:', response.status, response.config.url);
+        return response;
+      },
       async (error: AxiosError<ApiError>) => {
+        console.error('API Error:', {
+          status: error.response?.status,
+          url: error.config?.url,
+          message: error.message,
+          data: error.response?.data
+        });
+        
         if (error.response?.status === 401) {
           // Token expired, try to refresh
           const refreshToken = localStorage.getItem('refresh_token');
