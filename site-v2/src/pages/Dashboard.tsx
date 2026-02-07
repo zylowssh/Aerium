@@ -86,6 +86,7 @@ const Dashboard = () => {
         prevSensorsLength.current = sensors.length;
       }
       fetchAggregate();
+    }
   }, [sensors.length]);
 
   // Export alerts to CSV
@@ -116,8 +117,7 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error refreshing alerts:', error);
     }
-    }
-  }, [sensors.length]);
+  };
 
   // Fetch alerts - only on mount, then poll
   useEffect(() => {
