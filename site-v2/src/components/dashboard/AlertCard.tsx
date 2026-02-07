@@ -1,15 +1,62 @@
-import { AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Clock, CheckCircle, Check, XCircle } from 'lucide-react';
 import { Alert } from '@/lib/sensorData';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
-import { memo } from 'react';
+import { memo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { apiClient } from '@/lib/apiClient';
+import { useToast } from '@/hooks/use-toast';
 
 export interface AlertCardProps {
   alert: Alert;
+  onStatusChange?: () => void;
 }
 
-export const AlertCard = memo(function AlertCard({ alert }: AlertCardProps) {
+export const AlertCard = memo(function AlertCard({ alert, onStatusChange }: AlertCardProps) {
+  const { toast } = useToast();
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  const handleAcknowledge = async () => {
+    setIsUpdating(true);
+    try {
+      await apiClient.updateAlertStatus(String(alert.id), 'reconnue');
+      toast({
+        title: 'Alerte reconnue',
+        description: 'L\'alerte a été marquée comme reconnue.',
+      });
+      onStatusChange?.();
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour l\'alerte.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
+  const handleResolve = async () => {
+    setIsUpdating(true);
+    try {
+      await apiClient.updateAlertStatus(String(alert.id), 'résolue');
+      toast({
+        title: 'Alerte résolue',
+        description: 'L\'alerte a été marquée comme résolue.',
+      });
+      onStatusChange?.();
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour l\'alerte.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
   const typeStyles = {
     avertissement: {
       bg: 'bg-warning/10',
@@ -82,6 +129,31 @@ export const AlertCard = memo(function AlertCard({ alert }: AlertCardProps) {
             <Clock className="w-3 h-3" />
             <span>{formatDistanceToNow(alert.timestamp, { addSuffix: true })}</span>
           </div>
+          
+          {alert.status === 'nouvelle' && (
+            <div className="flex gap-2 mt-3">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-7 text-xs"
+                onClick={handleAcknowledge}
+                disabled={isUpdating}
+              >
+                <Check className="w-3 h-3 mr-1" />
+                Reconnaître
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-7 text-xs"
+                onClick={handleResolve}
+                disabled={isUpdating}
+              >
+                <XCircle className="w-3 h-3 mr-1" />
+                Résoudre
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

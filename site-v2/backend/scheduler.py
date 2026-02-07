@@ -5,6 +5,9 @@ import random
 
 scheduler = BackgroundScheduler()
 
+# Global simulation speed control (seconds between updates)
+SIMULATION_SPEED = 5
+
 # Sensor profiles with realistic base values
 SENSOR_PROFILES = {
     'Bureau Principal': {'base_co2': 650, 'base_temp': 22.5, 'base_humidity': 45, 'occupancy_factor': 0.8},
@@ -150,11 +153,11 @@ def simulate_sensor_readings(app, socketio):
 
 def init_scheduler(app, socketio):
     """Initialize the scheduler for periodic tasks"""
-    # Schedule real-time sensor data emission every 5 seconds
+    # Schedule real-time sensor data emission every 5 seconds (configurable via SIMULATION_SPEED)
     scheduler.add_job(
         func=simulate_sensor_readings,
         trigger='interval',
-        seconds=5,
+        seconds=SIMULATION_SPEED,
         args=[app, socketio],
         id='sensor_simulation',
         name='Real-time sensor simulation',
@@ -172,7 +175,7 @@ def init_scheduler(app, socketio):
     )
     
     scheduler.start()
-    print("✓ Scheduler initialized - Real-time sensor updates active (every 5 seconds)")
+    print(f"✓ Scheduler initialized - Real-time sensor updates active (every {SIMULATION_SPEED} seconds)")
     print("✓ WebSocket emissions enabled for simulated sensors")
 
 
@@ -187,4 +190,20 @@ def mark_overdue_maintenance(app):
 
         if updated:
             db.session.commit()
+
+
+def update_simulation_speed(new_speed: float):
+    """Update the simulation speed dynamically"""
+    global SIMULATION_SPEED
+    SIMULATION_SPEED = new_speed
+    
+    # Reschedule the simulation job with new speed
+    if scheduler.get_job('sensor_simulation'):
+        scheduler.reschedule_job(
+            'sensor_simulation',
+            trigger='interval',
+            seconds=new_speed
+        )
+        return True
+    return False
 

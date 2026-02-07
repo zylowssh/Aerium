@@ -18,9 +18,9 @@ class SensorSchema(Schema):
 
 class ReadingSchema(Schema):
     """Schema for sensor reading validation"""
-    co2_level = fields.Float(validate=validate.Range(min=0, max=5000))
-    temperature = fields.Float(validate=validate.Range(min=-50, max=100))
-    humidity = fields.Float(validate=validate.Range(min=0, max=100))
+    co2_level = fields.Float(validate=validate.Range(min=0, max=5000, error=\"CO2 level must be between 0 and 5000 ppm\"))
+    temperature = fields.Float(validate=validate.Range(min=-50, max=100, error=\"Temperature must be between -50 and 100°C\"))
+    humidity = fields.Float(validate=validate.Range(min=0, max=100, error=\"Humidity must be between 0 and 100%\"))
     timestamp = fields.DateTime()
 
 
@@ -34,10 +34,10 @@ class AlertSchema(Schema):
 
 class UserSchema(Schema):
     """Schema for user validation"""
-    email = fields.Email(required=True)
-    full_name = fields.Str(validate=validate.Length(min=1, max=255))
-    password = fields.Str(validate=validate.Length(min=6, max=255))
-    role = fields.Str(validate=validate.OneOf(['user', 'admin']))
+    email = fields.Email(required=True, error_messages={\"required\": \"Email is required\", \"invalid\": \"Invalid email format\"})
+    full_name = fields.Str(validate=validate.Length(min=1, max=255, error=\"Full name must be between 1 and 255 characters\"))
+    password = fields.Str(validate=validate.Length(min=8, max=255, error=\"Password must be at least 8 characters\"))
+    role = fields.Str(validate=validate.OneOf(['user', 'admin'], error=\"Role must be either 'user' or 'admin'\"))
 
 
 def validate_request_data(data, schema_class):

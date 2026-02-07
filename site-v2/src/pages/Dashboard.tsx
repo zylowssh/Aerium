@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Thermometer, Droplets, Activity, Heart, Plus } from 'lucide-react';
+import { Thermometer, Droplets, Activity, Heart, Plus, Download } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { AirQualityOverviewCard } from '@/components/dashboard/AirQualityOverviewCard';
@@ -42,6 +42,7 @@ const Dashboard = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [sensorReadings, setSensorReadings] = useState<Record<string, number[]>>({});
   const [isTrendLoading, setIsTrendLoading] = useState(true);
   const [isAlertsLoading, setIsAlertsLoading] = useState(true);
@@ -85,6 +86,36 @@ const Dashboard = () => {
         prevSensorsLength.current = sensors.length;
       }
       fetchAggregate();
+  }, [sensors.length]);
+
+  // Export alerts to CSV
+  const handleExportCSV = async () => {
+    try {
+      setIsExporting(true);
+      const blob = await apiClient.exportAlertsCSV(30);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `alertes-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Refresh alerts after status change
+  const refreshAlerts = async () => {
+    try {
+      const data = await apiClient.getAlerts();
+      setAlerts(data.slice(0, 20) || []);
+    } catch (error) {
+      console.error('Error refreshing alerts:', error);
+    }
     }
   }, [sensors.length]);
 
@@ -303,11 +334,23 @@ const Dashboard = () => {
               transition={{ delay: 0.1 }}
               className="p-4 rounded-xl bg-card border border-border"
             >
-              <h3 className="text-sm font-semibold text-foreground mb-2">Alertes Récentes</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-foreground">Alertes Récentes</h3>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={handleExportCSV}
+                  disabled={isExporting}
+                >
+                  <Download className="w-3 h-3" />
+                  {isExporting ? 'Export...' : 'CSV'}
+                </Button>
+              </div>
               <div className="space-y-1">
                 {alerts.slice(0, 3).length > 0 ? (
                   alerts.slice(0, 3).map((alert: Alert) => (
-                    <AlertCard key={alert.id} alert={alert} />
+                    <AlertCard key={alert.id} alert={alert} onStatusChange={refreshAlerts} />
                   ))
                 ) : (
                   <div className="text-center py-4">

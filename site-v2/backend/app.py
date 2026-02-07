@@ -20,6 +20,7 @@ from routes.users import users_bp
 from routes.alerts import alerts_bp
 from routes.reports import reports_bp
 from routes.maintenance import maintenance_bp
+from routes.admin import admin_bp
 from scheduler import init_scheduler
 from email_service import init_email
 from config import Config
@@ -222,6 +223,7 @@ def create_app():
     app.register_blueprint(alerts_bp, url_prefix='/api/alerts')
     app.register_blueprint(reports_bp, url_prefix='/api/reports')
     app.register_blueprint(maintenance_bp, url_prefix='/api/maintenance')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.logger.info('[OK] All API blueprints registered')
     
     # Health check endpoint

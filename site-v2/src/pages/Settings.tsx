@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/apiClient';
 import { useSensors } from '@/hooks/useSensors';
 import { useToast } from '@/hooks/use-toast';
+import { thresholdSchema, validateData } from '@/lib/validation';
 
 interface User {
   id: string;
@@ -31,6 +32,8 @@ const Settings = () => {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [sensorThresholds, setSensorThresholds] = useState<Record<string, any>>({});
   const [savingThresholds, setSavingThresholds] = useState<string | null>(null);
+  const [simulationSpeed, setSimulationSpeed] = useState<string>('5');
+  const [isUpdatingSpeed, setIsUpdatingSpeed] = useState(false);
 
   useEffect(() => {
     fetchTeamMembers();
@@ -77,6 +80,19 @@ const Settings = () => {
 
   const handleSaveThresholds = async (sensorId: string) => {
     try {
+      // Validate thresholds before saving
+      const validation = validateData(thresholdSchema, sensorThresholds[sensorId]);
+      
+      if (!validation.success) {
+        const errorMessages = Object.values(validation.errors).join(', ');
+        toast({
+          title: 'Validation échouée',
+          description: errorMessages,
+          variant: 'destructive',
+        });
+        return;
+      }
+      
       setSavingThresholds(sensorId);
       await apiClient.updateSensorThresholds(sensorId, sensorThresholds[sensorId]);
       toast({
@@ -91,6 +107,36 @@ const Settings = () => {
       });
     } finally {
       setSavingThresholds(null);
+    }
+  };
+
+  const handleSpeedChange = async (newSpeed: string) => {
+    setSimulationSpeed(newSpeed);
+    setIsUpdatingSpeed(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/simulation/speed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({ speed: parseFloat(newSpeed) })
+      });
+      
+      if (response.ok) {
+        toast({
+          title: 'Vitesse mise à jour',
+          description: `Simulation réglée sur ${newSpeed === '5' ? 'temps réel' : newSpeed === '2' ? 'rapide' : newSpeed === '1' ? 'très rapide' : 'ultra rapide'}.`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour la vitesse.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingSpeed(false);
     }
   };
 
@@ -417,6 +463,51 @@ const Settings = () => {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
+             {/* Demo Mode Controls */}
+             <div className="p-6 rounded-xl bg-card border border-border">
+               <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                 <Gauge className="w-5 h-5" />
+                 Mode Démonstration
+               </h3>
+               <p className="text-sm text-muted-foreground mb-4">
+                 Contrôlez la vitesse de simulation des capteurs pour les démonstrations en direct.
+               </p>
+               
+               <div className="space-y-4">
+                 <div className="flex items-center justify-between">
+                   <div>
+                     <p className="font-medium text-foreground">Vitesse de Simulation</p>
+                     <p className="text-sm text-muted-foreground">Intervalles de mise à jour des données des capteurs</p>
+                   </div>
+                   <select 
+                     className="px-3 py-2 bg-muted border border-border rounded-lg text-foreground min-w-[150px] disabled:opacity-50"
+                     value={simulationSpeed}
+                     onChange={(e) => handleSpeedChange(e.target.value)}
+                     disabled={isUpdatingSpeed}
+                   >
+                     <option value="5">Temps réel (5s)</option>
+                     <option value="2">Rapide (2s)</option>
+                     <option value="1">Très rapide (1s)</option>
+                     <option value="0.5">Ultra rapide (0.5s)</option>
+                   </select>
+                 </div>
+                 
+                 <div className="flex items-center justify-between">
+                   <div>
+                     <p className="font-medium text-foreground">Valeurs Extrêmes</p>
+                     <p className="text-sm text-muted-foreground">Générer occasionnellement des pics de CO₂ pour tester les alertes</p>
+                   </div>
+                   <Switch defaultChecked />
+                 </div>
+                 
+                 <div className="p-3 rounded-lg bg-primary/10 border border-primary/30">
+                   <p className="text-sm text-primary">
+                     <strong>Astuce pour la démo :</strong> Utilisez "Très rapide" pour montrer rapidement les tendances et les changements de statut pendant les présentations.
+                   </p>
+                 </div>
+               </div>
+             </div>
+
              {/* Backend Status Widget */}
              <BackendStatusWidget />
  
