@@ -41,10 +41,10 @@ const Settings = () => {
     const thresholds: Record<string, any> = {};
     sensors.forEach(sensor => {
       thresholds[sensor.id] = {
-        co2: null,
-        temp_min: null,
-        temp_max: null,
-        humidity: null
+        co2: sensor.thresholds?.co2 ?? null,
+        temp_min: sensor.thresholds?.temp_min ?? null,
+        temp_max: sensor.thresholds?.temp_max ?? null,
+        humidity: sensor.thresholds?.humidity ?? null
       };
     });
     setSensorThresholds(thresholds);

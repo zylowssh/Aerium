@@ -32,6 +32,7 @@ export const useSensors = () => {
         lastReading: s.lastReading ? new Date(s.lastReading) : new Date(s.updated_at),
         battery: s.battery ?? undefined,
         isLive: s.is_live ?? true,
+        thresholds: s.thresholds ?? undefined,
       }));
 
       setSensors(mappedSensors);

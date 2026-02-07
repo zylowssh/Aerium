@@ -11,6 +11,12 @@ export interface Sensor {
   lastReading: Date;
   battery?: number;
   isLive?: boolean;
+  thresholds?: {
+    co2?: number | null;
+    temp_min?: number | null;
+    temp_max?: number | null;
+    humidity?: number | null;
+  };
 }
 
 export interface Reading {
