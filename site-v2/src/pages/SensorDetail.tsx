@@ -151,7 +151,8 @@ const SensorDetail = () => {
     if (!socket || !sensorId) return;
 
     const handleUpdate = (data: any) => {
-      if (data.sensor_id === parseInt(sensorId)) {
+      const normalizedSensorId = Number(data.sensor_id);
+      if (normalizedSensorId === Number(sensorId)) {
         const { reading } = data;
         
         // Update sensor with latest reading
@@ -165,7 +166,7 @@ const SensorDetail = () => {
         // Add new reading to the list
         setReadings(prev => [{
           id: Date.now(),
-          sensor_id: parseInt(sensorId),
+          sensor_id: Number(sensorId),
           co2: reading.co2,
           temperature: reading.temperature,
           humidity: reading.humidity,

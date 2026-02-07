@@ -157,41 +157,71 @@ def check_thresholds(sensor, user_id, co2, temperature, humidity):
         # Check CO2 levels
         if co2 > co2_threshold:
             send_threshold_alert(
-                sensor, user, 'High CO2', f'CO2 level {co2} ppm exceeds threshold {co2_threshold} ppm',
-                co2, co2_threshold
+                sensor,
+                user,
+                'avertissement',
+                'co2',
+                f'CO2 level {co2} ppm exceeds threshold {co2_threshold} ppm',
+                co2,
+                co2_threshold
             )
         
         # Check temperature
         if temperature < temp_min or temperature > temp_max:
             threshold = temp_min if temperature < temp_min else temp_max
             send_threshold_alert(
-                sensor, user, f'Temperature Alert', f'Temperature {temperature}°C outside range',
-                temperature, threshold
+                sensor,
+                user,
+                'avertissement',
+                'temperature',
+                f'Temperature {temperature}°C outside range',
+                temperature,
+                threshold
             )
         
         # Check humidity
         if humidity > humidity_threshold:
             send_threshold_alert(
-                sensor, user, 'High Humidity', f'Humidity level {humidity}% exceeds threshold {humidity_threshold}%',
-                humidity, humidity_threshold
+                sensor,
+                user,
+                'avertissement',
+                'humidity',
+                f'Humidity level {humidity}% exceeds threshold {humidity_threshold}%',
+                humidity,
+                humidity_threshold
             )
     
     except Exception as e:
         logger.error(f"Error checking thresholds: {str(e)}")
 
 
-def send_threshold_alert(sensor, user, alert_type, message, value, threshold):
+def send_threshold_alert(sensor, user, alert_type, metric, message, value, threshold):
     """Send alert when threshold is exceeded"""
     try:
+        normalized_type = alert_type if alert_type in ['info', 'avertissement', 'critique'] else 'avertissement'
+
         # Create alert history record
         alert_history = AlertHistory(
             user_id=user.id,
             sensor_id=sensor.id,
-            alert_type=alert_type.lower().replace(' ', '_'),
+            alert_type=normalized_type,
+            metric=metric,
+            metric_value=float(value),
+            threshold_value=float(threshold) if threshold is not None else None,
             message=message,
             status='triggered'
         )
         db.session.add(alert_history)
+
+        # Create alert for dashboard
+        alert = Alert(
+            user_id=user.id,
+            sensor_id=sensor.id,
+            alert_type=normalized_type,
+            message=message,
+            value=float(value)
+        )
+        db.session.add(alert)
         db.session.commit()
         
         # Send email notification if enabled
@@ -312,6 +342,9 @@ def add_external_reading(sensor_api_key):
         )
         
         db.session.add(new_reading)
+
+        # Check thresholds and trigger alerts
+        check_thresholds(sensor, sensor.user_id, co2, temperature, humidity)
         
         # Update sensor status based on CO2 levels
         if co2 > 1200:

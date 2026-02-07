@@ -52,12 +52,13 @@ export const useSensors = () => {
   useEffect(() => {
     if (!socket || !user) return;
 
-    socket.on('sensor_update', (data: any) => {
+    const handleSensorUpdate = (data: any) => {
       const { sensor_id, reading } = data;
-      
+      const normalizedSensorId = Number(sensor_id);
+
       setSensors((prev) =>
         prev.map((sensor) =>
-          sensor.id === String(sensor_id)
+          sensor.id === normalizedSensorId
             ? {
                 ...sensor,
                 co2: Number(reading.co2),
@@ -68,10 +69,12 @@ export const useSensors = () => {
             : sensor
         )
       );
-    });
+    };
+
+    socket.on('sensor_update', handleSensorUpdate);
 
     return () => {
-      socket.off('sensor_update');
+      socket.off('sensor_update', handleSensorUpdate);
     };
   }, [socket, user]);
 
