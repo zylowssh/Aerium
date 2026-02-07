@@ -209,26 +209,16 @@ const Dashboard = () => {
     // Initial load only - WebSocket provides real-time sensor updates
   }, [sensors.length]);
 
-  // WebSocket listener for real-time aggregate updates
+  // WebSocket listener for real-time aggregate updates - recalculate when sensors change
   useEffect(() => {
-    if (!socket) return;
-
-    const handleSensorUpdate = () => {
-      // Recalculate aggregate data when any sensor updates
-      if (sensors.length > 0) {
-        setAggregateData({
-          avgCo2: Math.round(sensors.reduce((acc, s) => acc + s.co2, 0) / sensors.length),
-          avgTemp: parseFloat((sensors.reduce((acc, s) => acc + s.temperature, 0) / sensors.length).toFixed(1)),
-          avgHumidity: Math.round(sensors.reduce((acc, s) => acc + s.humidity, 0) / sensors.length)
-        });
-      }
-    };
-
-    socket.on('sensor_update', handleSensorUpdate);
-    return () => {
-      socket.off('sensor_update', handleSensorUpdate);
-    };
-  }, [socket, sensors]);
+    if (sensors.length > 0) {
+      setAggregateData({
+        avgCo2: Math.round(sensors.reduce((acc, s) => acc + s.co2, 0) / sensors.length),
+        avgTemp: parseFloat((sensors.reduce((acc, s) => acc + s.temperature, 0) / sensors.length).toFixed(1)),
+        avgHumidity: Math.round(sensors.reduce((acc, s) => acc + s.humidity, 0) / sensors.length)
+      });
+    }
+  }, [sensors]); // Recalculate whenever sensors array changes (includes WebSocket updates)
 
   // Calculate aggregate metrics from sensors if no backend data
   const avgCo2 = aggregateData.avgCo2 || (sensors.length > 0 ? Math.round(sensors.reduce((acc, s) => acc + s.co2, 0) / sensors.length) : 0);

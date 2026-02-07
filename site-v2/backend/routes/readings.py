@@ -202,6 +202,19 @@ def send_threshold_alert(sensor, user, alert_type, metric, message, value, thres
     try:
         normalized_type = alert_type if alert_type in ['info', 'avertissement', 'critique'] else 'avertissement'
 
+        # Check for existing unresolved alert to prevent duplicates
+        existing_alert = Alert.query.filter_by(
+            sensor_id=sensor.id,
+            alert_type=normalized_type,
+            status='nouvelle'
+        ).filter(
+            Alert.message.like(f'%{metric}%')
+        ).first()
+        
+        if existing_alert:
+            logger.info(f"Skipping duplicate alert for sensor {sensor.id}, metric {metric} - existing alert ID: {existing_alert.id}")
+            return  # Don't create duplicate alert
+
         # Create alert history record
         alert_history = AlertHistory(
             user_id=user.id,

@@ -115,6 +115,18 @@ def simulate_sensor_readings(app, socketio):
                 # Generate fresh simulated data
                 simulated_data = generate_current_simulated_reading(sensor.name)
                 
+                # Update sensor status based on CO2 levels (critical fix)
+                co2_value = simulated_data['co2']
+                if co2_value > 1200:
+                    sensor.status = 'avertissement'
+                elif co2_value >= 1000:
+                    sensor.status = 'avertissement'
+                else:
+                    sensor.status = 'en ligne'
+                
+                sensor.updated_at = datetime.utcnow()
+                db.session.commit()
+                
                 # Prepare WebSocket payload - match frontend's expected format
                 reading_data = {
                     'sensor_id': sensor.id,
@@ -124,7 +136,8 @@ def simulate_sensor_readings(app, socketio):
                         'temperature': simulated_data['temperature'],
                         'humidity': simulated_data['humidity'],
                         'recorded_at': datetime.utcnow().isoformat()
-                    }
+                    },
+                    'status': sensor.status  # Include updated status
                 }
                 
                 # Emit to owning user and admins only

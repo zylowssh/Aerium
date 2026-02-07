@@ -189,14 +189,19 @@ def create_app():
                 app.logger.warning('[WebSocket] Invalid user for client %s', request.sid)
                 return False
 
+            # Join user-specific room
             join_room(f'user_{user.id}')
+            rooms_joined = [f'user_{user.id}']
+            
+            # Join admin room if admin
             if user.role == 'admin':
                 join_room('admin')
+                rooms_joined.append('admin')
+            
+            app.logger.info(f'[WebSocket] Client {request.sid} connected - User: {user.email} (ID: {user.id}) - Rooms: {rooms_joined}')
         except Exception as exc:
             app.logger.warning('[WebSocket] Token validation failed for client %s: %s', request.sid, exc)
             return False
-
-        app.logger.info(f'[WebSocket] Client connected: {request.sid}')
     
     @socketio.on('disconnect')
     def handle_disconnect():
