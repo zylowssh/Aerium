@@ -23,6 +23,8 @@ export function PredictiveAlertsWidget() {
 
   useEffect(() => {
     fetchPredictions();
+    const intervalId = window.setInterval(fetchPredictions, 5 * 60 * 1000);
+    return () => window.clearInterval(intervalId);
   }, []);
 
   const fetchPredictions = async () => {

@@ -165,15 +165,6 @@ class ApiClient {
   }
 
   // Alert methods
-  async getAlerts(status?: string, limit?: number) {
-    const params = new URLSearchParams();
-    if (status) params.append('status', status);
-    if (limit) params.append('limit', limit.toString());
-    
-    const response = await this.client.get(`/alerts?${params.toString()}`);
-    return response.data.alerts;
-  }
-
   async getPredictions() {
     const response = await this.client.get('/alerts/predictions');
     return response.data.predictions;

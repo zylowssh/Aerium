@@ -16,3 +16,6 @@ APScheduler==3.10.4
 reportlab==4.0.9
 marshmallow==3.20.1
 email-validator==2.1.0
+numpy==1.26.4
+pandas==2.2.1
+prophet==1.1.5

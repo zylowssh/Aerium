@@ -154,14 +154,18 @@ def create_app():
 
     @jwt.user_identity_loader
     def user_identity_lookup(identity):
-        return int(identity)
+        return str(identity)
 
     @jwt.user_lookup_loader
     def user_lookup_callback(_jwt_header, jwt_data):
         identity = jwt_data.get('sub')
         if identity is None:
             return None
-        return User.query.get(identity)
+        try:
+            identity = int(identity)
+        except (TypeError, ValueError):
+            return None
+        return db.session.get(User, identity)
 
     # WebSocket event handlers
     @socketio.on('connect')
@@ -180,7 +184,7 @@ def create_app():
         try:
             decoded = decode_token(token)
             user_id = decoded.get('sub')
-            user = User.query.get(user_id) if user_id is not None else None
+            user = db.session.get(User, user_id) if user_id is not None else None
             if not user:
                 app.logger.warning('[WebSocket] Invalid user for client %s', request.sid)
                 return False

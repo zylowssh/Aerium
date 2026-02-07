@@ -69,8 +69,8 @@ def login():
             return jsonify({'error': 'Invalid login credentials'}), 401
         
         # Create tokens with explicit identity
-        access_token = create_access_token(identity=user.id)
-        refresh_token = create_refresh_token(identity=user.id)
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
         
         print(f"Login successful for user {user.id}: {user.email}")
         print(f"Access token created: {access_token[:50]}...")
@@ -96,7 +96,7 @@ def refresh():
         print(f"Refreshing token for user ID: {current_user_id}")
         
         # Convert to string for consistency
-        access_token = create_access_token(identity=current_user_id)
+        access_token = create_access_token(identity=str(current_user_id))
         
         print(f"New access token created: {access_token[:50]}...")
         return jsonify({'access_token': access_token}), 200

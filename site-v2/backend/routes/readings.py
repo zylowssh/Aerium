@@ -122,7 +122,9 @@ def add_reading():
         # Update sensor status based on CO2 levels
         if co2 > 1200:
             sensor.status = 'avertissement'
-        elif co2 < 1000:
+        elif co2 >= 1000:
+            sensor.status = 'avertissement'
+        else:
             sensor.status = 'en ligne'
         
         sensor.updated_at = datetime.utcnow()
@@ -349,7 +351,7 @@ def add_external_reading(sensor_api_key):
         # Update sensor status based on CO2 levels
         if co2 > 1200:
             sensor.status = 'avertissement'
-        elif co2 > 1000:
+        elif co2 >= 1000:
             sensor.status = 'avertissement'
         else:
             sensor.status = 'en ligne'
