@@ -1,5 +1,5 @@
 """
-Audit logging for tracking user actions
+Journalisation d'audit pour suivre les actions de l'utilisateur
 """
 from database import db
 from datetime import datetime
@@ -8,23 +8,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class AuditLog(db.Model):
-    """Model for tracking user actions"""
+class JournalAudit(db.Model):
+    """Modèle pour suivi des actions utilisateur"""
     __tablename__ = 'audit_log'
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    action = db.Column(db.String(100), nullable=False)  # e.g., 'CREATE_SENSOR', 'DELETE_ALERT'
-    resource_type = db.Column(db.String(50), nullable=False)  # e.g., 'SENSOR', 'ALERT'
+    action = db.Column(db.String(100), nullable=False)  # ex: 'CREER_CAPTEUR', 'SUPPRIMER_ALERTE'
+    resource_type = db.Column(db.String(50), nullable=False)  # ex: 'CAPTEUR', 'ALERTE'
     resource_id = db.Column(db.Integer)
-    details = db.Column(db.JSON)  # Additional context like old/new values
-    ip_address = db.Column(db.String(45))  # IPv4 or IPv6
+    details = db.Column(db.JSON)  # Contexte supplémentaire comme les valeurs ancien/nouveau
+    ip_address = db.Column(db.String(45))  # IPv4 ou IPv6
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     def __repr__(self):
-        return f'<AuditLog {self.action} by user {self.user_id}>'
+        return f'<JournalAudit {self.action} par l\'utilisateur {self.user_id}>'
     
-    def to_dict(self):
+    def vers_dict(self):
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -37,55 +37,55 @@ class AuditLog(db.Model):
         }
 
 
-def log_action(user_id, action, resource_type, resource_id=None, details=None, ip_address=None):
+def enregistrer_action(id_utilisateur, action, type_ressource, id_ressource=None, details=None, ip_address=None):
     """
-    Log a user action to audit trail
+    Enregistrer une action utilisateur dans la piste d'audit
     
     Args:
-        user_id: ID of user performing action
-        action: Action performed (e.g., 'CREATE', 'UPDATE', 'DELETE')
-        resource_type: Type of resource (e.g., 'SENSOR', 'ALERT')
-        resource_id: ID of the resource affected
-        details: Dictionary of additional details
-        ip_address: IP address of the request
+        id_utilisateur: ID de l'utilisateur effectuant l'action
+        action: Action effectuée (ex: 'CREER', 'MODIFIER', 'SUPPRIMER')
+        type_ressource: Type de ressource (ex: 'CAPTEUR', 'ALERTE')
+        id_ressource: ID de la ressource affectée
+        details: Dictionnaire de détails supplémentaires
+        ip_address: Adresse IP de la requête
     """
     try:
-        audit = AuditLog(
-            user_id=user_id,
-            action=f"{action}_{resource_type}",
-            resource_type=resource_type,
-            resource_id=resource_id,
+        audit = JournalAudit(
+            user_id=id_utilisateur,
+            action=f"{action}_{type_ressource}",
+            resource_type=type_ressource,
+            resource_id=id_ressource,
             details=details or {},
             ip_address=ip_address
         )
         db.session.add(audit)
         db.session.commit()
-        logger.debug(f"Audit log created: {action} on {resource_type} by user {user_id}")
+        logger.debug(f"Journal d'audit créé: {action} sur {type_ressource} par l'utilisateur {id_utilisateur}")
     except Exception as e:
-        logger.error(f"Failed to create audit log: {str(e)}")
+        logger.error(f"Erreur lors de la création du journal d'audit: {str(e)}")
         db.session.rollback()
 
 
-def get_user_audit_history(user_id, limit=100):
-    """Get audit history for a specific user"""
+def obtenir_historique_audit_utilisateur(id_utilisateur, limit=100):
+    """Obtenir l'historique d'audit pour un utilisateur spécifique"""
     try:
-        logs = AuditLog.query.filter_by(user_id=user_id).order_by(
-            AuditLog.timestamp.desc()
+        logs = JournalAudit.query.filter_by(user_id=id_utilisateur).order_by(
+            JournalAudit.timestamp.desc()
         ).limit(limit).all()
-        return [log.to_dict() for log in logs]
+        return [log.vers_dict() for log in logs]
     except Exception as e:
-        logger.error(f"Failed to retrieve audit history: {str(e)}")
+        logger.error(f"Erreur lors de la récupération de l'historique d'audit: {str(e)}")
         return []
 
 
-def get_resource_audit_history(resource_type, resource_id, limit=50):
-    """Get audit history for a specific resource"""
+def obtenir_historique_audit_ressource(type_ressource, id_ressource, limit=50):
+    """Obtenir l'historique d'audit pour une ressource spécifique"""
     try:
-        logs = AuditLog.query.filter_by(
-            resource_type=resource_type,
-            resource_id=resource_id
-        ).order_by(AuditLog.timestamp.desc()).limit(limit).all()
-        return [log.to_dict() for log in logs]
+        logs = JournalAudit.query.filter_by(
+            resource_type=type_ressource,
+            resource_id=id_ressource
+        ).order_by(JournalAudit.timestamp.desc()).limit(limit).all()
+        return [log.vers_dict() for log in logs]
     except Exception as e:
-        logger.error(f"Failed to retrieve resource audit history: {str(e)}")
+        logger.error(f"Erreur lors de la récupération de l'historique d'audit de la ressource: {str(e)}")
         return []

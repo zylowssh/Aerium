@@ -1,5 +1,5 @@
 """
-Email notification service for sending alerts to users
+Service de notification par courrier électronique pour envoyer des alertes aux utilisateurs
 """
 from flask_mail import Mail, Message
 from flask import current_app
@@ -9,68 +9,68 @@ mail = Mail()
 logger = logging.getLogger(__name__)
 
 
-def init_email(app):
-    """Initialize Flask-Mail with app"""
+def initialiser_email(app):
+    """Initialiser Flask-Mail avec l'app"""
     mail.init_app(app)
 
 
-def send_alert_email(to_email, sensor_name, alert_type, alert_value, threshold):
+def envoyer_email_alerte(to_email, sensor_name, alert_type, alert_value, threshold):
     """
-    Send alert email to user
+    Envoyer un courrier électronique d'alerte à l'utilisateur
     
     Args:
-        to_email: User email address
-        sensor_name: Name of the sensor
-        alert_type: Type of alert (e.g., "High CO2", "High Temperature")
-        alert_value: Current value that triggered the alert
-        threshold: Threshold that was exceeded
+        to_email: Adresse e-mail de l'utilisateur
+        sensor_name: Nom du capteur
+        alert_type: Type d'alerte (ex: "CO2 élevé", "Température élevée")
+        alert_value: Valeur actuelle qui a déclenché l'alerte
+        threshold: Seuil qui a été dépassé
     """
     if not current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
-        logger.info(f"Email notifications disabled, skipping email to {to_email}")
+        logger.info(f"Notifications par courrier électronique désactivées, non envoyées à {to_email}")
         return
     
     try:
-        subject = f"🚨 Air Sense Alert: {alert_type} on {sensor_name}"
+        subject = f"🚨 Alerte Aerium: {alert_type} sur {sensor_name}"
         
         body = f"""
-Hello,
+Bonjour,
 
-An alert has been triggered on your sensor: {sensor_name}
+Une alerte a été déclenchée sur votre capteur: {sensor_name}
 
-Alert Type: {alert_type}
-Current Value: {alert_value}
-Threshold: {threshold}
-Timestamp: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Type d'alerte: {alert_type}
+Valeur actuelle: {alert_value}
+Seuil: {threshold}
+Horodatage: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-Please check the Air Sense Dashboard for more details.
+Veuillez vérifier le tableau de bord Aerium pour plus de détails.
 
-Best regards,
-Air Sense Dashboard
+Meilleurs vœux,
+Tableau de bord Aerium
         """
         
         html = f"""
         <html>
             <body style="font-family: Arial, sans-serif;">
                 <div style="max-width: 600px; margin: 0 auto;">
-                    <h2>🚨 Air Sense Alert</h2>
-                    <p>Hello,</p>
-                    <p>An alert has been triggered on your sensor: <strong>{sensor_name}</strong></p>
+                    <h2>🚨 Alerte Aerium</h2>
+                    <p>Bonjour,</p>
+                    <p>Une alerte a été déclenchée sur votre capteur: <strong>{sensor_name}</strong></p>
                     <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                         <tr style="background-color: #f5f5f5;">
-                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Alert Type</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Type d'alerte</strong></td>
                             <td style="padding: 10px; border: 1px solid #ddd;">{alert_type}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Current Value</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Valeur actuelle</strong></td>
                             <td style="padding: 10px; border: 1px solid #ddd;">{alert_value}</td>
                         </tr>
                         <tr style="background-color: #f5f5f5;">
-                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Threshold</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Seuil</strong></td>
                             <td style="padding: 10px; border: 1px solid #ddd;">{threshold}</td>
                         </tr>
                     </table>
-                    <p>Please check the <a href="{current_app.config.get('FRONTEND_URL', 'http://localhost:5173')}/alerts">Air Sense Dashboard</a> for more details.</p>
-                    <p style="color: #666; font-size: 12px; margin-top: 20px;">Air Sense Dashboard</p>
+                    <p>Veuillez vérifier le <a href="{current_app.config.get('FRONTEND_URL', 'http://localhost:5173')}/alerts">tableau de bord Aerium</a> pour plus de détails.</p>
+                    <p style="color: #666; font-size: 12px; margin-top: 20px;">Tableau de bord Aerium</p>
                 </div>
             </body>
         </html>
@@ -84,42 +84,42 @@ Air Sense Dashboard
         )
         
         mail.send(msg)
-        logger.info(f"Alert email sent to {to_email} for {sensor_name}")
+        logger.info(f"E-mail d'alerte envoyé à {to_email} pour {sensor_name}")
         
     except Exception as e:
-        logger.error(f"Failed to send email to {to_email}: {str(e)}")
+        logger.error(f"Erreur lors de l'envoi du courrier électronique à {to_email}: {str(e)}")
 
 
-def send_daily_report_email(to_email, user_name, report_data):
+def envoyer_email_rapport_quotidien(to_email, user_name, report_data):
     """
-    Send daily sensor report email
+    Envoyer un rapport quotidien par e-mail
     
     Args:
-        to_email: User email address
-        user_name: User's display name
-        report_data: Dictionary with report statistics
+        to_email: Adresse e-mail de l'utilisateur
+        user_name: Nom d'affichage de l'utilisateur
+        report_data: Dictionnaire avec les statistiques du rapport
     """
     if not current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
         return
     
     try:
-        subject = "📊 Daily Air Sense Report"
+        subject = "📊 Rapport quotidien Aerium"
         
         body = f"""
-Hello {user_name},
+Bonjour {user_name},
 
-Here's your daily air quality report:
+Voici votre rapport quotidien sur la qualité de l'air:
 
-Sensors Monitored: {report_data.get('sensor_count', 0)}
-Alerts Triggered: {report_data.get('alert_count', 0)}
-Average CO2: {report_data.get('avg_co2', 'N/A')} ppm
-Average Temperature: {report_data.get('avg_temp', 'N/A')} °C
-Average Humidity: {report_data.get('avg_humidity', 'N/A')} %
+Capteurs surveillés: {report_data.get('sensor_count', 0)}
+Alertes déclenchées: {report_data.get('alert_count', 0)}
+Moyenne CO2: {report_data.get('avg_co2', 'N/A')} ppm
+Température moyenne: {report_data.get('avg_temp', 'N/A')} °C
+Humidité moyenne: {report_data.get('avg_humidity', 'N/A')} %
 
-Check the dashboard for detailed analytics.
+Vérifiez le tableau de bord pour une analyse détaillée.
 
-Best regards,
-Air Sense Dashboard
+Meilleurs vœux,
+Tableau de bord Aerium
         """
         
         msg = Message(
@@ -129,7 +129,7 @@ Air Sense Dashboard
         )
         
         mail.send(msg)
-        logger.info(f"Daily report email sent to {to_email}")
+        logger.info(f"E-mail de rapport quotidien envoyé à {to_email}")
         
     except Exception as e:
-        logger.error(f"Failed to send report email to {to_email}: {str(e)}")
+        logger.error(f"Erreur lors de l'envoi du courrier électronique de rapport à {to_email}: {str(e)}")

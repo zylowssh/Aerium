@@ -1,11 +1,11 @@
 # Aerium Flask Backend
 
-Air quality monitoring backend built with Flask and SQLite with advanced features including email notifications, rate limiting, audit logging, and search/filtering.
+Air quality monitoring backend built with Flask and SQLite with advanced features including rate limiting, audit logging, and search/filtering.
 
 ## Features
 
 - 🔐 JWT Authentication with role-based access control
-- 📧 Email alerts for sensor threshold violations
+
 - 🛡️ Rate limiting to prevent API abuse
 - 📊 Comprehensive logging with rotating file handler
 - 🔍 Advanced search and filtering for sensors and alerts
@@ -29,18 +29,6 @@ pip install -r requirements.txt
 Create a `.env` file in the backend directory:
 
 ```env
-# Core Configuration
-SECRET_KEY=your-secret-key-change-in-production
-JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
-
-# Email Notifications (optional)
-ENABLE_EMAIL_NOTIFICATIONS=True
-MAIL_SERVER=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USE_TLS=True
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
-
 # Alert Thresholds
 ALERT_CO2_THRESHOLD=1200
 ALERT_TEMP_MIN=15
@@ -53,6 +41,9 @@ RATELIMIT_DEFAULT=200 per day;50 per hour;10 per minute
 
 # Logging
 LOG_LEVEL=INFO
+
+FLASK_ENV=development
+FLASK_DEBUG=True
 ```
 
 ### 3. Initialize Database
@@ -131,21 +122,9 @@ Server runs on `http://localhost:5000`
 See `.env.example` for all available configuration options.
 
 Key features:
-- **Email Alerts**: Configure SMTP to send alerts when thresholds exceeded
 - **Rate Limiting**: Prevent API abuse with configurable request limits
 - **Logging**: Comprehensive logging with rotating file handler
 - **Audit Trail**: All user actions are tracked and can be audited
-
-## Email Alerts
-
-When a reading exceeds configured thresholds, the system automatically sends an email alert to the user. Set these environment variables to enable:
-
-```env
-ENABLE_EMAIL_NOTIFICATIONS=True
-MAIL_SERVER=smtp.gmail.com
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
-```
 
 ## Search and Filtering
 
@@ -203,12 +182,6 @@ When exceeded:
 
 ## Troubleshooting
 
-### Email alerts not sending
-1. Check `.env` has correct `MAIL_USERNAME` and `MAIL_PASSWORD`
-2. For Gmail, enable "Less secure apps" or use App Password
-3. Check `logs/aerium.log` for error details
-4. Verify `ENABLE_EMAIL_NOTIFICATIONS=True`
-
 ### Rate limiting too strict
 ```env
 ENABLE_RATE_LIMITING=False  # Disable in development
@@ -232,10 +205,8 @@ Check `logs/aerium.log` for detailed logging.
 
 ## Production Deployment
 
-1. Set strong secret keys in `.env`
-2. Enable rate limiting and logging
-3. Configure email service
-4. Run with production server:
+1. Enable rate limiting and logging
+2. Run with production server:
 
 ```bash
 pip install gunicorn

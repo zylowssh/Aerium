@@ -11,14 +11,14 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(255))
-    role = db.Column(db.String(50), default='user')  # 'user' or 'admin'
+    role = db.Column(db.String(50), default='user')  # 'user' ou 'admin'
     avatar_url = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     sensors = db.relationship('Sensor', backref='owner', lazy=True, cascade='all, delete-orphan')
     
-    def to_dict(self):
+    def vers_dict(self):
         return {
             'id': self.id,
             'email': self.email,
@@ -38,22 +38,22 @@ class Sensor(db.Model):
     name = db.Column(db.String(255), nullable=False)
     location = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(50), default='en ligne')  # 'en ligne', 'hors ligne', 'avertissement'
-    sensor_type = db.Column(db.String(50), default='simulation')  # 'real' or 'simulation'
+    sensor_type = db.Column(db.String(50), default='simulation')  # 'réel' ou 'simulation'
     battery = db.Column(db.Integer, default=100)
     is_live = db.Column(db.Boolean, default=True)
     
-    # Custom thresholds per sensor (nullable means use global defaults)
+    # Seuils personnalisés par capteur (nullable signifie utiliser les val défaut)
     threshold_co2 = db.Column(db.Float, nullable=True)  # PPM
     threshold_temp_min = db.Column(db.Float, nullable=True)  # Celsius
     threshold_temp_max = db.Column(db.Float, nullable=True)  # Celsius
-    threshold_humidity = db.Column(db.Float, nullable=True)  # Percentage
+    threshold_humidity = db.Column(db.Float, nullable=True)  # Pourcentage
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     readings = db.relationship('SensorReading', backref='sensor', lazy=True, cascade='all, delete-orphan')
     
-    def to_dict(self, include_latest_reading=False):
+    def vers_dict(self, inclure_dernière_lecture=False):
         result = {
             'id': str(self.id),
             'user_id': self.user_id,
@@ -73,12 +73,12 @@ class Sensor(db.Model):
             'updated_at': self.updated_at.isoformat()
         }
         
-        if include_latest_reading and self.readings:
-            latest = max(self.readings, key=lambda r: r.recorded_at)
-            result['co2'] = latest.co2
-            result['temperature'] = latest.temperature
-            result['humidity'] = latest.humidity
-            result['lastReading'] = latest.recorded_at.isoformat()
+        if inclure_dernière_lecture and self.readings:
+            dernière = max(self.readings, key=lambda r: r.recorded_at)
+            result['co2'] = dernière.co2
+            result['temperature'] = dernière.temperature
+            result['humidity'] = dernière.humidity
+            result['lastReading'] = dernière.recorded_at.isoformat()
         
         return result
 
@@ -93,7 +93,7 @@ class SensorReading(db.Model):
     humidity = db.Column(db.Float, nullable=False)
     recorded_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    def to_dict(self):
+    def vers_dict(self):
         return {
             'id': self.id,
             'sensor_id': self.sensor_id,
@@ -118,19 +118,19 @@ class Alert(db.Model):
     resolved_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    def to_dict(self):
+    def vers_dict(self):
         sensor = Sensor.query.get(self.sensor_id)
         result = {
             'id': str(self.id),
             'sensorId': str(self.sensor_id),
-            'sensorName': sensor.name if sensor else 'Unknown',
+            'sensorName': sensor.name if sensor else 'Inconnu',
             'type': self.alert_type,
             'message': self.message,
             'value': self.value,
             'status': self.status,
             'timestamp': self.created_at.isoformat()
         }
-        # Add optional fields if they exist
+        # Ajouter des champs optionnels s'ils existent
         if hasattr(self, 'acknowledged_at') and self.acknowledged_at:
             result['acknowledgedAt'] = self.acknowledged_at.isoformat()
         if hasattr(self, 'resolved_at') and self.resolved_at:
@@ -145,22 +145,22 @@ class AlertHistory(db.Model):
     sensor_id = db.Column(db.Integer, db.ForeignKey('sensors.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     alert_type = db.Column(db.String(50), nullable=False)  # 'avertissement', 'critique', 'info'
-    metric = db.Column(db.String(100), nullable=False)  # 'co2', 'temperature', 'humidity'
+    metric = db.Column(db.String(100), nullable=False)  # 'co2', 'température', 'humidité'
     metric_value = db.Column(db.Float, nullable=False)
     threshold_value = db.Column(db.Float)
     message = db.Column(db.String(500), nullable=False)
-    status = db.Column(db.String(50), default='triggered')  # 'triggered', 'acknowledged', 'resolved'
+    status = db.Column(db.String(50), default='triggered')  # 'déclenché', 'reconnu', 'résolu'
     acknowledged_at = db.Column(db.DateTime)
     resolved_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    def to_dict(self):
+    def vers_dict(self):
         sensor = Sensor.query.get(self.sensor_id)
         return {
             'id': str(self.id),
             'sensorId': str(self.sensor_id),
-            'sensorName': sensor.name if sensor else 'Unknown',
-            'sensorLocation': sensor.location if sensor else 'Unknown',
+            'sensorName': sensor.name if sensor else 'Inconnu',
+            'sensorLocation': sensor.location if sensor else 'Inconnu',
             'alertType': self.alert_type,
             'metric': self.metric,
             'metricValue': self.metric_value,
@@ -179,22 +179,22 @@ class Maintenance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sensor_id = db.Column(db.Integer, db.ForeignKey('sensors.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    type = db.Column(db.String(50), nullable=False)  # 'calibration', 'battery', 'inspection', 'repair', 'replacement'
-    status = db.Column(db.String(50), default='scheduled')  # 'scheduled', 'in_progress', 'completed', 'overdue'
+    type = db.Column(db.String(50), nullable=False)  # 'étalonnage', 'batterie', 'inspection', 'réparation', 'remplacement'
+    status = db.Column(db.String(50), default='scheduled')  # 'planifié', 'en_cours', 'terminé', 'en retard'
     scheduled_date = db.Column(db.DateTime, nullable=False)
     completed_date = db.Column(db.DateTime)
     description = db.Column(db.String(500))
     notes = db.Column(db.Text)
-    priority = db.Column(db.String(50), default='normal')  # 'low', 'normal', 'high'
+    priority = db.Column(db.String(50), default='normal')  # 'bas', 'normal', 'élevé'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    def to_dict(self):
+    def vers_dict(self):
         sensor = Sensor.query.get(self.sensor_id)
         return {
             'id': str(self.id),
             'sensorId': str(self.sensor_id),
-            'sensorName': sensor.name if sensor else 'Unknown',
+            'sensorName': sensor.name if sensor else 'Inconnu',
             'type': self.type,
             'status': self.status,
             'scheduledDate': self.scheduled_date.isoformat(),
@@ -208,31 +208,31 @@ class Maintenance(db.Model):
 
 
 def init_db():
-    """Initialize the database and create tables"""
+    """Initialiser la base de données et créer les tables"""
     db.create_all()
-    print("Database initialized successfully")
+    print("Base de données initialisée avec succès")
 
 
-def check_sensor_threshold_columns(app):
-    """Warn if expected sensor threshold columns are missing (no auto-migration)."""
+def vérifier_colonnes_seuil_capteur(app):
+    """Avertir si les colonnes de seuil de capteur attendues sont manquantes (pas d'auto-migration)."""
     try:
         with app.app_context():
-            inspector = inspect(db.engine)
-            if 'sensors' not in inspector.get_table_names():
+            inspecteur = inspect(db.engine)
+            if 'sensors' not in inspecteur.get_table_names():
                 return
 
-            columns = {col['name'] for col in inspector.get_columns('sensors')}
-            expected = {
+            colonnes = {col['name'] for col in inspecteur.get_columns('sensors')}
+            attendues = {
                 'threshold_co2',
                 'threshold_temp_min',
                 'threshold_temp_max',
                 'threshold_humidity'
             }
-            missing = sorted(expected - columns)
-            if missing:
+            manquantes = sorted(attendues - colonnes)
+            if manquantes:
                 app.logger.warning(
-                    '[DB] Missing sensor threshold columns: %s. Run migration or recreate DB.',
-                    ', '.join(missing)
+                    '[DB] Colonnes de seuil de capteur manquantes: %s. Exécutez la migration ou recréez la BD.',
+                    ', '.join(manquantes)
                 )
     except Exception as exc:
-        app.logger.warning('[DB] Schema check failed: %s', exc)
+        app.logger.warning('[DB] La vérification du schéma a échoué: %s', exc)

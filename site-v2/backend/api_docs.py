@@ -1,12 +1,12 @@
 """
-API documentation using Flasgger (Swagger)
+Documentation de l'API utilisant Flasgger (Swagger)
 """
 
-api_docs = {
+docs_api = {
     "swagger": "2.0",
     "info": {
-        "title": "Aerium Air Quality Dashboard API",
-        "description": "REST API for real-time air quality monitoring and sensor management",
+        "title": "API du Tableau de Bord de Qualité de l'Air Aerium",
+        "description": "API REST pour la surveillance en temps réel de la qualité de l'air et la gestion des capteurs",
         "version": "1.0.0",
         "contact": {
             "email": "support@airsense.app"
@@ -18,18 +18,18 @@ api_docs = {
     "paths": {
         "/health": {
             "get": {
-                "summary": "Health check endpoint",
-                "description": "Check if the API is running",
+                "summary": "Point de terminaison de vérification de santé",
+                "description": "Vérifier si l'API fonctionne",
                 "responses": {
                     "200": {
-                        "description": "API is healthy"
+                        "description": "L'API est en bonne santé"
                     }
                 }
             }
         },
         "/auth/register": {
             "post": {
-                "summary": "Register a new user",
+                "summary": "Inscrire un nouvel utilisateur",
                 "parameters": [
                     {
                         "name": "body",
@@ -47,14 +47,14 @@ api_docs = {
                     }
                 ],
                 "responses": {
-                    "201": {"description": "User registered successfully"},
-                    "400": {"description": "Invalid input"}
+                    "201": {"description": "Utilisateur inscrit avec succès"},
+                    "400": {"description": "Entrée invalide"}
                 }
             }
         },
         "/auth/login": {
             "post": {
-                "summary": "Login user",
+                "summary": "Connecter un utilisateur",
                 "parameters": [
                     {
                         "name": "body",
@@ -71,30 +71,30 @@ api_docs = {
                     }
                 ],
                 "responses": {
-                    "200": {"description": "Login successful"},
-                    "401": {"description": "Invalid credentials"}
+                    "200": {"description": "Connexion réussie"},
+                    "401": {"description": "Identifiants invalides"}
                 }
             }
         },
         "/sensors": {
             "get": {
-                "summary": "Get all sensors",
+                "summary": "Obtenir tous les capteurs",
                 "security": [{"Bearer": []}],
                 "parameters": [
-                    {"name": "search", "in": "query", "type": "string", "description": "Search by name or location"},
+                    {"name": "search", "in": "query", "type": "string", "description": "Rechercher par nom ou emplacement"},
                     {"name": "status", "in": "query", "type": "string", "enum": ["en ligne", "avertissement", "offline"]},
-                    {"name": "type", "in": "query", "type": "string", "description": "Filter by sensor type"},
+                    {"name": "type", "in": "query", "type": "string", "description": "Filtrer par type de capteur"},
                     {"name": "active", "in": "query", "type": "boolean"},
                     {"name": "sort", "in": "query", "type": "string", "enum": ["name", "updated_at", "status"]},
                     {"name": "limit", "in": "query", "type": "integer", "default": 100}
                 ],
                 "responses": {
-                    "200": {"description": "List of sensors"},
-                    "401": {"description": "Unauthorized"}
+                    "200": {"description": "Liste des capteurs"},
+                    "401": {"description": "Non autorisé"}
                 }
             },
             "post": {
-                "summary": "Create a new sensor",
+                "summary": "Créer un nouveau capteur",
                 "security": [{"Bearer": []}],
                 "parameters": [
                     {
@@ -113,14 +113,14 @@ api_docs = {
                     }
                 ],
                 "responses": {
-                    "201": {"description": "Sensor created"},
-                    "400": {"description": "Invalid input"}
+                    "201": {"description": "Capteur créé"},
+                    "400": {"description": "Entrée invalide"}
                 }
             }
         },
         "/readings": {
             "post": {
-                "summary": "Add a new sensor reading",
+                "summary": "Ajouter une nouvelle lecture de capteur",
                 "security": [{"Bearer": []}],
                 "parameters": [
                     {
@@ -140,21 +140,21 @@ api_docs = {
                     }
                 ],
                 "responses": {
-                    "201": {"description": "Reading added"},
-                    "400": {"description": "Invalid input"}
+                    "201": {"description": "Lecture ajoutée"},
+                    "400": {"description": "Entrée invalide"}
                 }
             }
         },
         "/alerts": {
             "get": {
-                "summary": "Get alerts",
+                "summary": "Obtenir les alertes",
                 "security": [{"Bearer": []}],
                 "parameters": [
                     {"name": "status", "in": "query", "type": "string"},
                     {"name": "limit", "in": "query", "type": "integer", "default": 50}
                 ],
                 "responses": {
-                    "200": {"description": "List of alerts"}
+                    "200": {"description": "Liste des alertes"}
                 }
             }
         }
@@ -164,7 +164,7 @@ api_docs = {
             "type": "apiKey",
             "name": "Authorization",
             "in": "header",
-            "description": "JWT Authorization header using the Bearer scheme"
+            "description": "En-tête d'autorisation JWT utilisant le schéma Bearer"
         }
     }
 }

@@ -1,28 +1,28 @@
 """
-Admin-only endpoints for system configuration
+Points de terminaison réservés aux administrateurs pour la configuration du système
 """
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import User
-from scheduler import update_simulation_speed, SIMULATION_SPEED
+from scheduler import mettre_a_jour_vitesse_simulation, VITESSE_SIMULATION
 
 admin_bp = Blueprint('admin', __name__)
 
 
-def admin_required(f):
-    """Decorator to require admin role"""
+def admin_requis(f):
+    """Décorateur pour exiger le rôle d'administrateur"""
     from functools import wraps
     
     @wraps(f)
     @jwt_required()
     def decorated(*args, **kwargs):
-        current_user_id = get_jwt_identity()
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
+        id_utilisateur_courant = get_jwt_identity()
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
         
-        user = User.query.get(current_user_id)
+        user = User.query.get(id_utilisateur_courant)
         if not user or user.role != 'admin':
-            return jsonify({'error': 'Admin access required'}), 403
+            return jsonify({'error': 'Accès administrateur requis'}), 403
         
         return f(*args, **kwargs)
     
@@ -30,35 +30,35 @@ def admin_required(f):
 
 
 @admin_bp.route('/simulation/speed', methods=['GET'])
-@admin_required
-def get_simulation_speed():
-    """Get current simulation speed"""
+@admin_requis
+def obtenir_vitesse_simulation():
+    """Obtenir la vitesse de simulation courante"""
     return jsonify({
-        'speed': SIMULATION_SPEED,
-        'message': f'Current simulation speed: {SIMULATION_SPEED} seconds'
+        'speed': VITESSE_SIMULATION,
+        'message': f'Vitesse de simulation actuelle: {VITESSE_SIMULATION} secondes'
     }), 200
 
 
 @admin_bp.route('/simulation/speed', methods=['POST'])
-@admin_required
-def set_simulation_speed():
-    """Update simulation speed (admin only)"""
+@admin_requis
+def definir_vitesse_simulation():
+    """Mettre à jour la vitesse de simulation (admin seulement)"""
     try:
         data = request.get_json()
-        new_speed = data.get('speed')
+        nouvelle_vitesse = data.get('speed')
         
-        if not new_speed or new_speed <= 0:
-            return jsonify({'error': 'Speed must be a positive number'}), 400
+        if not nouvelle_vitesse or nouvelle_vitesse <= 0:
+            return jsonify({'error': 'La vitesse doit être un nombre positif'}), 400
         
-        success = update_simulation_speed(float(new_speed))
+        succes = mettre_a_jour_vitesse_simulation(float(nouvelle_vitesse))
         
-        if success:
+        if succes:
             return jsonify({
-                'message': f'Simulation speed updated to {new_speed} seconds',
-                'speed': new_speed
+                'message': f'Vitesse de simulation mise à jour à {nouvelle_vitesse} secondes',
+                'speed': nouvelle_vitesse
             }), 200
         else:
-            return jsonify({'error': 'Failed to update simulation speed'}), 500
+            return jsonify({'error': 'Échec de la mise à jour de la vitesse de simulation'}), 500
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500

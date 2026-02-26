@@ -21,44 +21,44 @@ def generate_co2_pattern(hour, base_value):
     return max(350, base_value + patterns.get(hour, 0) + variation)
 
 
-def seed_database():
-    """Seed the database with demonstration data"""
+def amorcer_base_donnees():
+    """Amorcer la base de données avec des données de démonstration"""
     with app.app_context():
-        print("🌱 Seeding database with demonstration data...")
+        print("🌱 Amorçage de la base de données avec des données de démonstration...")
         
-        # Check if demo users already exist
-        existing_demo = User.query.filter_by(email='demo@aerium.app').first()
-        if existing_demo:
-            print("⚠️  Demo accounts already exist. Skipping seed.")
+        # Vérifier si les utilisateurs de démonstration existent déjà
+        demo_existant = User.query.filter_by(email='demo@aerium.app').first()
+        if demo_existant:
+            print("⚠️  Les comptes de démonstration existent déjà. Amorçage ignoré.")
             return
         
-        # Create demo users
-        demo_password = bcrypt.hashpw('demo123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        admin_password = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        # Créer des utilisateurs de démonstration
+        mot_de_passe_demo = bcrypt.hashpw('demo123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        mot_de_passe_admin = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
-        demo_user = User(
+        utilisateur_demo = User(
             email='demo@aerium.app',
-            password_hash=demo_password,
-            full_name='Demo User',
+            password_hash=mot_de_passe_demo,
+            full_name='Utilisateur Démo',
             role='user'
         )
         
-        admin_user = User(
+        utilisateur_admin = User(
             email='admin@aerium.app',
-            password_hash=admin_password,
-            full_name='Admin User',
+            password_hash=mot_de_passe_admin,
+            full_name='Administrateur',
             role='admin'
         )
         
-        db.session.add(demo_user)
-        db.session.add(admin_user)
+        db.session.add(utilisateur_demo)
+        db.session.add(utilisateur_admin)
         db.session.commit()
         
-        print(f"✅ Created demo user: demo@aerium.app (password: demo123)")
-        print(f"✅ Created admin user: admin@aerium.app (password: admin123)")
+        print(f"✅ Utilisateur de démonstration créé: demo@aerium.app (mot de passe: demo123)")
+        print(f"✅ Utilisateur administrateur créé: admin@aerium.app (mot de passe: admin123)")
         
-        # Create sensors for demo user
-        sensors_data = [
+        # Créer des capteurs pour l'utilisateur de démonstration
+        donnees_capteurs = [
             {
                 'name': 'Bureau Principal',
                 'location': 'Bâtiment A, 2ᵉ étage',
@@ -89,69 +89,69 @@ def seed_database():
             }
         ]
         
-        sensors = []
-        for sensor_data in sensors_data:
-            sensor = Sensor(
-                user_id=demo_user.id,
-                name=sensor_data['name'],
-                location=sensor_data['location'],
+        capteurs = []
+        for donnees_capteur in donnees_capteurs:
+            capteur = Sensor(
+                user_id=utilisateur_demo.id,
+                name=donnees_capteur['name'],
+                location=donnees_capteur['location'],
                 status='en ligne',
                 sensor_type='simulation',
                 battery=random.randint(75, 100),
                 is_live=True
             )
-            db.session.add(sensor)
-            sensors.append((sensor, sensor_data))
+            db.session.add(capteur)
+            capteurs.append((capteur, donnees_capteur))
         
         db.session.commit()
-        print(f"✅ Created {len(sensors)} demo sensors")
+        print(f"✅ {len(capteurs)} capteurs de démonstration créés")
         
-        # Create historical readings (last 24 hours)
-        now = datetime.utcnow()
-        readings_count = 0
+        # Créer des lectures historiques (dernières 24 heures)
+        maintenant = datetime.utcnow()
+        compteur_lectures = 0
         
-        for sensor, sensor_data in sensors:
-            # Generate readings for the last 24 hours (every 30 minutes = 48 readings)
+        for capteur, donnees_capteur in capteurs:
+            # Générer des lectures pour les dernières 24 heures (toutes les 30 minutes = 48 lectures)
             for i in range(48):
-                time_offset = timedelta(minutes=30 * i)
-                reading_time = now - timedelta(hours=24) + time_offset
-                hour = reading_time.hour
+                decalage_temps = timedelta(minutes=30 * i)
+                heure_lecture = maintenant - timedelta(hours=24) + decalage_temps
+                heure = heure_lecture.hour
                 
-                # Generate realistic variations
-                co2 = round(generate_co2_pattern(hour, sensor_data['base_co2']))
-                temp = round((sensor_data['base_temp'] + (random.random() - 0.5) * 2) * 10) / 10
-                humidity = round(sensor_data['base_humidity'] + (random.random() - 0.5) * 10)
+                # Générer des variations réalistes
+                co2 = round(generer_motif_co2(heure, donnees_capteur['base_co2']))
+                temp = round((donnees_capteur['base_temp'] + (random.random() - 0.5) * 2) * 10) / 10
+                humidite = round(donnees_capteur['base_humidity'] + (random.random() - 0.5) * 10)
                 
-                reading = SensorReading(
-                    sensor_id=sensor.id,
+                lecture = SensorReading(
+                    sensor_id=capteur.id,
                     co2=co2,
                     temperature=temp,
-                    humidity=max(20, min(80, humidity)),
-                    recorded_at=reading_time
+                    humidity=max(20, min(80, humidite)),
+                    recorded_at=heure_lecture
                 )
-                db.session.add(reading)
-                readings_count += 1
+                db.session.add(lecture)
+                compteur_lectures += 1
         
-        # Update sensor statuses based on latest readings
-        for sensor, _ in sensors:
-            latest_reading = SensorReading.query.filter_by(
-                sensor_id=sensor.id
+        # Mettre à jour les statuts des capteurs en fonction des dernières lectures
+        for capteur, _ in capteurs:
+            derniere_lecture = SensorReading.query.filter_by(
+                sensor_id=capteur.id
             ).order_by(SensorReading.recorded_at.desc()).first()
             
-            if latest_reading:
-                if latest_reading.co2 > 1200:
-                    sensor.status = 'avertissement'
-                elif latest_reading.co2 > 1000:
-                    sensor.status = 'avertissement'
+            if derniere_lecture:
+                if derniere_lecture.co2 > 1200:
+                    capteur.status = 'avertissement'
+                elif derniere_lecture.co2 > 1000:
+                    capteur.status = 'avertissement'
                 else:
-                    sensor.status = 'en ligne'
+                    capteur.status = 'en ligne'
         
         db.session.commit()
-        print(f"✅ Created {readings_count} historical sensor readings")
+        print(f"✅ {compteur_lectures} lectures de capteurs historiques créées")
         
-        # Create admin sensors
-        admin_sensor = Sensor(
-            user_id=admin_user.id,
+        # Créer des capteurs pour l'administrateur
+        capteur_admin = Sensor(
+            user_id=utilisateur_admin.id,
             name='Salle Serveur',
             location='Datacenter',
             status='en ligne',
@@ -159,20 +159,20 @@ def seed_database():
             battery=95,
             is_live=True
         )
-        db.session.add(admin_sensor)
+        db.session.add(capteur_admin)
         db.session.commit()
-        print(f"✅ Created admin sensor")
+        print(f"✅ Capteur administrateur créé")
         
-        print("\n🎉 Database seeding completed!")
-        print("\n📊 Demo Accounts:")
-        print("   Regular User:")
+        print("\n🎉 Amorçage de la base de données terminé!")
+        print("\n📊 Comptes de démonstration:")
+        print("   Utilisateur régulier:")
         print("   - Email: demo@aerium.app")
-        print("   - Password: demo123")
-        print("\n   Admin User:")
+        print("   - Mot de passe: demo123")
+        print("\n   Utilisateur administrateur:")
         print("   - Email: admin@aerium.app")
-        print("   - Password: admin123")
-        print("\n🚀 You can now login with these accounts!")
+        print("   - Mot de passe: admin123")
+        print("\n🚀 Vous pouvez maintenant vous connecter avec ces comptes!")
 
 
 if __name__ == '__main__':
-    seed_database()
+    amorcer_base_donnees()

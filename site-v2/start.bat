@@ -6,6 +6,7 @@ setlocal enabledelayedexpansion
 set "BACKEND_PORT=5000"
 set "FRONTEND_PORT=5173"
 set "BACKEND_TIMEOUT=30"
+set "FRONTEND_TIMEOUT=30"
 set "VERBOSE="
 
 :: Parse arguments
@@ -15,7 +16,7 @@ if "%1"=="--verbose" set "VERBOSE=1" & echo [VERBOSE] Mode activé
 cls
 echo.
 echo ================================================================================
-echo                  AERIUM - Air Quality Monitoring Platform
+echo                                    AERIUM
 echo ================================================================================
 echo.
 echo [INFO] Lancement d'Aerium...
@@ -31,6 +32,12 @@ if not exist "backend" (
 REM ========== CHECK DEPENDENCIES ==========
 call :check_command python "Python 3.9+" "https://python.org"
 call :check_command node "Node.js 18+" "https://nodejs.org"
+
+REM ========== FORCE CLEANUP ANY EXISTING ==========
+echo.
+echo [INFO] Nettoyage des processus existants...
+call :force_cleanup
+timeout /t 3 /nobreak >nul
 
 REM ========== CHECK PORTS ==========
 call :check_port %BACKEND_PORT% "Backend"
@@ -53,24 +60,41 @@ if not exist "venv" (
 
 set "PYTHON=%cd%\venv\Scripts\python.exe"
 
-echo [INFO] Installation des paquets Python...
-if defined VERBOSE (
-    "%PYTHON%" -m pip install -r requirements.txt
+:: Check if pip packages are installed
+if not exist "venv\Lib\site-packages\flask" (
+    echo [INFO] Installation des paquets Python...
+    if defined VERBOSE (
+        "%PYTHON%" -m pip install -r requirements.txt
+    ) else (
+        "%PYTHON%" -m pip install -r requirements.txt >nul 2>&1
+    )
+    if errorlevel 1 (
+        echo [ERROR] Échec de l'installation des paquets Python
+        pause
+        exit /b 1
+    )
+    echo [OK] Dépendances Python installées
 ) else (
-    "%PYTHON%" -m pip install -r requirements.txt >nul 2>&1
+    echo [OK] Dépendances Python déjà installées
 )
-if errorlevel 1 (
-    echo [ERROR] Échec de l'installation des paquets Python
-    pause
-    exit /b 1
-)
-echo [OK] Dépendances Python installées
 
+:: Database creation - FIXED LOGIC
 if not exist "aerium.db" (
     echo [INFO] Création de la base de données...
-    "%PYTHON%" seed_database.py >nul 2>&1 && echo [OK] Base de données créée || (
-        echo [WARN] Échec de la création de la base de données
+    if defined VERBOSE (
+        "%PYTHON%" seed_database.py
+    ) else (
+        "%PYTHON%" seed_database.py >nul 2>&1
     )
+    :: Check if DB was created (seed_database.py starts server, so check file after)
+    timeout /t 3 >nul
+    if exist "aerium.db" (
+        echo [OK] Base de données créée avec succès
+    ) else (
+        echo [WARN] La base de données n'a pas été créée - vérifiez seed_database.py
+    )
+) else (
+    echo [OK] Base de données déjà existante
 )
 
 echo [START] Lancement du backend sur le port %BACKEND_PORT%...
@@ -78,12 +102,12 @@ echo [START] Lancement du backend sur le port %BACKEND_PORT%...
 if defined VERBOSE (
     start "Aerium Backend" cmd /c "%PYTHON% app.py"
 ) else (
-    start "Aerium Backend" /MIN cmd /c "%PYTHON% app.py 2^>^&1 ^| findstr /V /C:^"^*^" 127.0.0.1^""
+    start "Aerium Backend" /MIN cmd /c "%PYTHON% app.py"
 )
 
 call :wait_for_backend %BACKEND_TIMEOUT% || (
     echo [ERROR] Le backend n'a pas démarré dans le délai imparti %BACKEND_TIMEOUT%s
-    call :cleanup
+    call :force_cleanup
     pause
     exit /b 1
 )
@@ -100,11 +124,13 @@ if not exist "node_modules" (
     )
     if errorlevel 1 (
         echo [ERROR] Échec de l'installation des paquets npm
-        call :cleanup
+        call :force_cleanup
         pause
         exit /b 1
     )
     echo [OK] Dépendances npm installées
+) else (
+    echo [OK] Dépendances npm déjà installées
 )
 
 echo [START] Lancement du frontend sur le port %FRONTEND_PORT%...
@@ -115,7 +141,10 @@ if defined VERBOSE (
     start "Aerium Frontend" /MIN npm run dev
 )
 
-timeout /t 2 /nobreak >nul
+REM ========== WAIT FOR FRONTEND ==========
+call :wait_for_frontend %FRONTEND_TIMEOUT% || (
+    echo [WARN] Frontend pas fully ready, opening browser anyway...
+)
 
 REM ========== AUTO OPEN BROWSER ==========
 call :launch_browser
@@ -151,7 +180,7 @@ timeout /t 1 >nul
 goto menu_loop
 
 :shutdown
-call :cleanup
+call :force_cleanup
 echo [INFO] Services arrêtés.
 timeout /t 1 >nul
 endlocal
@@ -170,14 +199,42 @@ for /f "tokens=*" %%A in ('%~1 --version 2^>^&1') do echo [OK] %%A
 exit /b 0
 
 :check_port
-netstat -ano | findstr ":%~1" >nul 2>&1
+netstat -ano | findstr ":%~1.*LISTENING" >nul 2>&1
 if not errorlevel 1 (
-    echo [ERROR] Port %~1 est déjà utilisé. Arrêtez le processus ou modifiez la configuration.
+    echo [ERROR] Port %~1 est toujours utilisé. Vérifiez manuellement avec: netstat -ano | findstr ":%~1"
     pause
     exit /b 1
 )
 echo [OK] Port %~1 disponible
 exit /b 0
+
+:force_cleanup
+echo [INFO] Arrêt forcé de tous les services Aerium...
+taskkill /F /FI "WINDOWTITLE eq Aerium Backend" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Aerium Frontend" >nul 2>&1
+taskkill /IM python.exe /F >nul 2>&1
+taskkill /IM node.exe /F >nul 2>&1
+for /f "tokens=5" %%A in ('netstat -ano 2^>nul ^| findstr ":%BACKEND_PORT%.*LISTENING"') do (
+    taskkill /PID %%A /F >nul 2>&1
+)
+for /f "tokens=5" %%A in ('netstat -ano 2^>nul ^| findstr ":%FRONTEND_PORT%.*LISTENING"') do (
+    taskkill /PID %%A /F >nul 2>&1
+)
+set "attempt=0"
+:cleanup_wait
+timeout /t 1 /nobreak >nul
+set /a attempt+=1
+netstat -ano | findstr ":%BACKEND_PORT%.*LISTENING\|:%FRONTEND_PORT%.*LISTENING" >nul 2>&1
+if errorlevel 1 (
+    echo [OK] Tous les ports libérés
+    exit /b 0
+)
+if %attempt% geq 5 (
+    wmic process where "name='python.exe' or name='node.exe'" delete >nul 2>&1
+)
+if %attempt% lss 10 goto cleanup_wait
+echo [ERROR] Impossible de libérer les ports
+exit /b 1
 
 :wait_for_backend
 set "max_attempts=%~1"
@@ -189,6 +246,16 @@ curl -s http://localhost:%BACKEND_PORT%/ >nul 2>&1 && exit /b 0
 if %attempt% geq %max_attempts% exit /b 1
 goto wait_loop
 
+:wait_for_frontend
+set "max_attempts=%~1"
+set "attempt=0"
+:frontend_wait_loop
+timeout /t 1 /nobreak >nul
+set /a attempt+=1
+curl -s http://localhost:%FRONTEND_PORT%/ >nul 2>&1 && exit /b 0
+if %attempt% geq %max_attempts% exit /b 1
+goto frontend_wait_loop
+
 :launch_browser
 echo [INFO] Ouverture du navigateur...
 start "" "http://localhost:%FRONTEND_PORT%"
@@ -197,16 +264,7 @@ exit /b 0
 :restart_services
 echo.
 echo [INFO] Redémarrage des services...
-call :cleanup
-timeout /t 2 >nul
-echo [INFO] Relancement...
+call :force_cleanup
+timeout /t 3 >nul
 start "" "%~f0" %*
-exit /b 0
-
-:cleanup
-echo [INFO] Arrêt des services...
-taskkill /F /FI "WINDOWTITLE eq Aerium Backend" >nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Aerium Frontend" >nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Aerium Backend*" >nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Aerium Frontend*" >nul 2>&1
 exit /b 0

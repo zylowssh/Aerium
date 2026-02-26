@@ -9,85 +9,85 @@ try:
 except Exception:  # pragma: no cover - handled at runtime
     Prophet = None
 
-alerts_bp = Blueprint('alerts', __name__)
+alertes_bp = Blueprint('alerts', __name__)
 
-@alerts_bp.route('', methods=['GET'])
+@alertes_bp.route('', methods=['GET'])
 @jwt_required()
-def get_alerts():
-    """Get alerts for the current user"""
+def obtenir_alertes():
+    """Obtenir les alertes pour l'utilisateur courant"""
     try:
-        current_user_id = get_jwt_identity()
+        id_utilisateur_courant = get_jwt_identity()
         
-        # Convert to int if string
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
+        # Convertir en int si chaîne
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
             
-        user = User.query.get(current_user_id)
+        user = User.query.get(id_utilisateur_courant)
         
         if not user:
-            return jsonify({'error': 'User not found'}), 404
+            return jsonify({'error': 'Utilisateur non trouvé'}), 404
         
-        # Get query parameters
+        # Obtenir les paramètres de requête
         status = request.args.get('status')  # 'nouvelle', 'reconnue', 'résolue'
         limit = request.args.get('limit', 50, type=int)
         
-        # Check if alerts table exists
+        # Vérifier si la table des alertes existe
         try:
-            # Build query
+            # Construire la requête
             if user.role == 'admin':
                 query = Alert.query
             else:
-                query = Alert.query.filter_by(user_id=current_user_id)
+                query = Alert.query.filter_by(user_id=id_utilisateur_courant)
             
-            # Filter by status if provided
+            # Filtrer par statut si fourni
             if status:
                 query = query.filter_by(status=status)
             
-            # Get alerts ordered by most recent first
-            alerts = query.order_by(Alert.created_at.desc()).limit(limit).all()
+            # Obtenir les alertes triées par les plus récentes
+            alertes = query.order_by(Alert.created_at.desc()).limit(limit).all()
             
-            return jsonify({'alerts': [alert.to_dict() for alert in alerts]}), 200
-        except Exception as query_error:
-            # If table doesn't exist or query fails, return empty list
-            print(f"Query error (returning empty): {query_error}")
+            return jsonify({'alerts': [alerte.vers_dict() for alerte in alertes]}), 200
+        except Exception as erreur_requete:
+            # Si la table n'existe pas ou la requête échoue, retourner une liste vide
+            print(f"Erreur de requête (retour vide): {erreur_requete}")
             return jsonify({'alerts': []}), 200
         
     except Exception as e:
-        print(f"Error fetching alerts: {e}")
+        print(f"Erreur lors de la récupération des alertes: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e), 'alerts': []}), 200
 
 
-@alerts_bp.route('/<int:alert_id>', methods=['PUT'])
+@alertes_bp.route('/<int:alert_id>', methods=['PUT'])
 @jwt_required()
-def update_alert_status(alert_id):
-    """Update alert status"""
+def mettre_a_jour_statut_alerte(alert_id):
+    """Mettre à jour le statut de l'alerte"""
     try:
-        current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
+        id_utilisateur_courant = get_jwt_identity()
+        user = User.query.get(id_utilisateur_courant)
         
-        alert = Alert.query.get(alert_id)
+        alerte = Alert.query.get(alert_id)
         
-        if not alert:
-            return jsonify({'error': 'Alert not found'}), 404
+        if not alerte:
+            return jsonify({'error': 'Alerte non trouvée'}), 404
         
-        # Check ownership unless admin
-        if user.role != 'admin' and alert.user_id != current_user_id:
-            return jsonify({'error': 'Unauthorized access to this alert'}), 403
+        # Vérifier la propriété sauf si admin
+        if user.role != 'admin' and alerte.user_id != id_utilisateur_courant:
+            return jsonify({'error': 'Accès non autorisé à cette alerte'}), 403
         
         data = request.get_json()
-        new_status = data.get('status')
+        nouveau_statut = data.get('status')
         
-        if new_status not in ['nouvelle', 'reconnue', 'résolue']:
-            return jsonify({'error': 'Invalid status'}), 400
+        if nouveau_statut not in ['nouvelle', 'reconnue', 'résolue']:
+            return jsonify({'error': 'Statut invalide'}), 400
         
-        alert.status = new_status
+        alerte.status = nouveau_statut
         db.session.commit()
         
         return jsonify({
-            'message': 'Alert status updated successfully',
-            'alert': alert.to_dict()
+            'message': 'Statut de l\'alerte mis à jour avec succès',
+            'alert': alerte.vers_dict()
         }), 200
         
     except Exception as e:
@@ -95,111 +95,111 @@ def update_alert_status(alert_id):
         return jsonify({'error': str(e)}), 500
 
 
-@alerts_bp.route('/<int:alert_id>', methods=['DELETE'])
+@alertes_bp.route('/<int:alert_id>', methods=['DELETE'])
 @jwt_required()
-def delete_alert(alert_id):
-    """Delete an alert"""
+def supprimer_alerte(alert_id):
+    """Supprimer une alerte"""
     try:
-        current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
+        id_utilisateur_courant = get_jwt_identity()
+        user = User.query.get(id_utilisateur_courant)
         
-        alert = Alert.query.get(alert_id)
+        alerte = Alert.query.get(alert_id)
         
-        if not alert:
-            return jsonify({'error': 'Alert not found'}), 404
+        if not alerte:
+            return jsonify({'error': 'Alerte non trouvée'}), 404
         
-        # Check ownership unless admin
-        if user.role != 'admin' and alert.user_id != current_user_id:
-            return jsonify({'error': 'Unauthorized access to this alert'}), 403
+        # Vérifier la propriété sauf si admin
+        if user.role != 'admin' and alerte.user_id != id_utilisateur_courant:
+            return jsonify({'error': 'Accès non autorisé à cette alerte'}), 403
         
-        db.session.delete(alert)
+        db.session.delete(alerte)
         db.session.commit()
         
-        return jsonify({'message': 'Alert deleted successfully'}), 200
+        return jsonify({'message': 'Alerte supprimée avec succès'}), 200
         
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
 
-# Alert History Endpoints
+# Points de terminaison d'historique des alertes
 
-@alerts_bp.route('/history/list', methods=['GET'])
+@alertes_bp.route('/history/list', methods=['GET'])
 @jwt_required()
-def get_alert_history():
-    """Get alert history for the current user"""
+def obtenir_historique_alertes():
+    """Obtenir l'historique des alertes pour l'utilisateur courant"""
     try:
-        current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
+        id_utilisateur_courant = get_jwt_identity()
+        user = User.query.get(id_utilisateur_courant)
         
         if not user:
-            return jsonify({'error': 'User not found'}), 404
+            return jsonify({'error': 'Utilisateur non trouvé'}), 404
         
-        # Get query parameters
-        days = request.args.get('days', 30, type=int)
+        # Obtenir les paramètres de requête
+        jours = request.args.get('days', 30, type=int)
         status = request.args.get('status')
-        alert_type = request.args.get('type')
+        type_alerte = request.args.get('type')
         sensor_id = request.args.get('sensor_id', type=int)
         limit = request.args.get('limit', 100, type=int)
         
-        # Build query
+        # Construire la requête
         if user.role == 'admin':
             query = AlertHistory.query
         else:
-            query = AlertHistory.query.filter_by(user_id=current_user_id)
+            query = AlertHistory.query.filter_by(user_id=id_utilisateur_courant)
         
-        # Filter by date
-        start_date = datetime.utcnow() - timedelta(days=days)
-        query = query.filter(AlertHistory.created_at >= start_date)
+        # Filtrer par date
+        date_debut = datetime.utcnow() - timedelta(days=jours)
+        query = query.filter(AlertHistory.created_at >= date_debut)
         
-        # Filter by status if provided
+        # Filtrer par statut si fourni
         if status:
             query = query.filter_by(status=status)
         
-        # Filter by alert type if provided
-        if alert_type:
-            query = query.filter_by(alert_type=alert_type)
+        # Filtrer par type d'alerte si fourni
+        if type_alerte:
+            query = query.filter_by(alert_type=type_alerte)
         
-        # Filter by sensor if provided
+        # Filtrer par capteur si fourni
         if sensor_id:
             query = query.filter_by(sensor_id=sensor_id)
         
-        # Get alerts ordered by most recent first
-        alerts = query.order_by(AlertHistory.created_at.desc()).limit(limit).all()
+        # Obtenir les alertes triées par les plus récentes
+        alertes = query.order_by(AlertHistory.created_at.desc()).limit(limit).all()
         
         return jsonify({
-            'alerts': [alert.to_dict() for alert in alerts],
-            'total': len(alerts)
+            'alerts': [alerte.vers_dict() for alerte in alertes],
+            'total': len(alertes)
         }), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-@alerts_bp.route('/history/acknowledge/<int:alert_id>', methods=['PUT'])
+@alertes_bp.route('/history/acknowledge/<int:alert_id>', methods=['PUT'])
 @jwt_required()
-def acknowledge_alert(alert_id):
-    """Acknowledge an alert from history"""
+def accuser_reception_alerte(alert_id):
+    """Accuser réception d'une alerte de l'historique"""
     try:
-        current_user_id = get_jwt_identity()
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
-        alert = AlertHistory.query.get(alert_id)
+        id_utilisateur_courant = get_jwt_identity()
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
+        alerte = AlertHistory.query.get(alert_id)
         
-        if not alert:
-            return jsonify({'error': 'Alert not found'}), 404
+        if not alerte:
+            return jsonify({'error': 'Alerte non trouvée'}), 404
         
-        user = User.query.get(current_user_id)
-        if user.role != 'admin' and alert.user_id != current_user_id:
-            return jsonify({'error': 'Unauthorized'}), 403
+        user = User.query.get(id_utilisateur_courant)
+        if user.role != 'admin' and alerte.user_id != id_utilisateur_courant:
+            return jsonify({'error': 'Non autorisé'}), 403
         
-        alert.status = 'acknowledged'
-        alert.acknowledged_at = datetime.utcnow()
+        alerte.status = 'acknowledged'
+        alerte.acknowledged_at = datetime.utcnow()
         db.session.commit()
         
         return jsonify({
-            'message': 'Alert acknowledged',
-            'alert': alert.to_dict()
+            'message': 'Alerte accusée',
+            'alert': alerte.vers_dict()
         }), 200
         
     except Exception as e:
@@ -207,30 +207,30 @@ def acknowledge_alert(alert_id):
         return jsonify({'error': str(e)}), 500
 
 
-@alerts_bp.route('/history/resolve/<int:alert_id>', methods=['PUT'])
+@alertes_bp.route('/history/resolve/<int:alert_id>', methods=['PUT'])
 @jwt_required()
-def resolve_alert(alert_id):
-    """Resolve an alert from history"""
+def resoudre_alerte(alert_id):
+    """Résoudre une alerte de l'historique"""
     try:
-        current_user_id = get_jwt_identity()
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
-        alert = AlertHistory.query.get(alert_id)
+        id_utilisateur_courant = get_jwt_identity()
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
+        alerte = AlertHistory.query.get(alert_id)
         
-        if not alert:
-            return jsonify({'error': 'Alert not found'}), 404
+        if not alerte:
+            return jsonify({'error': 'Alerte non trouvée'}), 404
         
-        user = User.query.get(current_user_id)
-        if user.role != 'admin' and alert.user_id != current_user_id:
-            return jsonify({'error': 'Unauthorized'}), 403
+        user = User.query.get(id_utilisateur_courant)
+        if user.role != 'admin' and alerte.user_id != id_utilisateur_courant:
+            return jsonify({'error': 'Non autorisé'}), 403
         
-        alert.status = 'resolved'
-        alert.resolved_at = datetime.utcnow()
+        alerte.status = 'resolved'
+        alerte.resolved_at = datetime.utcnow()
         db.session.commit()
         
         return jsonify({
-            'message': 'Alert resolved',
-            'alert': alert.to_dict()
+            'message': 'Alerte résolue',
+            'alert': alerte.vers_dict()
         }), 200
         
     except Exception as e:
@@ -238,110 +238,110 @@ def resolve_alert(alert_id):
         return jsonify({'error': str(e)}), 500
 
 
-@alerts_bp.route('/history/stats', methods=['GET'])
+@alertes_bp.route('/history/stats', methods=['GET'])
 @jwt_required()
-def get_alert_stats():
-    """Get alert statistics"""
+def obtenir_stats_alertes():
+    """Obtenir les statistiques des alertes"""
     try:
-        current_user_id = get_jwt_identity()
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
-        user = User.query.get(current_user_id)
-        days = request.args.get('days', 30, type=int)
+        id_utilisateur_courant = get_jwt_identity()
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
+        user = User.query.get(id_utilisateur_courant)
+        jours = request.args.get('days', 30, type=int)
         
-        start_date = datetime.utcnow() - timedelta(days=days)
+        date_debut = datetime.utcnow() - timedelta(days=jours)
         
         if user.role == 'admin':
             query = AlertHistory.query
         else:
-            query = AlertHistory.query.filter_by(user_id=current_user_id)
+            query = AlertHistory.query.filter_by(user_id=id_utilisateur_courant)
         
-        query = query.filter(AlertHistory.created_at >= start_date)
+        query = query.filter(AlertHistory.created_at >= date_debut)
         
-        total_alerts = query.count()
-        triggered = query.filter_by(status='triggered').count()
-        acknowledged = query.filter_by(status='acknowledged').count()
-        resolved = query.filter_by(status='resolved').count()
+        total_alertes = query.count()
+        declenchees = query.filter_by(status='triggered').count()
+        accusees = query.filter_by(status='acknowledged').count()
+        resolues = query.filter_by(status='resolved').count()
         
-        # Count by type
-        by_type = {}
-        for alert_type in ['info', 'avertissement', 'critique']:
-            by_type[alert_type] = query.filter_by(alert_type=alert_type).count()
+        # Compter par type
+        par_type = {}
+        for type_alerte in ['info', 'avertissement', 'critique']:
+            par_type[type_alerte] = query.filter_by(alert_type=type_alerte).count()
         
-        # Count by metric
-        by_metric = {}
-        for metric in ['co2', 'temperature', 'humidity']:
-            by_metric[metric] = query.filter_by(metric=metric).count()
+        # Compter par métrique
+        par_metrique = {}
+        for metrique in ['co2', 'temperature', 'humidity']:
+            par_metrique[metrique] = query.filter_by(metric=metrique).count()
         
         return jsonify({
-            'totalAlerts': total_alerts,
-            'triggered': triggered,
-            'acknowledged': acknowledged,
-            'resolved': resolved,
-            'byType': by_type,
-            'byMetric': by_metric
+            'totalAlerts': total_alertes,
+            'triggered': declenchees,
+            'acknowledged': accusees,
+            'resolved': resolues,
+            'byType': par_type,
+            'byMetric': par_metrique
         }), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-@alerts_bp.route('/predictions', methods=['GET'])
+@alertes_bp.route('/predictions', methods=['GET'])
 @jwt_required()
-def get_predictions():
-    """Get predictive alerts based on trend analysis"""
+def obtenir_predictions():
+    """Obtenir les alertes prédictives basées sur l'analyse des tendances"""
     try:
-        current_user_id = get_jwt_identity()
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
+        id_utilisateur_courant = get_jwt_identity()
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
         
-        user = User.query.get(current_user_id)
+        user = User.query.get(id_utilisateur_courant)
         if not user:
-            return jsonify({'error': 'User not found'}), 404
+            return jsonify({'error': 'Utilisateur non trouvé'}), 404
         
-        # Get user's sensors
+        # Obtenir les capteurs de l'utilisateur
         if user.role == 'admin':
-            sensors = Sensor.query.all()
+            capteurs = Sensor.query.all()
         else:
-            sensors = Sensor.query.filter_by(user_id=current_user_id).all()
+            capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
         
-        use_prophet = Prophet is not None
+        utiliser_prophet = Prophet is not None
 
         predictions = []
-        horizon_hours = 24
+        horizon_heures = 24
 
-        # Analyze each sensor for predictions
-        for sensor in sensors:
-            readings = SensorReading.query.filter_by(sensor_id=sensor.id)\
+        # Analyser chaque capteur pour les prédictions
+        for capteur in capteurs:
+            lectures = SensorReading.query.filter_by(sensor_id=capteur.id)\
                 .order_by(SensorReading.recorded_at.desc())\
                 .limit(200).all()
 
-            if len(readings) < 20:
+            if len(lectures) < 20:
                 continue
 
-            readings.reverse()
+            lectures.reverse()
 
-            for metric in ['co2', 'temperature', 'humidity']:
-                prediction = build_forecast_prediction(sensor, readings, metric, horizon_hours, use_prophet)
+            for metrique in ['co2', 'temperature', 'humidity']:
+                prediction = construire_prediction_prevision(capteur, lectures, metrique, horizon_heures, utiliser_prophet)
                 if prediction:
                     predictions.append(prediction)
         
         return jsonify({'predictions': predictions}), 200
         
     except Exception as e:
-        print(f"Error getting predictions: {e}")
+        print(f"Erreur lors de l'obtention des prédictions: {e}")
         return jsonify({'error': str(e)}), 500
 
 
-def build_forecast_prediction(sensor, readings, metric, horizon_hours, use_prophet):
-    """Build a Prophet-based prediction for a sensor metric, with fallback."""
+def construire_prediction_prevision(capteur, lectures, metrique, horizon_heures, utiliser_prophet):
+    """Construire une prédiction basée sur Prophet pour une métrique de capteur, avec solution de repli."""
     df = None
-    current_value = None
-    trend_percentage = 0.0
+    valeur_courante = None
+    pourcentage_tendance = 0.0
     try:
         df = pd.DataFrame([
-            {'ds': r.recorded_at, 'y': float(getattr(r, metric))}
-            for r in readings
+            {'ds': r.recorded_at, 'y': float(getattr(r, metrique))}
+            for r in lectures
         ])
         if df.empty:
             return None
@@ -352,44 +352,44 @@ def build_forecast_prediction(sensor, readings, metric, horizon_hours, use_proph
         if len(df) < 20:
             return None
 
-        interval_minutes = get_median_interval_minutes(df)
-        if not interval_minutes:
+        minutes_intervalle = obtenir_intervalle_median_minutes(df)
+        if not minutes_intervalle:
             return None
 
-        current_value = float(df['y'].iloc[-1])
-        trend_percentage = compute_trend_percentage(df['y'])
-        thresholds = get_sensor_thresholds(sensor)
+        valeur_courante = float(df['y'].iloc[-1])
+        pourcentage_tendance = calculer_pourcentage_tendance(df['y'])
+        seuils = obtenir_seuils_capteur(capteur)
 
-        if use_prophet:
+        if utiliser_prophet:
             try:
-                model = Prophet(
+                modele = Prophet(
                     daily_seasonality=True,
                     weekly_seasonality=False,
                     yearly_seasonality=False,
                     seasonality_mode='additive'
                 )
-                model.fit(df)
+                modele.fit(df)
 
-                periods = max(1, int((horizon_hours * 60) / interval_minutes))
-                future = model.make_future_dataframe(periods=periods, freq=f'{interval_minutes}min')
-                forecast = model.predict(future).tail(periods)
+                periodes = max(1, int((horizon_heures * 60) / minutes_intervalle))
+                futur = modele.make_future_dataframe(periods=periodes, freq=f'{minutes_intervalle}min')
+                prevision = modele.predict(futur).tail(periodes)
 
-                prediction = evaluate_forecast(sensor, metric, current_value, trend_percentage, forecast, thresholds, horizon_hours)
+                prediction = evaluer_prevision(capteur, metrique, valeur_courante, pourcentage_tendance, prevision, seuils, horizon_heures)
                 if prediction:
                     return prediction
-            except Exception as prophet_error:
-                # Prophet failed, fall back to trend-based prediction
-                print(f"Prophet forecasting failed for {metric} on sensor {sensor.id}: {prophet_error}. Using trend-based fallback.")
+            except Exception as erreur_prophet:
+                # Prophet a échoué, revenir à la prédiction basée sur les tendances
+                print(f"Échec de la prévision Prophet pour {metrique} sur le capteur {capteur.id}: {erreur_prophet}. Utilisation de la solution de repli basée sur les tendances.")
 
-        return build_trend_prediction(sensor, df, metric, horizon_hours, thresholds, current_value, trend_percentage)
+        return construire_prediction_tendance(capteur, df, metrique, horizon_heures, seuils, valeur_courante, pourcentage_tendance)
     except Exception as exc:
-        print(f"Error forecasting {metric} for sensor {sensor.id}: {exc}")
-        if df is None or current_value is None:
+        print(f"Erreur de prévision {metrique} pour le capteur {capteur.id}: {exc}")
+        if df is None or valeur_courante is None:
             return None
-        return build_trend_prediction(sensor, df, metric, horizon_hours, get_sensor_thresholds(sensor), current_value, trend_percentage)
+        return construire_prediction_tendance(capteur, df, metrique, horizon_heures, obtenir_seuils_capteur(capteur), valeur_courante, pourcentage_tendance)
 
 
-def get_median_interval_minutes(df):
+def obtenir_intervalle_median_minutes(df):
     if len(df) < 2:
         return None
     deltas = df['ds'].diff().dropna().dt.total_seconds() / 60
@@ -401,7 +401,7 @@ def get_median_interval_minutes(df):
     return max(1, int(round(median)))
 
 
-def compute_trend_percentage(series):
+def calculer_pourcentage_tendance(series):
     if len(series) < 2:
         return 0.0
     first = float(series.iloc[0])
@@ -410,192 +410,192 @@ def compute_trend_percentage(series):
     return round(((last - first) / baseline) * 100, 1)
 
 
-def build_trend_prediction(sensor, df, metric, horizon_hours, thresholds, current_value, trend_percentage):
+def construire_prediction_tendance(capteur, df, metrique, horizon_heures, seuils, valeur_courante, pourcentage_tendance):
     recent = df.tail(12)
     if len(recent) < 6:
         return None
 
-    start_time = recent['ds'].iloc[0]
-    end_time = recent['ds'].iloc[-1]
-    hours_span = max((end_time - start_time).total_seconds() / 3600.0, 1 / 60)
+    heure_debut = recent['ds'].iloc[0]
+    heure_fin = recent['ds'].iloc[-1]
+    portee_heures = max((heure_fin - heure_debut).total_seconds() / 3600.0, 1 / 60)
 
-    start_value = float(recent['y'].iloc[0])
-    end_value = float(recent['y'].iloc[-1])
-    slope_per_hour = (end_value - start_value) / hours_span
-    projected = end_value + (slope_per_hour * horizon_hours)
+    valeur_debut = float(recent['y'].iloc[0])
+    valeur_fin = float(recent['y'].iloc[-1])
+    pente_par_heure = (valeur_fin - valeur_debut) / portee_heures
+    projet = valeur_fin + (pente_par_heure * horizon_heures)
 
-    if metric == 'co2':
-        threshold = thresholds['co2']
-        if projected <= threshold:
+    if metrique == 'co2':
+        seuil = seuils['co2']
+        if projet <= seuil:
             return None
-        likelihood = estimate_projection_likelihood(projected, threshold)
-        impact = 'high' if projected >= threshold * 1.2 else 'medium'
-        title = f'Risque de depassement CO2 ({current_value:.0f} ppm)'
-        description = f'Projection lineaire au-dessus de {threshold:.0f} ppm dans les prochaines {horizon_hours}h.'
-        return build_prediction_payload(sensor, metric, current_value, trend_percentage, title, description, likelihood, impact, horizon_hours)
+        vraisemblance = estimer_vraisemblance_projection(projet, seuil)
+        impact = 'high' if projet >= seuil * 1.2 else 'medium'
+        titre = f'Risque de depassement CO2 ({valeur_courante:.0f} ppm)'
+        description = f'Projection lineaire au-dessus de {seuil:.0f} ppm dans les prochaines {horizon_heures}h.'
+        return construire_payload_prediction(capteur, metrique, valeur_courante, pourcentage_tendance, titre, description, vraisemblance, impact, horizon_heures)
 
-    if metric == 'humidity':
-        threshold = thresholds['humidity']
-        if projected <= threshold:
+    if metrique == 'humidity':
+        seuil = seuils['humidity']
+        if projet <= seuil:
             return None
-        likelihood = estimate_projection_likelihood(projected, threshold)
-        impact = 'high' if projected >= threshold + 10 else 'medium'
-        title = f'Risque d\'humidite elevee ({current_value:.0f}%)'
-        description = f'Projection lineaire au-dessus de {threshold:.0f}% dans les prochaines {horizon_hours}h.'
-        return build_prediction_payload(sensor, metric, current_value, trend_percentage, title, description, likelihood, impact, horizon_hours)
+        vraisemblance = estimer_vraisemblance_projection(projet, seuil)
+        impact = 'high' if projet >= seuil + 10 else 'medium'
+        titre = f'Risque d\'humidite elevee ({valeur_courante:.0f}%)'
+        description = f'Projection lineaire au-dessus de {seuil:.0f}% dans les prochaines {horizon_heures}h.'
+        return construire_payload_prediction(capteur, metrique, valeur_courante, pourcentage_tendance, titre, description, vraisemblance, impact, horizon_heures)
 
-    if metric == 'temperature':
-        temp_min = thresholds['temp_min']
-        temp_max = thresholds['temp_max']
+    if metrique == 'temperature':
+        temp_min = seuils['temp_min']
+        temp_max = seuils['temp_max']
 
-        if projected > temp_max:
-            likelihood = estimate_projection_likelihood(projected, temp_max)
-            impact = 'high' if projected >= temp_max + 2 else 'medium'
-            title = f'Risque de chaleur ({current_value:.1f}C)'
-            description = f'Projection lineaire au-dessus de {temp_max:.1f}C dans les prochaines {horizon_hours}h.'
-            return build_prediction_payload(sensor, metric, current_value, trend_percentage, title, description, likelihood, impact, horizon_hours)
+        if projet > temp_max:
+            vraisemblance = estimer_vraisemblance_projection(projet, temp_max)
+            impact = 'high' if projet >= temp_max + 2 else 'medium'
+            titre = f'Risque de chaleur ({valeur_courante:.1f}C)'
+            description = f'Projection lineaire au-dessus de {temp_max:.1f}C dans les prochaines {horizon_heures}h.'
+            return construire_payload_prediction(capteur, metrique, valeur_courante, pourcentage_tendance, titre, description, vraisemblance, impact, horizon_heures)
 
-        if projected < temp_min:
-            likelihood = estimate_projection_likelihood(temp_min, projected)
-            impact = 'high' if projected <= temp_min - 2 else 'medium'
-            title = f'Risque de froid ({current_value:.1f}C)'
-            description = f'Projection lineaire en dessous de {temp_min:.1f}C dans les prochaines {horizon_hours}h.'
-            return build_prediction_payload(sensor, metric, current_value, trend_percentage, title, description, likelihood, impact, horizon_hours)
+        if projet < temp_min:
+            vraisemblance = estimer_vraisemblance_projection(temp_min, projet)
+            impact = 'high' if projet <= temp_min - 2 else 'medium'
+            titre = f'Risque de froid ({valeur_courante:.1f}C)'
+            description = f'Projection lineaire en dessous de {temp_min:.1f}C dans les prochaines {horizon_heures}h.'
+            return construire_payload_prediction(capteur, metrique, valeur_courante, pourcentage_tendance, titre, description, vraisemblance, impact, horizon_heures)
 
     return None
 
 
-def estimate_projection_likelihood(predicted, threshold):
-    distance = abs(predicted - threshold)
+def estimer_vraisemblance_projection(predit, seuil):
+    distance = abs(predit - seuil)
     return float(min(95.0, max(55.0, 55.0 + distance)))
 
 
-def get_sensor_thresholds(sensor):
+def obtenir_seuils_capteur(capteur):
     return {
-        'co2': sensor.threshold_co2 if sensor.threshold_co2 is not None else current_app.config.get('ALERT_CO2_THRESHOLD', 1200),
-        'temp_min': sensor.threshold_temp_min if sensor.threshold_temp_min is not None else current_app.config.get('ALERT_TEMP_MIN', 15),
-        'temp_max': sensor.threshold_temp_max if sensor.threshold_temp_max is not None else current_app.config.get('ALERT_TEMP_MAX', 28),
-        'humidity': sensor.threshold_humidity if sensor.threshold_humidity is not None else current_app.config.get('ALERT_HUMIDITY_THRESHOLD', 80)
+        'co2': capteur.threshold_co2 if capteur.threshold_co2 is not None else current_app.config.get('ALERT_CO2_THRESHOLD', 1200),
+        'temp_min': capteur.threshold_temp_min if capteur.threshold_temp_min is not None else current_app.config.get('ALERT_TEMP_MIN', 15),
+        'temp_max': capteur.threshold_temp_max if capteur.threshold_temp_max is not None else current_app.config.get('ALERT_TEMP_MAX', 28),
+        'humidity': capteur.threshold_humidity if capteur.threshold_humidity is not None else current_app.config.get('ALERT_HUMIDITY_THRESHOLD', 80)
     }
 
 
-def evaluate_forecast(sensor, metric, current_value, trend_percentage, forecast, thresholds, horizon_hours):
-    yhat_upper = forecast['yhat_upper']
-    yhat_lower = forecast['yhat_lower']
-    yhat = forecast['yhat']
+def evaluer_prevision(capteur, metrique, valeur_courante, pourcentage_tendance, prevision, seuils, horizon_heures):
+    yhat_superieur = prevision['yhat_upper']
+    yhat_inferieur = prevision['yhat_lower']
+    yhat = prevision['yhat']
 
-    if metric == 'co2':
-        threshold = thresholds['co2']
-        predicted_max = float(yhat_upper.max())
-        if predicted_max <= threshold:
+    if metrique == 'co2':
+        seuil = seuils['co2']
+        predit_max = float(yhat_superieur.max())
+        if predit_max <= seuil:
             return None
-        likelihood = estimate_likelihood(predicted_max, float(yhat_lower.max()), threshold)
-        impact = 'high' if predicted_max >= threshold * 1.2 else 'medium'
-        title = f'Risque de dépassement CO2 ({current_value:.0f} ppm)'
-        description = f'CO2 prévu au-dessus de {threshold:.0f} ppm dans les prochaines {horizon_hours}h.'
-        return build_prediction_payload(sensor, metric, current_value, trend_percentage, title, description, likelihood, impact, horizon_hours)
+        vraisemblance = estimer_vraisemblance(predit_max, float(yhat_inferieur.max()), seuil)
+        impact = 'high' if predit_max >= seuil * 1.2 else 'medium'
+        titre = f'Risque de dépassement CO2 ({valeur_courante:.0f} ppm)'
+        description = f'CO2 prévu au-dessus de {seuil:.0f} ppm dans les prochaines {horizon_heures}h.'
+        return construire_payload_prediction(capteur, metrique, valeur_courante, pourcentage_tendance, titre, description, vraisemblance, impact, horizon_heures)
 
-    if metric == 'humidity':
-        threshold = thresholds['humidity']
-        predicted_max = float(yhat_upper.max())
-        if predicted_max <= threshold:
+    if metrique == 'humidity':
+        seuil = seuils['humidity']
+        predit_max = float(yhat_superieur.max())
+        if predit_max <= seuil:
             return None
-        likelihood = estimate_likelihood(predicted_max, float(yhat_lower.max()), threshold)
-        impact = 'high' if predicted_max >= threshold + 10 else 'medium'
-        title = f'Risque d\'humidité élevée ({current_value:.0f}%)'
-        description = f'Humidité prévue au-dessus de {threshold:.0f}% dans les prochaines {horizon_hours}h.'
-        return build_prediction_payload(sensor, metric, current_value, trend_percentage, title, description, likelihood, impact, horizon_hours)
+        vraisemblance = estimer_vraisemblance(predit_max, float(yhat_inferieur.max()), seuil)
+        impact = 'high' if predit_max >= seuil + 10 else 'medium'
+        titre = f'Risque d\'humidité élevée ({valeur_courante:.0f}%)'
+        description = f'Humidité prévue au-dessus de {seuil:.0f}% dans les prochaines {horizon_heures}h.'
+        return construire_payload_prediction(capteur, metrique, valeur_courante, pourcentage_tendance, titre, description, vraisemblance, impact, horizon_heures)
 
-    if metric == 'temperature':
-        temp_min = thresholds['temp_min']
-        temp_max = thresholds['temp_max']
-        predicted_min = float(yhat_lower.min())
-        predicted_max = float(yhat_upper.max())
-        predicted_upper_min = float(yhat_upper.min())
+    if metrique == 'temperature':
+        temp_min = seuils['temp_min']
+        temp_max = seuils['temp_max']
+        predit_min = float(yhat_inferieur.min())
+        predit_max = float(yhat_superieur.max())
+        predit_superieur_min = float(yhat_superieur.min())
 
-        if predicted_min >= temp_min and predicted_max <= temp_max:
+        if predit_min >= temp_min and predit_max <= temp_max:
             return None
 
-        if predicted_max > temp_max:
-            threshold = temp_max
-            likelihood = estimate_likelihood(predicted_max, float(yhat_lower.max()), threshold)
-            impact = 'high' if predicted_max >= temp_max + 2 else 'medium'
-            title = f'Risque de chaleur ({current_value:.1f}°C)'
-            description = f'Température prévue au-dessus de {temp_max:.1f}°C dans les prochaines {horizon_hours}h.'
-            return build_prediction_payload(sensor, metric, current_value, trend_percentage, title, description, likelihood, impact, horizon_hours)
+        if predit_max > temp_max:
+            seuil = temp_max
+            vraisemblance = estimer_vraisemblance(predit_max, float(yhat_inferieur.max()), seuil)
+            impact = 'high' if predit_max >= temp_max + 2 else 'medium'
+            titre = f'Risque de chaleur ({valeur_courante:.1f}°C)'
+            description = f'Température prévue au-dessus de {temp_max:.1f}°C dans les prochaines {horizon_heures}h.'
+            return construire_payload_prediction(capteur, metrique, valeur_courante, pourcentage_tendance, titre, description, vraisemblance, impact, horizon_heures)
 
-        threshold = temp_min
-        likelihood = estimate_likelihood_low(predicted_min, predicted_upper_min, threshold)
-        impact = 'high' if predicted_min <= temp_min - 2 else 'medium'
-        title = f'Risque de froid ({current_value:.1f}°C)'
-        description = f'Température prévue en dessous de {temp_min:.1f}°C dans les prochaines {horizon_hours}h.'
-        return build_prediction_payload(sensor, metric, current_value, trend_percentage, title, description, likelihood, impact, horizon_hours)
+        seuil = temp_min
+        vraisemblance = estimer_vraisemblance_faible(predit_min, predit_superieur_min, seuil)
+        impact = 'high' if predit_min <= temp_min - 2 else 'medium'
+        titre = f'Risque de froid ({valeur_courante:.1f}°C)'
+        description = f'Température prévue en dessous de {temp_min:.1f}°C dans les prochaines {horizon_heures}h.'
+        return construire_payload_prediction(capteur, metrique, valeur_courante, pourcentage_tendance, titre, description, vraisemblance, impact, horizon_heures)
 
     return None
 
 
-def estimate_likelihood(predicted_max, predicted_lower_max, threshold):
-    if predicted_max <= threshold:
+def estimer_vraisemblance(predit_max, predit_inferieur_max, seuil):
+    if predit_max <= seuil:
         return 0.0
-    if predicted_lower_max > threshold:
+    if predit_inferieur_max > seuil:
         return 90.0
-    distance = predicted_max - threshold
+    distance = predit_max - seuil
     return float(min(95.0, max(55.0, 55.0 + distance)))
 
 
-def estimate_likelihood_low(predicted_min, predicted_upper_min, threshold):
-    if predicted_min >= threshold:
+def estimer_vraisemblance_faible(predit_min, predit_superieur_min, seuil):
+    if predit_min >= seuil:
         return 0.0
-    if predicted_upper_min < threshold:
+    if predit_superieur_min < seuil:
         return 90.0
-    distance = threshold - predicted_min
+    distance = seuil - predit_min
     return float(min(95.0, max(55.0, 55.0 + distance)))
 
 
-def build_prediction_payload(sensor, metric, current_value, trend_percentage, title, description, likelihood, impact, horizon_hours):
+def construire_payload_prediction(capteur, metrique, valeur_courante, pourcentage_tendance, titre, description, vraisemblance, impact, horizon_heures):
     return {
-        'id': f'{sensor.id}-{metric}-{int(datetime.utcnow().timestamp())}',
-        'sensorId': sensor.id,
-        'sensorName': sensor.name,
-        'metric': metric,
-        'currentValue': round(current_value, 1),
-        'trendPercentage': trend_percentage,
-        'title': title,
-        'likelihood': round(max(0, min(100, likelihood)), 1),
-        'timeframe': f'Prochaines {horizon_hours}h',
+        'id': f'{capteur.id}-{metrique}-{int(datetime.utcnow().timestamp())}',
+        'sensorId': capteur.id,
+        'sensorName': capteur.name,
+        'metric': metrique,
+        'currentValue': round(valeur_courante, 1),
+        'trendPercentage': pourcentage_tendance,
+        'title': titre,
+        'likelihood': round(max(0, min(100, vraisemblance)), 1),
+        'timeframe': f'Prochaines {horizon_heures}h',
         'impact': impact,
         'description': description
     }
 
 
-def get_prediction_title(metric_type, value):
-    """Get prediction title based on metric and value"""
-    if metric_type == 'co2':
-        return f'Risque de dépassement CO2 ({value:.0f} ppm)'
-    elif metric_type == 'temperature':
-        return f'Température anormale ({value:.1f}°C)'
-    elif metric_type == 'humidity':
-        return f'Humidité hors normes ({value:.0f}%)'
+def obtenir_titre_prediction(type_metrique, valeur):
+    """Obtenir le titre de prédiction basé sur la métrique et la valeur"""
+    if type_metrique == 'co2':
+        return f'Risque de dépassement CO2 ({valeur:.0f} ppm)'
+    elif type_metrique == 'temperature':
+        return f'Température anormale ({valeur:.1f}°C)'
+    elif type_metrique == 'humidity':
+        return f'Humidité hors normes ({valeur:.0f}%)'
     return 'Prédiction d\'alerte'
 
 
-def get_prediction_description(metric_type, value, trend):
-    """Get prediction description"""
-    trend_dir = 'augmente' if trend > 0 else 'diminue'
-    if metric_type == 'co2':
-        return f'Le CO2 {trend_dir}. Valeur actuelle: {value:.0f} ppm'
-    elif metric_type == 'temperature':
-        return f'La température {trend_dir}. Valeur actuelle: {value:.1f}°C'
-    elif metric_type == 'humidity':
-        return f'L\'humidité {trend_dir}. Valeur actuelle: {value:.0f}%'
-    return f'Tendance détectée: {trend_dir}'
+def obtenir_description_prediction(type_metrique, valeur, tendance):
+    """Obtenir la description de prédiction"""
+    direction_tendance = 'augmente' if tendance > 0 else 'diminue'
+    if type_metrique == 'co2':
+        return f'Le CO2 {direction_tendance}. Valeur actuelle: {valeur:.0f} ppm'
+    elif type_metrique == 'temperature':
+        return f'La température {direction_tendance}. Valeur actuelle: {valeur:.1f}°C'
+    elif type_metrique == 'humidity':
+        return f'L\'humidité {direction_tendance}. Valeur actuelle: {valeur:.0f}%'
+    return f'Tendance détectée: {direction_tendance}'
 
 
-def get_timeframe(trend_magnitude):
-    """Estimate timeframe for prediction"""
-    if trend_magnitude > 0.05:
+def obtenir_delai(magnitude_tendance):
+    """Estimer le délai pour la prédiction"""
+    if magnitude_tendance > 0.05:
         return 'Prochaines 6h'
-    elif trend_magnitude > 0.02:
+    elif magnitude_tendance > 0.02:
         return 'Prochaines 12h'
     else:
         return 'Prochaines 24h'

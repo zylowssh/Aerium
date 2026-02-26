@@ -6,8 +6,8 @@ import bcrypt
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
-def register():
-    """Register a new user"""
+def inscrire():
+    """Inscrire un nouvel utilisateur"""
     try:
         data = request.get_json()
         
@@ -16,16 +16,16 @@ def register():
         full_name = data.get('fullName', data.get('full_name', ''))
         
         if not email or not password:
-            return jsonify({'error': 'Email and password are required'}), 400
+            return jsonify({'error': 'L\'email et le mot de passe sont requis'}), 400
         
-        # Check if user already exists
+        # Vérifier si l'utilisateur existe déjà
         if User.query.filter_by(email=email).first():
-            return jsonify({'error': 'Email already registered'}), 400
+            return jsonify({'error': 'Email déjà enregistré'}), 400
         
-        # Hash password
+        # Hacher le mot de passe
         password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
-        # Create new user
+        # Créer un nouvel utilisateur
         new_user = User(
             email=email,
             password_hash=password_hash,
@@ -37,8 +37,8 @@ def register():
         db.session.commit()
         
         return jsonify({
-            'message': 'User registered successfully',
-            'user': new_user.to_dict()
+            'message': 'Utilisateur enregistré avec succès',
+            'user': new_user.vers_dict()
         }), 201
         
     except Exception as e:
@@ -47,102 +47,102 @@ def register():
 
 
 @auth_bp.route('/login', methods=['POST'])
-def login():
-    """Authenticate user and return JWT tokens"""
+def connexion():
+    """Authentifier l'utilisateur et retourner les jetons JWT"""
     try:
         data = request.get_json()
         
         if not data:
-            print("Login error: No JSON data received")
-            return jsonify({'error': 'No data provided'}), 400
+            print("Erreur de connexion: Aucune donnée JSON reçue")
+            return jsonify({'error': 'Aucune donnée fournie'}), 400
         
         email = data.get('email')
         password = data.get('password')
         
-        print(f"Login attempt for: {email}")
+        print(f"Tentative de connexion pour: {email}")
         
         if not email or not password:
-            print("Login error: Missing email or password")
-            return jsonify({'error': 'Email and password are required'}), 400
+            print("Erreur de connexion: Email ou mot de passe manquant")
+            return jsonify({'error': 'Email et mot de passe requis'}), 400
         
-        # Find user
+        # Trouver l'utilisateur
         user = User.query.filter_by(email=email).first()
         
         if not user:
-            print(f"Login error: User not found - {email}")
-            return jsonify({'error': 'Invalid login credentials'}), 401
+            print(f"Erreur de connexion: Utilisateur non trouvé - {email}")
+            return jsonify({'error': 'Identifiants de connexion invalides'}), 401
         
-        # Verify password
+        # Vérifier le mot de passe
         if not bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
-            print(f"Login error: Invalid password for {email}")
-            return jsonify({'error': 'Invalid login credentials'}), 401
+            print(f"Erreur de connexion: Mot de passe invalide pour {email}")
+            return jsonify({'error': 'Identifiants de connexion invalides'}), 401
         
-        # Create tokens with explicit identity
+        # Créer les jetons avec une identité explicite
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
         
-        print(f"✓ Login successful for user {user.id}: {user.email}")
+        print(f"✓ Connexion réussie pour l'utilisateur {user.id}: {user.email}")
         
         return jsonify({
             'access_token': access_token,
             'refresh_token': refresh_token,
-            'user': user.to_dict()
+            'user': user.vers_dict()
         }), 200
         
     except Exception as e:
-        print(f"✗ Login exception: {e}")
+        print(f"✗ Exception de connexion: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Server error: {str(e)}'}), 500
+        return jsonify({'error': f'Erreur du serveur: {str(e)}'}), 500
 
 
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
-def refresh():
-    """Refresh access token"""
+def rafraîchir():
+    """Rafraîchir le jeton d'accès"""
     try:
-        current_user_id = get_jwt_identity()
-        print(f"Refreshing token for user ID: {current_user_id}")
+        id_utilisateur_courant = get_jwt_identity()
+        print(f"Rafraîchissement du jeton pour l'ID utilisateur: {id_utilisateur_courant}")
         
-        # Convert to string for consistency
-        access_token = create_access_token(identity=str(current_user_id))
+        # Convertir en chaîne pour la cohérence
+        access_token = create_access_token(identity=str(id_utilisateur_courant))
         
-        print(f"New access token created: {access_token[:50]}...")
+        print(f"Nouveau jeton d'accès créé: {access_token[:50]}...")
         return jsonify({'access_token': access_token}), 200
         
     except Exception as e:
-        print(f"Refresh error: {e}")
+        print(f"Erreur de rafraîchissement: {e}")
         return jsonify({'error': str(e)}), 500
 
 
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()
-def get_current_user():
-    """Get current user information"""
+def obtenir_utilisateur_courant():
+    """Obtenir les informations de l'utilisateur courant"""
     try:
-        current_user_id = get_jwt_identity()
-        print(f"Getting user for ID: {current_user_id} (type: {type(current_user_id)})")
+        id_utilisateur_courant = get_jwt_identity()
+        print(f"Obtention de l'utilisateur pour l'ID: {id_utilisateur_courant} (type: {type(id_utilisateur_courant)})")
         
-        # Convert to int if it's a string
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
+        # Convertir en int si c'est une chaîne
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
         
-        user = User.query.get(current_user_id)
+        user = User.query.get(id_utilisateur_courant)
         
         if not user:
-            print(f"User not found for ID: {current_user_id}")
-            return jsonify({'error': 'User not found'}), 404
+            print(f"Utilisateur non trouvé pour l'ID: {id_utilisateur_courant}")
+            return jsonify({'error': 'Utilisateur non trouvé'}), 404
         
-        print(f"User found: {user.email}")
-        return jsonify({'user': user.to_dict()}), 200
+        print(f"Utilisateur trouvé: {user.email}")
+        return jsonify({'user': user.vers_dict()}), 200
         
     except Exception as e:
-        print(f"Error in get_current_user: {e}")
+        print(f"Erreur dans obtenir_utilisateur_courant: {e}")
         return jsonify({'error': str(e)}), 500
 
 
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required()
-def logout():
-    """Logout user (client-side token removal)"""
-    return jsonify({'message': 'Logged out successfully'}), 200
+def déconnexion():
+    """Déconnecter l'utilisateur (suppression du jeton côté client)"""
+    return jsonify({'message': 'Déconnexion réussie'}), 200

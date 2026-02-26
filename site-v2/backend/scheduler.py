@@ -5,120 +5,120 @@ import random
 
 scheduler = BackgroundScheduler()
 
-# Global simulation speed control (seconds between updates)
-SIMULATION_SPEED = 5
+# Contrôle global de la vitesse de simulation (secondes entre les mises à jour)
+VITESSE_SIMULATION = 5
 
-# Sensor profiles with realistic base values
-SENSOR_PROFILES = {
-    'Bureau Principal': {'base_co2': 650, 'base_temp': 22.5, 'base_humidity': 45, 'occupancy_factor': 0.8},
-    'Salle de Réunion Alpha': {'base_co2': 800, 'base_temp': 23.2, 'base_humidity': 48, 'occupancy_factor': 1.5},
-    'Open Space Dev': {'base_co2': 750, 'base_temp': 21.8, 'base_humidity': 52, 'occupancy_factor': 1.2},
-    'Cafétéria': {'base_co2': 600, 'base_temp': 23.5, 'base_humidity': 42, 'occupancy_factor': 1.0},
-    'Salle Serveur': {'base_co2': 450, 'base_temp': 19.0, 'base_humidity': 35, 'occupancy_factor': 0.1},
+# Profils de capteurs avec des valeurs de base réalistes
+PROFILS_CAPTEURS = {
+    'Bureau Principal': {'base_co2': 650, 'base_temp': 22.5, 'base_humidity': 45, 'facteur_occupance': 0.8},
+    'Salle de Réunion Alpha': {'base_co2': 800, 'base_temp': 23.2, 'base_humidity': 48, 'facteur_occupance': 1.5},
+    'Open Space Dev': {'base_co2': 750, 'base_temp': 21.8, 'base_humidity': 52, 'facteur_occupance': 1.2},
+    'Cafétéria': {'base_co2': 600, 'base_temp': 23.5, 'base_humidity': 42, 'facteur_occupance': 1.0},
+    'Salle Serveur': {'base_co2': 450, 'base_temp': 19.0, 'base_humidity': 35, 'facteur_occupance': 0.1},
 }
 
-def get_sensor_profile(sensor_name):
-    """Get sensor profile or return default"""
-    return SENSOR_PROFILES.get(sensor_name, {
+def obtenir_profil_capteur(nom_capteur):
+    """Obtenir le profil du capteur ou retourner le profil par défaut"""
+    return PROFILS_CAPTEURS.get(nom_capteur, {
         'base_co2': 700, 
         'base_temp': 22.0, 
         'base_humidity': 50, 
-        'occupancy_factor': 1.0
+        'facteur_occupance': 1.0
     })
 
-def generate_co2_pattern(hour, base_value, occupancy_factor=1.0, sensor_name=''):
-    """Generate realistic CO2 patterns based on time of day and space type"""
-    # Office hours pattern (more occupancy during work hours)
-    if 'Salle de Réunion' in sensor_name:
-        # Meeting rooms: spikes during meeting times
-        meeting_times = {
+def générer_motif_co2(hour, base_value, facteur_occupance=1.0, nom_capteur=''):
+    """Générer des motifs de CO2 réalistes en fonction de l'heure et du type d'espace"""
+    # Motif des heures de bureau (plus d'occupance pendant les heures de travail)
+    if 'Salle de Réunion' in nom_capteur:
+        # Salles de réunion: pics pendant les heures de réunion
+        heures_reunion = {
             9: 300, 10: 400, 11: 350, 14: 400, 15: 350, 16: 300
         }
-        pattern_offset = meeting_times.get(hour, 0)
-    elif 'Cafétéria' in sensor_name:
-        # Cafeteria: peaks during lunch and break times
-        meal_times = {
+        decalage_motif = heures_reunion.get(hour, 0)
+    elif 'Cafétéria' in nom_capteur:
+        # Cafétéria: pics pendant les repas et pauses
+        heures_repas = {
             8: 150, 9: 100, 12: 350, 13: 300, 17: 200, 18: 150
         }
-        pattern_offset = meal_times.get(hour, -100)
-    elif 'Serveur' in sensor_name:
-        # Server room: consistently low with minimal variation
-        pattern_offset = random.randint(-20, 20)
+        decalage_motif = heures_repas.get(hour, -100)
+    elif 'Serveur' in nom_capteur:
+        # Salle serveur: consistemment faible avec variation minimale
+        decalage_motif = random.randint(-20, 20)
     else:
-        # Office/default: gradual increase during work hours
-        patterns = {
+        # Bureau/défaut: augmentation progressive pendant les heures de travail
+        motifs = {
             0: -200, 1: -220, 2: -230, 3: -240, 4: -230, 5: -200,
             6: -150, 7: -50, 8: 100, 9: 200, 10: 250, 11: 280,
             12: 250, 13: 280, 14: 300, 15: 280, 16: 250, 17: 150,
             18: 50, 19: -50, 20: -100, 21: -150, 22: -180, 23: -190
         }
-        pattern_offset = patterns.get(hour, 0)
+        decalage_motif = motifs.get(hour, 0)
     
-    # Apply occupancy factor
-    pattern_offset = int(pattern_offset * occupancy_factor)
+    # Appliquer le facteur d'occupance
+    decalage_motif = int(decalage_motif * facteur_occupance)
     
-    # Add random variation (±50 ppm)
+    # Ajouter une variation aléatoire (±50 ppm)
     variation = random.randint(-50, 50)
     
-    # Calculate final value
-    final_value = base_value + pattern_offset + variation
+    # Calculer la valeur finale
+    valeur_finale = base_value + decalage_motif + variation
     
-    # Clamp to realistic ranges
-    return max(400, min(1500, final_value))
+    # Limiter aux plages réalistes
+    return max(400, min(1500, valeur_finale))
 
 
-def generate_temperature(base_temp, hour, sensor_name=''):
-    """Generate realistic temperature variations"""
-    if 'Serveur' in sensor_name:
-        # Server room: cooler and more stable
+def générer_température(temp_base, hour, nom_capteur=''):
+    """Générer des variations de température réalistes"""
+    if 'Serveur' in nom_capteur:
+        # Salle serveur: plus froide et plus stable
         variation = (random.random() - 0.5) * 0.3
     else:
-        # Normal rooms: slight variation throughout day
-        daily_pattern = {
+        # Pièces normales: légère variation tout au long de la journée
+        motif_quotidien = {
             0: -0.5, 1: -0.6, 2: -0.7, 3: -0.7, 4: -0.6, 5: -0.5,
             6: -0.3, 7: 0.0, 8: 0.3, 9: 0.5, 10: 0.7, 11: 0.8,
             12: 0.8, 13: 0.9, 14: 1.0, 15: 0.9, 16: 0.7, 17: 0.5,
             18: 0.3, 19: 0.0, 20: -0.2, 21: -0.3, 22: -0.4, 23: -0.5
         }
-        daily_offset = daily_pattern.get(hour, 0)
-        variation = daily_offset + (random.random() - 0.5) * 0.4
+        decalage_quotidien = motif_quotidien.get(hour, 0)
+        variation = decalage_quotidien + (random.random() - 0.5) * 0.4
     
-    return round((base_temp + variation) * 10) / 10
+    return round((temp_base + variation) * 10) / 10
 
 
-def generate_humidity(base_humidity, hour, sensor_name=''):
-    """Generate realistic humidity variations"""
-    if 'Serveur' in sensor_name:
-        # Server room: lower and more controlled humidity
+def générer_humidité(humidite_base, hour, nom_capteur=''):
+    """Générer des variations d'humidité réalistes"""
+    if 'Serveur' in nom_capteur:
+        # Salle serveur: humidité plus basse et plus contrôlée
         variation = (random.random() - 0.5) * 2
     else:
-        # Normal variation (±5%)
+        # Variation normale (±5%)
         variation = (random.random() - 0.5) * 10
     
-    return max(30, min(70, round(base_humidity + variation)))
+    return max(30, min(70, round(humidite_base + variation)))
 
 
-def simulate_sensor_readings(app, socketio):
+def simuler_lectures_capteurs(app, socketio):
     """
-    Generate and emit sensor readings to connected WebSocket clients.
-    Runs periodically to provide real-time updates for simulated sensors.
+    Générer et émettre les lectures des capteurs aux clients WebSocket connectés.
+    S'exécute périodiquement pour fournir des mises à jour en temps réel pour les capteurs simulés.
     """
     with app.app_context():
-        # Get all simulated sensors (sensor_type='simulation')
+        # Obtenir tous les capteurs simulés (sensor_type='simulation')
         sensors = Sensor.query.filter_by(sensor_type='simulation').all()
         
         if not sensors:
             return
         
-        # Import here to avoid circular imports
+        # Importer ici pour éviter les importations circulaires
         from sensor_simulator import generate_current_simulated_reading
         
         for sensor in sensors:
             try:
-                # Generate fresh simulated data
+                # Générer des données simulées fraìhes
                 simulated_data = generate_current_simulated_reading(sensor.name)
                 
-                # Update sensor status based on CO2 levels (critical fix)
+                # Mettre à jour l'état du capteur en fonction des niveaux de CO2 (correction critique)
                 co2_value = simulated_data['co2']
                 if co2_value > 1200:
                     sensor.status = 'avertissement'
@@ -130,7 +130,7 @@ def simulate_sensor_readings(app, socketio):
                 sensor.updated_at = datetime.utcnow()
                 db.session.commit()
                 
-                # Prepare WebSocket payload - match frontend's expected format
+                # Préparer la charge WebSocket - correspond au format attendu par le frontend
                 reading_data = {
                     'sensor_id': sensor.id,
                     'sensor_name': sensor.name,
@@ -140,47 +140,47 @@ def simulate_sensor_readings(app, socketio):
                         'humidity': simulated_data['humidity'],
                         'recorded_at': datetime.utcnow().isoformat()
                     },
-                    'status': sensor.status  # Include updated status
+                    'status': sensor.status  # Inclure le statut mis à jour
                 }
                 
-                # Emit to owning user and admins only
+                # Emettre à l'utilisateur propriétaire et aux administrateurs uniquement
                 socketio.emit('sensor_update', reading_data, room=f'user_{sensor.user_id}')
                 socketio.emit('sensor_update', reading_data, room='admin')
                 
             except Exception as e:
-                print(f"Error generating reading for sensor {sensor.name}: {e}")
+                print(f"Erreur lors de la génération de la lecture pour le capteur {sensor.name}: {e}")
 
 
-def init_scheduler(app, socketio):
-    """Initialize the scheduler for periodic tasks"""
-    # Schedule real-time sensor data emission every 5 seconds (configurable via SIMULATION_SPEED)
+def initialiser_planificateur(app, socketio):
+    """Initialiser le planificateur pour les tâches périodiques"""
+    # Programmer l'émission de données de capteur en temps réel toutes les 5 secondes (configurable via VITESSE_SIMULATION)
     scheduler.add_job(
-        func=simulate_sensor_readings,
+        func=simuler_lectures_capteurs,
         trigger='interval',
-        seconds=SIMULATION_SPEED,
+        seconds=VITESSE_SIMULATION,
         args=[app, socketio],
         id='sensor_simulation',
-        name='Real-time sensor simulation',
+        name='Simulation de capteur en temps réel',
         replace_existing=True
     )
 
     scheduler.add_job(
-        func=mark_overdue_maintenance,
+        func=marquer_maintenance_en_retard,
         trigger='interval',
         minutes=10,
         args=[app],
         id='maintenance_overdue_check',
-        name='Maintenance overdue check',
+        name='Vérification de la maintenance en retard',
         replace_existing=True
     )
     
     scheduler.start()
-    print(f"✓ Scheduler initialized - Real-time sensor updates active (every {SIMULATION_SPEED} seconds)")
-    print("✓ WebSocket emissions enabled for simulated sensors")
+    print(f"✓ Planificateur initialisé - Mises à jour de capteurs en temps réel actives (toutes les {VITESSE_SIMULATION} secondes)")
+    print("✓ Émissions WebSocket activées pour les capteurs simulés")
 
 
-def mark_overdue_maintenance(app):
-    """Mark scheduled maintenance tasks as overdue if past due date."""
+def marquer_maintenance_en_retard(app):
+    """Marquer les tâches de maintenance planifiées comme en retard si la date limite est dépassée."""
     with app.app_context():
         now = datetime.utcnow()
         updated = Maintenance.query.filter(
@@ -192,17 +192,17 @@ def mark_overdue_maintenance(app):
             db.session.commit()
 
 
-def update_simulation_speed(new_speed: float):
-    """Update the simulation speed dynamically"""
-    global SIMULATION_SPEED
-    SIMULATION_SPEED = new_speed
+def mettre_a_jour_vitesse_simulation(nouvelle_vitesse: float):
+    """Mettre à jour la vitesse de simulation de manière dynamique"""
+    global VITESSE_SIMULATION
+    VITESSE_SIMULATION = nouvelle_vitesse
     
-    # Reschedule the simulation job with new speed
+    # Reprogrammer le travail de simulation avec la nouvelle vitesse
     if scheduler.get_job('sensor_simulation'):
         scheduler.reschedule_job(
             'sensor_simulation',
             trigger='interval',
-            seconds=new_speed
+            seconds=nouvelle_vitesse
         )
         return True
     return False

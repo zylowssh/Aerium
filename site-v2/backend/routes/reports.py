@@ -1,5 +1,5 @@
 """
-Reports endpoints for generating analytics and exports
+Points de terminaison de rapports pour générer des analyses et des exportations
 """
 from flask import Blueprint, jsonify, request, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -9,87 +9,87 @@ import csv
 import io
 from functools import wraps
 
-reports_bp = Blueprint('reports', __name__, url_prefix='/api/reports')
+rapports_bp = Blueprint('reports', __name__, url_prefix='/api/reports')
 
 
-def admin_or_owner(f):
-    """Decorator to check if user is admin or owns the sensor"""
+def admin_ou_proprietaire(f):
+    """Décorateur pour vérifier si l'utilisateur est admin ou propriétaire du capteur"""
     @wraps(f)
     @jwt_required()
     def decorated(*args, **kwargs):
-        current_user_id = get_jwt_identity()
-        # Handle string user_id from JWT
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
-        user = User.query.get(current_user_id)
+        id_utilisateur_courant = get_jwt_identity()
+        # Gérer le user_id chaîne du JWT
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
+        user = User.query.get(id_utilisateur_courant)
         
         if not user:
-            return jsonify({'error': 'User not found'}), 404
+            return jsonify({'error': 'Utilisateur non trouvé'}), 404
         
         return f(*args, **kwargs)
     
     return decorated
 
 
-@reports_bp.route('/export/csv', methods=['GET'])
-@admin_or_owner
-def export_alerts_csv():
-    """Export alerts as CSV file"""
+@rapports_bp.route('/export/csv', methods=['GET'])
+@admin_ou_proprietaire
+def exporter_alertes_csv():
+    """Exporter les alertes en fichier CSV"""
     try:
-        days = request.args.get('days', 30, type=int)
-        current_user_id = get_jwt_identity()
-        # Handle string user_id from JWT
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
-        user = User.query.get(current_user_id)
+        jours = request.args.get('days', 30, type=int)
+        id_utilisateur_courant = get_jwt_identity()
+        # Gérer le user_id chaîne du JWT
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
+        user = User.query.get(id_utilisateur_courant)
         
-        # Calculate date range
-        end_date = datetime.utcnow()
-        start_date = end_date - timedelta(days=days)
+        # Calculer l'intervalle de dates
+        date_fin = datetime.utcnow()
+        date_debut = date_fin - timedelta(days=jours)
         
-        # Query alerts for user's sensors
-        sensors = Sensor.query.filter_by(user_id=current_user_id).all()
-        sensor_ids = [s.id for s in sensors]
+        # Requête d'alertes pour les capteurs de l'utilisateur
+        capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
+        ids_capteurs = [s.id for s in capteurs]
         
-        if not sensor_ids:
-            return jsonify({'error': 'No sensors found'}), 404
+        if not ids_capteurs:
+            return jsonify({'error': 'Aucun capteur trouvé'}), 404
         
-        alerts = AlertHistory.query.filter(
-            AlertHistory.sensor_id.in_(sensor_ids),
-            AlertHistory.created_at >= start_date,
-            AlertHistory.created_at <= end_date
+        alertes = AlertHistory.query.filter(
+            AlertHistory.sensor_id.in_(ids_capteurs),
+            AlertHistory.created_at >= date_debut,
+            AlertHistory.created_at <= date_fin
         ).order_by(AlertHistory.created_at.desc()).all()
         
-        # Create CSV
+        # Créer CSV
         output = io.StringIO()
         writer = csv.writer(output)
         
-        # Write header
+        # Écrire l'en-tête
         writer.writerow([
             'Date/Heure', 'Capteur', 'Localisation', 'Type d\'alerte',
             'Métrique', 'Valeur', 'Seuil', 'Message', 'Statut',
             'Créée le', 'Accusée le', 'Résolue le'
         ])
         
-        # Write data
-        for alert in alerts:
-            sensor = Sensor.query.get(alert.sensor_id)
+        # Écrire les données
+        for alerte in alertes:
+            capteur = Sensor.query.get(alerte.sensor_id)
             writer.writerow([
-                alert.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                sensor.name if sensor else 'N/A',
-                sensor.location if sensor else 'N/A',
-                alert.alert_type,
-                alert.metric,
-                f"{alert.metric_value:.2f}",
-                f"{alert.threshold_value:.2f}" if alert.threshold_value else 'N/A',
-                alert.message,
-                alert.status,
-                alert.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                alert.acknowledged_at.strftime('%Y-%m-%d %H:%M:%S') if alert.acknowledged_at else '',
-                alert.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if alert.resolved_at else ''
+                alerte.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                capteur.name if capteur else 'N/A',
+                capteur.location if capteur else 'N/A',
+                alerte.alert_type,
+                alerte.metric,
+                f"{alerte.metric_value:.2f}",
+                f"{alerte.threshold_value:.2f}" if alerte.threshold_value else 'N/A',
+                alerte.message,
+                alerte.status,
+                alerte.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                alerte.acknowledged_at.strftime('%Y-%m-%d %H:%M:%S') if alerte.acknowledged_at else '',
+                alerte.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if alerte.resolved_at else ''
             ])
         
-        # Prepare response
+        # Préparer la réponse
         output.seek(0)
         mem = io.BytesIO()
         mem.write(output.getvalue().encode('utf-8-sig'))
@@ -106,10 +106,10 @@ def export_alerts_csv():
         return jsonify({'error': str(e)}), 500
 
 
-@reports_bp.route('/export/pdf', methods=['GET'])
-@admin_or_owner
-def export_alerts_pdf():
-    """Export alerts as PDF file"""
+@rapports_bp.route('/export/pdf', methods=['GET'])
+@admin_ou_proprietaire
+def exporter_alertes_pdf():
+    """Exporter les alertes en fichier PDF"""
     try:
         from reportlab.lib import colors
         from reportlab.lib.pagesizes import letter, A4
@@ -117,31 +117,31 @@ def export_alerts_pdf():
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.units import inch
         
-        days = request.args.get('days', 30, type=int)
-        current_user_id = get_jwt_identity()
-        # Handle string user_id from JWT
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
-        user = User.query.get(current_user_id)
+        jours = request.args.get('days', 30, type=int)
+        id_utilisateur_courant = get_jwt_identity()
+        # Gérer le user_id chaîne du JWT
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
+        user = User.query.get(id_utilisateur_courant)
         
-        # Calculate date range
-        end_date = datetime.utcnow()
-        start_date = end_date - timedelta(days=days)
+        # Calculer l'intervalle de dates
+        date_fin = datetime.utcnow()
+        date_debut = date_fin - timedelta(days=jours)
         
-        # Query alerts for user's sensors
-        sensors = Sensor.query.filter_by(user_id=current_user_id).all()
-        sensor_ids = [s.id for s in sensors]
+        # Requête d'alertes pour les capteurs de l'utilisateur
+        capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
+        ids_capteurs = [s.id for s in capteurs]
         
-        if not sensor_ids:
-            return jsonify({'error': 'No sensors found'}), 404
+        if not ids_capteurs:
+            return jsonify({'error': 'Aucun capteur trouvé'}), 404
         
-        alerts = AlertHistory.query.filter(
-            AlertHistory.sensor_id.in_(sensor_ids),
-            AlertHistory.created_at >= start_date,
-            AlertHistory.created_at <= end_date
+        alertes = AlertHistory.query.filter(
+            AlertHistory.sensor_id.in_(ids_capteurs),
+            AlertHistory.created_at >= date_debut,
+            AlertHistory.created_at <= date_fin
         ).order_by(AlertHistory.created_at.desc()).all()
         
-        # Create PDF
+        # Créer PDF
         mem = io.BytesIO()
         doc = SimpleDocTemplate(mem, pagesize=A4)
         story = []
@@ -163,24 +163,24 @@ def export_alerts_pdf():
             spaceAfter=12
         )
         
-        # Title
+        # Titre
         story.append(Paragraph('Rapport d\'Alertes', title_style))
         story.append(Paragraph(
-            f'Période: {start_date.strftime("%d/%m/%Y")} - {end_date.strftime("%d/%m/%Y")}',
+            f'Période: {date_debut.strftime("%d/%m/%Y")} - {date_fin.strftime("%d/%m/%Y")}',
             styles['Normal']
         ))
         story.append(Spacer(1, 0.3 * inch))
         
-        # Summary
+        # Résumé
         story.append(Paragraph('Résumé', heading_style))
-        summary_data = [
-            ['Nombre total d\'alertes', str(len(alerts))],
-            ['Alertes déclenchées', str(sum(1 for a in alerts if a.status == 'triggered'))],
-            ['Alertes accusées', str(sum(1 for a in alerts if a.status == 'acknowledged'))],
-            ['Alertes résolues', str(sum(1 for a in alerts if a.status == 'resolved'))],
+        donnees_resume = [
+            ['Nombre total d\'alertes', str(len(alertes))],
+            ['Alertes déclenchées', str(sum(1 for a in alertes if a.status == 'triggered'))],
+            ['Alertes accusées', str(sum(1 for a in alertes if a.status == 'acknowledged'))],
+            ['Alertes résolues', str(sum(1 for a in alertes if a.status == 'resolved'))],
         ]
-        summary_table = Table(summary_data, colWidths=[3 * inch, 2 * inch])
-        summary_table.setStyle(TableStyle([
+        tableau_resume = Table(donnees_resume, colWidths=[3 * inch, 2 * inch])
+        tableau_resume.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f1f5f9')),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
@@ -189,29 +189,29 @@ def export_alerts_pdf():
             ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
             ('GRID', (0, 0), (-1, -1), 1, colors.grey),
         ]))
-        story.append(summary_table)
+        story.append(tableau_resume)
         story.append(Spacer(1, 0.3 * inch))
         
-        # Detailed alerts table (limit to recent 50 for PDF readability)
+        # Tableau détaillé des alertes (limiter à 50 récentes pour lisibilité du PDF)
         story.append(Paragraph('Alertes Détaillées', heading_style))
         
-        table_data = [
+        donnees_tableau = [
             ['Date/Heure', 'Capteur', 'Type', 'Métrique', 'Valeur', 'Statut']
         ]
         
-        for alert in alerts[:50]:
-            sensor = Sensor.query.get(alert.sensor_id)
-            table_data.append([
-                alert.created_at.strftime('%d/%m %H:%M'),
-                sensor.name if sensor else 'N/A',
-                alert.alert_type,
-                alert.metric,
-                f"{alert.metric_value:.1f}",
-                alert.status
+        for alerte in alertes[:50]:
+            capteur = Sensor.query.get(alerte.sensor_id)
+            donnees_tableau.append([
+                alerte.created_at.strftime('%d/%m %H:%M'),
+                capteur.name if capteur else 'N/A',
+                alerte.alert_type,
+                alerte.metric,
+                f"{alerte.metric_value:.1f}",
+                alerte.status
             ])
         
-        table = Table(table_data, colWidths=[1.2 * inch, 1.5 * inch, 0.8 * inch, 0.8 * inch, 0.7 * inch, 0.8 * inch])
-        table.setStyle(TableStyle([
+        tableau = Table(donnees_tableau, colWidths=[1.2 * inch, 1.5 * inch, 0.8 * inch, 0.8 * inch, 0.7 * inch, 0.8 * inch])
+        tableau.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -223,9 +223,9 @@ def export_alerts_pdf():
             ('FONTSIZE', (0, 1), (-1, -1), 8),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
         ]))
-        story.append(table)
+        story.append(tableau)
         
-        # Build PDF
+        # Construire le PDF
         doc.build(story)
         mem.seek(0)
         
@@ -237,31 +237,31 @@ def export_alerts_pdf():
         )
     
     except ImportError:
-        return jsonify({'error': 'reportlab library not installed. Please run: pip install reportlab'}), 500
+        return jsonify({'error': 'Bibliothèque reportlab non installée. Veuillez exécuter: pip install reportlab'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-@reports_bp.route('/stats', methods=['GET'])
-@admin_or_owner
-def get_report_stats():
-    """Get alert statistics for a period"""
+@rapports_bp.route('/stats', methods=['GET'])
+@admin_ou_proprietaire
+def obtenir_stats_rapport():
+    """Obtenir les statistiques d'alertes pour une période"""
     try:
-        days = request.args.get('days', 30, type=int)
-        current_user_id = get_jwt_identity()
-        # Handle string user_id from JWT
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
+        jours = request.args.get('days', 30, type=int)
+        id_utilisateur_courant = get_jwt_identity()
+        # Gérer le user_id chaîne du JWT
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
         
-        # Calculate date range
-        end_date = datetime.utcnow()
-        start_date = end_date - timedelta(days=days)
+        # Calculer l'intervalle de dates
+        date_fin = datetime.utcnow()
+        date_debut = date_fin - timedelta(days=jours)
         
-        # Query alerts for user's sensors
-        sensors = Sensor.query.filter_by(user_id=current_user_id).all()
-        sensor_ids = [s.id for s in sensors]
+        # Requête d'alertes pour les capteurs de l'utilisateur
+        capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
+        ids_capteurs = [s.id for s in capteurs]
         
-        if not sensor_ids:
+        if not ids_capteurs:
             return jsonify({
                 'totalAlerts': 0,
                 'triggered': 0,
@@ -271,41 +271,41 @@ def get_report_stats():
                 'byMetric': {}
             }), 200
         
-        alerts = AlertHistory.query.filter(
-            AlertHistory.sensor_id.in_(sensor_ids),
-            AlertHistory.created_at >= start_date,
-            AlertHistory.created_at <= end_date
+        alertes = AlertHistory.query.filter(
+            AlertHistory.sensor_id.in_(ids_capteurs),
+            AlertHistory.created_at >= date_debut,
+            AlertHistory.created_at <= date_fin
         ).all()
         
-        # Calculate stats
-        by_type = {}
-        by_metric = {}
-        status_counts = {
+        # Calculer les stats
+        par_type = {}
+        par_metrique = {}
+        comptages_statut = {
             'triggered': 0,
             'acknowledged': 0,
             'resolved': 0
         }
         
-        for alert in alerts:
-            # By type
-            alert_type = alert.alert_type
-            by_type[alert_type] = by_type.get(alert_type, 0) + 1
+        for alerte in alertes:
+            # Par type
+            type_alerte = alerte.alert_type
+            par_type[type_alerte] = par_type.get(type_alerte, 0) + 1
             
-            # By metric
-            metric = alert.metric
-            by_metric[metric] = by_metric.get(metric, 0) + 1
+            # Par métrique
+            metrique = alerte.metric
+            par_metrique[metrique] = par_metrique.get(metrique, 0) + 1
             
-            # By status
-            if alert.status in status_counts:
-                status_counts[alert.status] += 1
+            # Par statut
+            if alerte.status in comptages_statut:
+                comptages_statut[alerte.status] += 1
         
         return jsonify({
-            'totalAlerts': len(alerts),
-            'triggered': status_counts['triggered'],
-            'acknowledged': status_counts['acknowledged'],
-            'resolved': status_counts['resolved'],
-            'byType': by_type,
-            'byMetric': by_metric
+            'totalAlerts': len(alertes),
+            'triggered': comptages_statut['triggered'],
+            'acknowledged': comptages_statut['acknowledged'],
+            'resolved': comptages_statut['resolved'],
+            'byType': par_type,
+            'byMetric': par_metrique
         }), 200
     
     except Exception as e:

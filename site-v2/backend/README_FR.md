@@ -17,11 +17,12 @@ pip install -r requirements.txt
 
 Créez `.env`:
 ```env
-SECRET_KEY=votre-clé-secrète
-JWT_SECRET_KEY=votre-clé-jwt
-ENABLE_EMAIL_NOTIFICATIONS=True
-MAIL_USERNAME=votre-email@gmail.com
-MAIL_PASSWORD=votre-mot-de-passe-app
+ENABLE_RATE_LIMITING=True
+ALERT_CO2_THRESHOLD=1200
+ALERT_TEMP_MIN=15
+ALERT_TEMP_MAX=28
+FLASK_ENV=development
+FLASK_DEBUG=True
 ```
 
 ### Lancer

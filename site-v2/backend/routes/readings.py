@@ -2,46 +2,45 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import db, SensorReading, Sensor, User, Alert, AlertHistory
 from datetime import datetime, timedelta
-from email_service import send_alert_email
-from audit_logger import log_action
+from audit_logger import enregistrer_action
 from sensor_simulator import generate_historical_simulated_readings, generate_current_simulated_reading
 import logging
 
-readings_bp = Blueprint('readings', __name__)
+lectures_bp = Blueprint('readings', __name__)
 logger = logging.getLogger(__name__)
 
-@readings_bp.route('/sensor/<int:sensor_id>', methods=['GET'])
+@lectures_bp.route('/sensor/<int:sensor_id>', methods=['GET'])
 @jwt_required()
-def get_sensor_readings(sensor_id):
-    """Get readings for a specific sensor (generates on-demand for simulated sensors)"""
+def obtenir_lectures_capteur(sensor_id):
+    """Obtenir les lectures pour un capteur spécifique (générer à la demande pour les capteurs simulés)"""
     try:
-        current_user_id = get_jwt_identity()
+        id_utilisateur_courant = get_jwt_identity()
         
-        # Convert to int if string
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
+        # Convertir en int si chaîne
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
             
-        user = User.query.get(current_user_id)
+        user = User.query.get(id_utilisateur_courant)
         
-        sensor = Sensor.query.get(sensor_id)
+        capteur = Sensor.query.get(sensor_id)
         
-        if not sensor:
-            return jsonify({'error': 'Sensor not found'}), 404
+        if not capteur:
+            return jsonify({'error': 'Capteur non trouvé'}), 404
         
-        # Check ownership unless admin
-        if user.role != 'admin' and sensor.user_id != current_user_id:
-            return jsonify({'error': 'Unauthorized access to this sensor'}), 403
+        # Vérifier la propriété sauf si admin
+        if user.role != 'admin' and capteur.user_id != id_utilisateur_courant:
+            return jsonify({'error': 'Accès non autorisé à ce capteur'}), 403
         
-        # Get query parameters
+        # Obtenir les paramètres de requête
         limit = request.args.get('limit', 100, type=int)
-        hours = request.args.get('hours', 24, type=int)
+        heures = request.args.get('hours', 24, type=int)
         
-        # For simulated sensors, generate historical data on-demand
-        if sensor.sensor_type == 'simulation':
-            simulated_readings = generate_historical_simulated_readings(sensor.name, hours)
+        # Pour les capteurs simulés, générer des données historiques à la demande
+        if capteur.sensor_type == 'simulation':
+            lectures_simulees = generate_historical_simulated_readings(capteur.name, heures)
             
-            # Return limited number of readings
-            readings_data = [
+            # Retourner un nombre limité de lectures
+            donnees_lectures = [
                 {
                     'id': idx,
                     'sensor_id': sensor_id,
@@ -50,43 +49,43 @@ def get_sensor_readings(sensor_id):
                     'humidity': r['humidity'],
                     'recorded_at': r['recorded_at']
                 }
-                for idx, r in enumerate(simulated_readings[-limit:])
+                for idx, r in enumerate(lectures_simulees[-limit:])
             ]
             
             return jsonify({
-                'readings': readings_data
+                'readings': donnees_lectures
             }), 200
         
-        # For real sensors, get actual readings from database
-        # Calculate time range
-        end_time = datetime.utcnow()
-        start_time = end_time - timedelta(hours=hours)
+        # Pour les capteurs réels, obtenir les lectures réelles de la base de données
+        # Calculer l'intervalle de temps
+        temps_fin = datetime.utcnow()
+        temps_debut = temps_fin - timedelta(hours=heures)
         
-        readings = SensorReading.query.filter(
+        lectures = SensorReading.query.filter(
             SensorReading.sensor_id == sensor_id,
-            SensorReading.recorded_at >= start_time
+            SensorReading.recorded_at >= temps_debut
         ).order_by(SensorReading.recorded_at.desc()).limit(limit).all()
         
         return jsonify({
-            'readings': [reading.to_dict() for reading in readings]
+            'readings': [lecture.vers_dict() for lecture in lectures]
         }), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-@readings_bp.route('', methods=['POST'])
+@lectures_bp.route('', methods=['POST'])
 @jwt_required()
-def add_reading():
-    """Add a new sensor reading"""
+def ajouter_lecture():
+    """Ajouter une nouvelle lecture de capteur"""
     try:
-        current_user_id = get_jwt_identity()
+        id_utilisateur_courant = get_jwt_identity()
         
-        # Convert to int if string
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
+        # Convertir en int si chaîne
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
             
-        user = User.query.get(current_user_id)
+        user = User.query.get(id_utilisateur_courant)
         
         data = request.get_json()
         
@@ -96,187 +95,177 @@ def add_reading():
         humidity = data.get('humidity')
         
         if not sensor_id or co2 is None or temperature is None or humidity is None:
-            return jsonify({'error': 'sensor_id, co2, temperature, and humidity are required'}), 400
+            return jsonify({'error': 'sensor_id, co2, temperature, et humidity sont requis'}), 400
         
-        sensor = Sensor.query.get(sensor_id)
+        capteur = Sensor.query.get(sensor_id)
         
-        if not sensor:
-            return jsonify({'error': 'Sensor not found'}), 404
+        if not capteur:
+            return jsonify({'error': 'Capteur non trouvé'}), 404
         
-        # Check ownership unless admin
-        if user.role != 'admin' and sensor.user_id != current_user_id:
-            return jsonify({'error': 'Unauthorized access to this sensor'}), 403
+        # Vérifier la propriété sauf si admin
+        if user.role != 'admin' and capteur.user_id != id_utilisateur_courant:
+            return jsonify({'error': 'Accès non autorisé à ce capteur'}), 403
         
-        new_reading = SensorReading(
+        nouvelle_lecture = SensorReading(
             sensor_id=sensor_id,
             co2=float(co2),
             temperature=float(temperature),
             humidity=float(humidity)
         )
         
-        db.session.add(new_reading)
+        db.session.add(nouvelle_lecture)
         
-        # Check thresholds and trigger alerts
-        check_thresholds(sensor, current_user_id, co2, temperature, humidity)
+        # Vérifier les seuils et déclencher des aler
+        verifier_seuils(capteur, id_utilisateur_courant, co2, temperature, humidity)
         
-        # Update sensor status based on CO2 levels
+        # Mettre à jour l'état du capteur en fonction des niveaux de CO2
         if co2 > 1200:
-            sensor.status = 'avertissement'
+            capteur.status = 'avertissement'
         elif co2 >= 1000:
-            sensor.status = 'avertissement'
+            capteur.status = 'avertissement'
         else:
-            sensor.status = 'en ligne'
+            capteur.status = 'en ligne'
         
-        sensor.updated_at = datetime.utcnow()
+        capteur.updated_at = datetime.utcnow()
         
         db.session.commit()
         
-        # Log the action
-        log_action(current_user_id, 'CREATE', 'READING', resource_id=new_reading.id)
+        # Enregistrer l'action
+        enregistrer_action(id_utilisateur_courant, 'CREER', 'LECTURE', resource_id=nouvelle_lecture.id)
         
         return jsonify({
-            'message': 'Reading added successfully',
-            'reading': new_reading.to_dict()
+            'message': 'Lecture ajoutée avec succès',
+            'reading': nouvelle_lecture.vers_dict()
         }), 201
         
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error adding reading: {str(e)}")
+        logger.error(f"Erreur lors de l'ajout de la lecture: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 
-def check_thresholds(sensor, user_id, co2, temperature, humidity):
-    """Check if readings exceed configured thresholds and trigger alerts"""
+def verifier_seuils(capteur, id_utilisateur_courant, co2, temperature, humidity):
+    """Vérifier si les lectures dépassent les seuils configurés et déclencher des alertes"""
     try:
-        # Get thresholds - use sensor-specific if set, otherwise use global defaults
-        co2_threshold = sensor.threshold_co2 if sensor.threshold_co2 is not None else current_app.config.get('ALERT_CO2_THRESHOLD', 1200)
-        temp_min = sensor.threshold_temp_min if sensor.threshold_temp_min is not None else current_app.config.get('ALERT_TEMP_MIN', 15)
-        temp_max = sensor.threshold_temp_max if sensor.threshold_temp_max is not None else current_app.config.get('ALERT_TEMP_MAX', 28)
-        humidity_threshold = sensor.threshold_humidity if sensor.threshold_humidity is not None else current_app.config.get('ALERT_HUMIDITY_THRESHOLD', 80)
+        # Obtenir les seuils - utiliser ceux spécifiques au capteur s'ils sont définis, sinon les défauts globaux
+        seuil_co2 = capteur.threshold_co2 if capteur.threshold_co2 is not None else current_app.config.get('ALERT_CO2_THRESHOLD', 1200)
+        temp_min = capteur.threshold_temp_min if capteur.threshold_temp_min is not None else current_app.config.get('ALERT_TEMP_MIN', 15)
+        temp_max = capteur.threshold_temp_max if capteur.threshold_temp_max is not None else current_app.config.get('ALERT_TEMP_MAX', 28)
+        seuil_humidite = capteur.threshold_humidity if capteur.threshold_humidity is not None else current_app.config.get('ALERT_HUMIDITY_THRESHOLD', 80)
         
-        user = User.query.get(user_id)
+        user = User.query.get(id_utilisateur_courant)
         
-        # Check CO2 levels
-        if co2 > co2_threshold:
-            send_threshold_alert(
-                sensor,
+        # Vérifier les niveaux de CO2
+        if co2 > seuil_co2:
+            envoyer_alerte_seuil(
+                capteur,
                 user,
                 'avertissement',
                 'co2',
-                f'CO2 level {co2} ppm exceeds threshold {co2_threshold} ppm',
+                f'Le niveau de CO2 {co2} ppm dépasse le seuil {seuil_co2} ppm',
                 co2,
-                co2_threshold
+                seuil_co2
             )
         
-        # Check temperature
+        # Vérifier la température
         if temperature < temp_min or temperature > temp_max:
-            threshold = temp_min if temperature < temp_min else temp_max
-            send_threshold_alert(
-                sensor,
+            seuil = temp_min if temperature < temp_min else temp_max
+            envoyer_alerte_seuil(
+                capteur,
                 user,
                 'avertissement',
                 'temperature',
-                f'Temperature {temperature}°C outside range',
+                f'La température {temperature}°C est en dehors de la plage',
                 temperature,
-                threshold
+                seuil
             )
         
-        # Check humidity
-        if humidity > humidity_threshold:
-            send_threshold_alert(
-                sensor,
+        # Vérifier l'humidité
+        if humidity > seuil_humidite:
+            envoyer_alerte_seuil(
+                capteur,
                 user,
                 'avertissement',
                 'humidity',
-                f'Humidity level {humidity}% exceeds threshold {humidity_threshold}%',
+                f'Le niveau d\'humidité {humidity}% dépasse le seuil {seuil_humidite}%',
                 humidity,
-                humidity_threshold
+                seuil_humidite
             )
     
     except Exception as e:
-        logger.error(f"Error checking thresholds: {str(e)}")
+        logger.error(f"Erreur lors de la vérification des seuils: {str(e)}")
 
 
-def send_threshold_alert(sensor, user, alert_type, metric, message, value, threshold):
-    """Send alert when threshold is exceeded"""
+def envoyer_alerte_seuil(capteur, user, type_alerte, metrique, message, valeur, seuil):
+    """Envoyer une alerte quand un seuil est dépassé"""
     try:
-        normalized_type = alert_type if alert_type in ['info', 'avertissement', 'critique'] else 'avertissement'
+        type_normalise = type_alerte if type_alerte in ['info', 'avertissement', 'critique'] else 'avertissement'
 
-        # Check for existing unresolved alert to prevent duplicates
-        existing_alert = Alert.query.filter_by(
-            sensor_id=sensor.id,
-            alert_type=normalized_type,
+        # Vérifier les alertes existantes non résolues pour éviter les doublons
+        alerte_existante = Alert.query.filter_by(
+            sensor_id=capteur.id,
+            alert_type=type_normalise,
             status='nouvelle'
         ).filter(
-            Alert.message.like(f'%{metric}%')
+            Alert.message.like(f'%{metrique}%')
         ).first()
         
-        if existing_alert:
-            logger.info(f"Skipping duplicate alert for sensor {sensor.id}, metric {metric} - existing alert ID: {existing_alert.id}")
-            return  # Don't create duplicate alert
+        if alerte_existante:
+            logger.info(f"Alerte duplicée ignorée pour le capteur {capteur.id}, métrique {metrique} - ID d'alerte existante: {alerte_existante.id}")
+            return  # Ne pas créer d'alerte duplicée
 
-        # Create alert history record
-        alert_history = AlertHistory(
+        # Créer un enregistrement d'historique d'alerte
+        historique_alerte = AlertHistory(
             user_id=user.id,
-            sensor_id=sensor.id,
-            alert_type=normalized_type,
-            metric=metric,
-            metric_value=float(value),
-            threshold_value=float(threshold) if threshold is not None else None,
+            sensor_id=capteur.id,
+            alert_type=type_normalise,
+            metric=metrique,
+            metric_value=float(valeur),
+            threshold_value=float(seuil) if seuil is not None else None,
             message=message,
             status='triggered'
         )
-        db.session.add(alert_history)
+        db.session.add(historique_alerte)
 
-        # Create alert for dashboard
-        alert = Alert(
+        # Créer une alerte pour le tableau de bord
+        alerte = Alert(
             user_id=user.id,
-            sensor_id=sensor.id,
-            alert_type=normalized_type,
+            sensor_id=capteur.id,
+            alert_type=type_normalise,
             message=message,
-            value=float(value)
+            value=float(valeur)
         )
-        db.session.add(alert)
+        db.session.add(alerte)
         db.session.commit()
         
-        # Send email notification if enabled
-        if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS') and user.email:
-            send_alert_email(
-                to_email=user.email,
-                sensor_name=sensor.name,
-                alert_type=alert_type,
-                alert_value=value,
-                threshold=threshold
-            )
-        
-        logger.info(f"Alert triggered for sensor {sensor.id}: {alert_type}")
+        logger.info(f"Alerte déclenchée pour le capteur {capteur.id}: {type_alerte}")
     
     except Exception as e:
-        logger.error(f"Error sending threshold alert: {str(e)}")
+        logger.error(f"Erreur lors de l'envoi de l'alerte de seuil: {str(e)}")
 
 
-@readings_bp.route('/aggregate', methods=['GET'])
+@lectures_bp.route('/aggregate', methods=['GET'])
 @jwt_required()
-def get_aggregate_data():
-    """Get aggregate sensor data for the current user"""
+def obtenir_donnees_agregees():
+    """Obtenir les données agrégées des capteurs pour l'utilisateur courant"""
     try:
-        current_user_id = get_jwt_identity()
+        id_utilisateur_courant = get_jwt_identity()
         
-        # Convert to int if string
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
+        # Convertir en int si chaîne
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
             
-        user = User.query.get(current_user_id)
+        user = User.query.get(id_utilisateur_courant)
         
-        # Get all user's sensors
+        # Obtenir tous les capteurs de l'utilisateur
         if user.role == 'admin':
-            sensors = Sensor.query.all()
+            capteurs = Sensor.query.all()
         else:
-            sensors = Sensor.query.filter_by(user_id=current_user_id).all()
+            capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
         
-        sensor_ids = [s.id for s in sensors]
+        ids_capteurs = [s.id for s in capteurs]
         
-        if not sensor_ids:
+        if not ids_capteurs:
             return jsonify({
                 'avgCo2': 0,
                 'avgTemperature': 0,
@@ -284,16 +273,16 @@ def get_aggregate_data():
                 'totalReadings': 0
             }), 200
         
-        # Get recent readings (last 24 hours)
-        end_time = datetime.utcnow()
-        start_time = end_time - timedelta(hours=24)
+        # Obtenir les lectures récentes (dernières 24 heures)
+        temps_fin = datetime.utcnow()
+        temps_debut = temps_fin - timedelta(hours=24)
         
-        readings = SensorReading.query.filter(
-            SensorReading.sensor_id.in_(sensor_ids),
-            SensorReading.recorded_at >= start_time
+        lectures = SensorReading.query.filter(
+            SensorReading.sensor_id.in_(ids_capteurs),
+            SensorReading.recorded_at >= temps_debut
         ).all()
         
-        if not readings:
+        if not lectures:
             return jsonify({
                 'avgCo2': 0,
                 'avgTemperature': 0,
@@ -301,28 +290,28 @@ def get_aggregate_data():
                 'totalReadings': 0
             }), 200
         
-        # Calculate averages
-        avg_co2 = sum(r.co2 for r in readings) / len(readings)
-        avg_temp = sum(r.temperature for r in readings) / len(readings)
-        avg_humidity = sum(r.humidity for r in readings) / len(readings)
+        # Calculer les moyennes
+        moy_co2 = sum(r.co2 for r in lectures) / len(lectures)
+        moy_temp = sum(r.temperature for r in lectures) / len(lectures)
+        moy_humidite = sum(r.humidity for r in lectures) / len(lectures)
         
         return jsonify({
-            'avgCo2': round(avg_co2, 2),
-            'avgTemperature': round(avg_temp, 2),
-            'avgHumidity': round(avg_humidity, 2),
-            'totalReadings': len(readings)
+            'avgCo2': round(moy_co2, 2),
+            'avgTemperature': round(moy_temp, 2),
+            'avgHumidity': round(moy_humidite, 2),
+            'totalReadings': len(lectures)
         }), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-@readings_bp.route('/external/<sensor_api_key>', methods=['POST'])
-def add_external_reading(sensor_api_key):
+@lectures_bp.route('/external/<sensor_api_key>', methods=['POST'])
+def ajouter_lecture_externe(sensor_api_key):
     """
-    External endpoint for real sensors (SDC30, etc.) to push data.
-    This endpoint uses API key auth instead of JWT for IoT devices.
-    The sensor_api_key is the sensor ID for now (can be enhanced with API keys later)
+    Point de terminaison externe pour les capteurs réels (SDC30, etc.) pour pousser les données.
+    Ce point de terminaison utilise l'authentification par clé API au lieu de JWT pour les appareils IoT.
+    La sensor_api_key est l'ID du capteur pour l'instant (peut être améliorée avec des clés API plus tard)
     """
     try:
         data = request.get_json()
@@ -332,50 +321,50 @@ def add_external_reading(sensor_api_key):
         humidity = data.get('humidity')
         
         if co2 is None or temperature is None or humidity is None:
-            return jsonify({'error': 'co2, temperature, and humidity are required'}), 400
+            return jsonify({'error': 'co2, temperature, et humidity sont requis'}), 400
         
-        # Find sensor by ID (treating api_key as sensor_id for simplicity)
+        # Trouver le capteur par ID (traiter api_key comme sensor_id pour simplicité)
         try:
             sensor_id = int(sensor_api_key)
         except ValueError:
-            return jsonify({'error': 'Invalid sensor identifier'}), 400
+            return jsonify({'error': 'Identifiant de capteur invalide'}), 400
             
-        sensor = Sensor.query.get(sensor_id)
+        capteur = Sensor.query.get(sensor_id)
         
-        if not sensor:
-            return jsonify({'error': 'Sensor not found'}), 404
+        if not capteur:
+            return jsonify({'error': 'Capteur non trouvé'}), 404
         
-        # Only allow real sensors to use this endpoint
-        if sensor.sensor_type != 'real':
-            return jsonify({'error': 'This endpoint is only for real sensors'}), 403
+        # Permettre uniquement aux capteurs réels d'utiliser ce point de terminaison
+        if capteur.sensor_type != 'real':
+            return jsonify({'error': 'Ce point de terminaison est réservé aux capteurs réels'}), 403
         
-        new_reading = SensorReading(
+        nouvelle_lecture = SensorReading(
             sensor_id=sensor_id,
             co2=float(co2),
             temperature=float(temperature),
             humidity=float(humidity)
         )
         
-        db.session.add(new_reading)
+        db.session.add(nouvelle_lecture)
 
-        # Check thresholds and trigger alerts
-        check_thresholds(sensor, sensor.user_id, co2, temperature, humidity)
+        # Vérifier les seuils et déclencher des alertes
+        verifier_seuils(capteur, capteur.user_id, co2, temperature, humidity)
         
-        # Update sensor status based on CO2 levels
+        # Mettre à jour l'état du capteur en fonction des niveaux de CO2
         if co2 > 1200:
-            sensor.status = 'avertissement'
+            capteur.status = 'avertissement'
         elif co2 >= 1000:
-            sensor.status = 'avertissement'
+            capteur.status = 'avertissement'
         else:
-            sensor.status = 'en ligne'
+            capteur.status = 'en ligne'
         
-        sensor.updated_at = datetime.utcnow()
+        capteur.updated_at = datetime.utcnow()
         
         db.session.commit()
         
         return jsonify({
-            'message': 'Reading recorded successfully',
-            'reading': new_reading.to_dict()
+            'message': 'Lecture enregistrée avec succès',
+            'reading': nouvelle_lecture.vers_dict()
         }), 201
         
     except Exception as e:
@@ -383,61 +372,61 @@ def add_external_reading(sensor_api_key):
         return jsonify({'error': str(e)}), 500
 
 
-@readings_bp.route('/latest/<int:sensor_id>', methods=['GET'])
+@lectures_bp.route('/latest/<int:sensor_id>', methods=['GET'])
 @jwt_required()
-def get_latest_reading(sensor_id):
-    """Get the latest reading for a specific sensor. For simulated sensors, generate and store if stale."""
+def obtenir_derniere_lecture(sensor_id):
+    """Obtenir la dernière lecture pour un capteur spécifique. Pour les capteurs simulés, générer et enregistrer si obsolète."""
     try:
-        current_user_id = get_jwt_identity()
+        id_utilisateur_courant = get_jwt_identity()
         
-        # Convert to int if string
-        if isinstance(current_user_id, str):
-            current_user_id = int(current_user_id)
+        # Convertir en int si chaîne
+        if isinstance(id_utilisateur_courant, str):
+            id_utilisateur_courant = int(id_utilisateur_courant)
             
-        user = User.query.get(current_user_id)
+        user = User.query.get(id_utilisateur_courant)
         
-        sensor = Sensor.query.get(sensor_id)
+        capteur = Sensor.query.get(sensor_id)
         
-        if not sensor:
-            return jsonify({'error': 'Sensor not found'}), 404
+        if not capteur:
+            return jsonify({'error': 'Capteur non trouvé'}), 404
         
-        # Check ownership unless admin
-        if user.role != 'admin' and sensor.user_id != current_user_id:
-            return jsonify({'error': 'Unauthorized access to this sensor'}), 403
+        # Vérifier la propriété sauf si admin
+        if user.role != 'admin' and capteur.user_id != id_utilisateur_courant:
+            return jsonify({'error': 'Accès non autorisé à ce capteur'}), 403
         
-        # Get latest reading
-        latest_reading = SensorReading.query.filter_by(
+        # Obtenir la dernière lecture
+        derniere_lecture = SensorReading.query.filter_by(
             sensor_id=sensor_id
         ).order_by(SensorReading.recorded_at.desc()).first()
         
-        # For simulated sensors, generate fresh reading on-demand without persisting
-        if sensor.sensor_type == 'simulation':
-            if latest_reading and (datetime.utcnow() - latest_reading.recorded_at).total_seconds() <= 60:
+        # Pour les capteurs simulés, générer une lecture fraêche à la demande sans persister
+        if capteur.sensor_type == 'simulation':
+            if derniere_lecture and (datetime.utcnow() - derniere_lecture.recorded_at).total_seconds() <= 60:
                 return jsonify({
-                    'reading': latest_reading.to_dict(),
-                    'sensor': sensor.to_dict()
+                    'reading': derniere_lecture.vers_dict(),
+                    'sensor': capteur.vers_dict()
                 }), 200
 
-            simulated_data = generate_current_simulated_reading(sensor.name)
-            simulated_reading = {
+            donnees_simulees = generate_current_simulated_reading(capteur.name)
+            lecture_simulee = {
                 'id': 0,
                 'sensor_id': sensor_id,
-                'co2': simulated_data['co2'],
-                'temperature': simulated_data['temperature'],
-                'humidity': simulated_data['humidity'],
+                'co2': donnees_simulees['co2'],
+                'temperature': donnees_simulees['temperature'],
+                'humidity': donnees_simulees['humidity'],
                 'recorded_at': datetime.utcnow().isoformat()
             }
             return jsonify({
-                'reading': simulated_reading,
-                'sensor': sensor.to_dict()
+                'reading': lecture_simulee,
+                'sensor': capteur.vers_dict()
             }), 200
         
-        if not latest_reading:
-            return jsonify({'error': 'No readings found for this sensor'}), 404
+        if not derniere_lecture:
+            return jsonify({'error': 'Aucune lecture trouvée pour ce capteur'}), 404
         
         return jsonify({
-            'reading': latest_reading.to_dict(),
-            'sensor': sensor.to_dict()
+            'reading': derniere_lecture.vers_dict(),
+            'sensor': capteur.vers_dict()
         }), 200
         
     except Exception as e:

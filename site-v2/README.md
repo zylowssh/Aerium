@@ -11,8 +11,7 @@ Système complet de surveillance de la qualité de l'air en temps réel avec une
 - 🎨 Dashboard intuitif et responsive
 
 ### Alertes Intelligentes
-- 📧 Notifications par email automatiques
-- 🚨 Seuils d'alerte configurables
+-  Seuils d'alerte configurables
 - 📝 Historique complet des alertes
 - 🔔 Reconnaissance et résolution d'alertes
 
@@ -167,14 +166,14 @@ air-sense-dashboard/
 
 | # | Fonctionnalité | Description |
 |---|---|---|
-| 1️⃣ | Notifications Email | Alertes automatiques par email |
-| 2️⃣ | Rate Limiting | Protection contre les abus |
-| 3️⃣ | Logging Complet | Tous les événements enregistrés |
-| 4️⃣ | Piste d'Audit | Traçabilité complète des actions |
-| 5️⃣ | Recherche Avancée | Filtrage multi-critères |
-| 6️⃣ | Validation Données | Vérification stricte serveur |
-| 7️⃣ | Mise en Cache | Performance optimisée |
-| 8️⃣ | Documentation API | Swagger/OpenAPI interactive |
+| 1️⃣ | Rate Limiting | Protection contre les abus |
+| 2️⃣ | Logging Complet | Tous les événements enregistrés |
+| 3️⃣ | Piste d'Audit | Traçabilité complète des actions |
+| 4️⃣ | Recherche Avancée | Filtrage multi-critères |
+| 5️⃣ | Validation Données | Vérification stricte serveur |
+| 6️⃣ | Mise en Cache | Performance optimisée |
+| 7️⃣ | Documentation API | Swagger/OpenAPI interactive |
+| 8️⃣ | Alertes Avancées | Seuils configurables avec historique |
 
 Voir **[Fonctionnalités](docs/fr/FEATURES.md)** pour détails complets.
 
@@ -222,11 +221,11 @@ Voir **[Référence API Complète](docs/guides/API_REFERENCE.md)** pour tous les
 
 ### Étapes Rapides
 
-1. **Préparer les clés de sécurité** (clés aléatoires fortes)
-2. **Configurer l'email** (SMTP production)
-3. **Builder le frontend** (`npm run build`)
-4. **Lancer avec Gunicorn** (serveur WSGI)
-5. **Configurer Nginx** (proxy inverse + SSL)
+1. **Builder le frontend** (`npm run build`)
+2. **Lancer avec Gunicorn** (serveur WSGI)
+3. **Configurer Nginx** (proxy inverse + SSL)
+4. **Configurer la base de données** (initialiser SQLite)
+5. **Tester les endpoints** (vérifier les routes API)
 
 Voir **[Guide Déploiement Complet](docs/guides/DEPLOYMENT.md)** pour instructions détaillées.
 
@@ -239,34 +238,6 @@ Voir **[Guide Déploiement Complet](docs/guides/DEPLOYMENT.md)** pour instructio
 - Configuration problématique
 - Problèmes de déploiement
 - Logs et debugging
-
----
-
-## 📞 Support
-
-### Ressources
-
-- 📚 **Documentation Complète**: [docs/README.md](docs/README.md)
-- 🚀 **Guide Rapide**: [docs/fr/QUICKSTART.md](docs/fr/QUICKSTART.md)
-- 📖 **Architecture**: [docs/guides/ARCHITECTURE.md](docs/guides/ARCHITECTURE.md)
-- 🔌 **API Référence**: [docs/guides/API_REFERENCE.md](docs/guides/API_REFERENCE.md)
-- 🛠️ **Dépannage**: [docs/guides/TROUBLESHOOTING.md](docs/guides/TROUBLESHOOTING.md)
-
-### Contacter
-
-- 💬 Créer une issue GitHub
-- 📧 Consulter la documentation
-- 🔍 Vérifier les logs: `backend/logs/aerium.log`
-
----
-
-## 🤝 Contribution
-
-Les contributions sont bienvenues! Voir **[Guide de Contribution](docs/guides/CONTRIBUTING.md)** pour:
-- Processus de contribution
-- Conventions de code
-- Types de contributions
-- Pull request template
 
 ---
 
@@ -298,23 +269,18 @@ Les contributions sont bienvenues! Voir **[Guide de Contribution](docs/guides/CO
 ```env
 # Copier en .env et adapter
 
-# Sécurité
-SECRET_KEY=votre-clé-secrète
-JWT_SECRET_KEY=votre-clé-jwt-secrète
-
-# Email (optionnel)
-ENABLE_EMAIL_NOTIFICATIONS=True
-MAIL_SERVER=smtp.gmail.com
-MAIL_USERNAME=votre-email@gmail.com
-
 # Seuils d'alerte
 ALERT_CO2_THRESHOLD=1200
 ALERT_TEMP_MIN=15
 ALERT_TEMP_MAX=28
+ALERT_HUMIDITY_THRESHOLD=80
 
 # Rate Limiting
 ENABLE_RATE_LIMITING=True
 RATELIMIT_DEFAULT=200 per day;50 per hour;10 per minute
+
+FLASK_ENV=development
+FLASK_DEBUG=True
 ```
 
 Voir `.env.example` pour toutes les options disponibles.
@@ -353,12 +319,6 @@ sqlite3 instance/aerium.db ".tables"
 
 ---
 
-## 📜 Licence
-
-[À définir selon votre licence]
-
----
-
 ## ✨ À Venir
 
 Améliorations futures:
@@ -370,18 +330,9 @@ Améliorations futures:
 - [ ] Support multilingue
 - [ ] Webhooks 3e parties
 
----
-
-**Créé avec ❤️ pour une meilleure surveillance de la qualité de l'air**
 
 ---
 
 ## 🔗 Lien Rapide
 
 👉 **[Accéder à toute la documentation →](docs/README.md)**
-
----
-
-**Dernière mise à jour:** Février 2026  
-**Statut:** Production Ready ✅  
-**Version:** 1.0.0

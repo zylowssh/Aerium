@@ -13,8 +13,7 @@ Système complet de surveillance de la qualité de l'air en temps réel avec une
 - 🎨 Dashboard intuitif et responsive
 
 ### Alertes Intelligentes
-- 📧 Notifications par email automatiques
-- 🚨 Seuils d'alerte configurables
+-  Seuils d'alerte configurables
 - 📝 Historique complet des alertes
 - 🔔 Reconnaissance et résolution d'alertes
 
@@ -143,7 +142,6 @@ air-sense-dashboard/
 - SQLite (base de données)
 - Flask-JWT-Extended (authentification)
 - Flask-SocketIO (WebSocket)
-- Flask-Mail (emails)
 - Flask-Limiter (rate limiting)
 
 ## 🔧 Configuration
@@ -153,17 +151,6 @@ air-sense-dashboard/
 Créez un fichier `.env` dans le répertoire `backend/` :
 
 ```env
-# Clés de sécurité
-SECRET_KEY=votre-clé-secrète
-JWT_SECRET_KEY=votre-clé-jwt-secrète
-
-# Email (optionnel)
-ENABLE_EMAIL_NOTIFICATIONS=True
-MAIL_SERVER=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=votre-email@gmail.com
-MAIL_PASSWORD=votre-mot-de-passe
-
 # Seuils d'alerte
 ALERT_CO2_THRESHOLD=1200
 ALERT_TEMP_MIN=15
@@ -174,9 +161,8 @@ ALERT_HUMIDITY_THRESHOLD=80
 ENABLE_RATE_LIMITING=True
 RATELIMIT_DEFAULT=200 per day;50 per hour;10 per minute
 
-# Logging
-LOG_LEVEL=INFO
-LOG_FILE=logs/aerium.log
+FLASK_ENV=development
+FLASK_DEBUG=True
 ```
 
 Voir `.env.example` pour toutes les options disponibles.

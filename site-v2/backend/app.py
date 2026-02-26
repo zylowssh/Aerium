@@ -12,95 +12,84 @@ import logging
 from logging.handlers import RotatingFileHandler
 import urllib.request
 
-from database import db, init_db, check_sensor_threshold_columns, User
+from database import db, init_db, vérifier_colonnes_seuil_capteur, User
 from routes.auth import auth_bp
-from routes.sensors import sensors_bp
-from routes.readings import readings_bp
-from routes.users import users_bp
-from routes.alerts import alerts_bp
-from routes.reports import reports_bp
+from routes.sensors import capteurs_bp
+from routes.readings import lectures_bp
+from routes.users import utilisateurs_bp
+from routes.alerts import alertes_bp
+from routes.reports import rapports_bp
 from routes.maintenance import maintenance_bp
 from routes.admin import admin_bp
-from scheduler import init_scheduler
-from email_service import init_email
+from scheduler import initialiser_planificateur
 from config import Config
 
 load_dotenv()
 
-# Configure logging
-def setup_logging(app):
-    """Setup application logging with enhanced CLI output"""
+# Configurer la journalisation
+def configurer_journalisation(app):
+    """Configuration de la journalisation de l'application avec sortie CLI améliorée"""
     if not app.config.get('DEBUG'):
         if not os.path.exists('logs'):
             os.mkdir('logs')
         
-        file_handler = RotatingFileHandler(
+        gestionnaire_fichier = RotatingFileHandler(
             'logs/aerium.log',
             maxBytes=10240000,
             backupCount=10
         )
-        file_handler.setFormatter(logging.Formatter(
+        gestionnaire_fichier.setFormatter(logging.Formatter(
             '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
         ))
-        file_handler.setLevel(logging.INFO)
-        app.logger.addHandler(file_handler)
+        gestionnaire_fichier.setLevel(logging.INFO)
+        app.logger.addHandler(gestionnaire_fichier)
         app.logger.setLevel(logging.INFO)
-        app.logger.info('[INIT] Aerium Air Quality Dashboard startup')
+        app.logger.info('[INIT] Démarrage du tableau de bord Aerium de qualité de l\'air')
     else:
-        # Enhanced console output for debug mode
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
-        app.logger.addHandler(console_handler)
+        # Sortie de console améliorée pour le mode débogage
+        gestionnaire_console = logging.StreamHandler()
+        gestionnaire_console.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
+        app.logger.addHandler(gestionnaire_console)
         app.logger.setLevel(logging.INFO)
 
 
-def rate_limit_key():
-    """Key function for rate limiter that excludes OPTIONS requests"""
-    # Don't rate limit CORS preflight requests
+def clé_limite_débit():
+    """Fonction clé pour le limiteur de débit qui exclut les requêtes OPTIONS"""
+    # Ne pas limiter les requêtes de pré-vol CORS
     if request.method == 'OPTIONS':
-        return None
-    return get_remote_address()
+        return 'cors-preflight'
+    return get_remote_address() or 'unknown'
 
 
-def create_app():
+def créer_app():
     app = Flask(__name__)
     
-    # Load configuration
+    # Charger la configuration
     app.config.from_object(Config)
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'aerium-dev-secret-key-change-in-production')
+    app.config['SECRET_KEY'] = 'aerium-school-project-secret'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aerium.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
+    app.config['JWT_SECRET_KEY'] = 'aerium-jwt-secret'
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
     app.config['JWT_HEADER_NAME'] = 'Authorization'
     app.config['JWT_HEADER_TYPE'] = 'Bearer'
     
-    # Email configuration
-    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
-    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@airsense.app')
-    
-    # Feature flags
-    app.config['ENABLE_EMAIL_NOTIFICATIONS'] = os.getenv('ENABLE_EMAIL_NOTIFICATIONS', 'True') == 'True'
+    # Drapeaux de fonctionnalité
     app.config['ENABLE_RATE_LIMITING'] = os.getenv('ENABLE_RATE_LIMITING', 'True') == 'True'
     app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', 'http://localhost:5173')
     
-    # Setup logging
-    setup_logging(app)
+    # Configurer la journalisation
+    configurer_journalisation(app)
     
-    # Initialize extensions
+    # Initialiser les extensions
     db.init_app(app)
     jwt = JWTManager(app)
-    init_email(app)
 
     
-    # CORS Configuration - must be initialized early
-    # Get local IP for mobile access
+    # Configuration CORS - doit être initialisée tôt
+    # Obtenir l'adresse IP locale pour l'accès mobile
     import socket
     try:
         hostname = socket.gethostname()
@@ -145,7 +134,7 @@ def create_app():
     if app.config.get('ENABLE_RATE_LIMITING'):
         limiter = Limiter(
             app=app,
-            key_func=rate_limit_key,
+            key_func=clé_limite_débit,
             default_limits=["10000 per day", "1000 per hour", "100 per minute"],
             storage_uri="memory://"
         )
@@ -154,7 +143,7 @@ def create_app():
         # Create a dummy limiter that doesn't limit anything
         limiter = Limiter(
             app=app,
-            key_func=lambda: None,  # Return None to disable
+            key_func=lambda: "disabled",  # Return a string key but no actual limits
             default_limits=[],
             enabled=False
         )
@@ -172,11 +161,11 @@ def create_app():
     app.logger.info('[OK] WebSocket (Socket.IO) initialized')
 
     @jwt.user_identity_loader
-    def user_identity_lookup(identity):
+    def recherche_identité_utilisateur(identity):
         return str(identity)
 
     @jwt.user_lookup_loader
-    def user_lookup_callback(_jwt_header, jwt_data):
+    def rappel_recherche_utilisateur(_jwt_header, jwt_data):
         identity = jwt_data.get('sub')
         if identity is None:
             return None
@@ -186,10 +175,10 @@ def create_app():
             return None
         return db.session.get(User, identity)
 
-    # WebSocket event handlers
+    # Gestionnaires d'événements WebSocket
     @socketio.on('connect')
-    def handle_connect(auth):
-        """Handle client connection"""
+    def gérer_connexion(auth):
+        """Gérer la connexion du client"""
         token = None
         if isinstance(auth, dict):
             token = auth.get('token')
@@ -197,170 +186,175 @@ def create_app():
             token = request.args.get('token')
 
         if not token:
-            app.logger.warning('[WebSocket] Missing token for client %s', request.sid)
+            sid = getattr(request, 'sid', 'unknown')
+            app.logger.warning('[WebSocket] Jeton manquant pour le client %s', sid)
             return False
 
         try:
-            decoded = decode_token(token)
-            user_id = decoded.get('sub')
-            user = db.session.get(User, user_id) if user_id is not None else None
-            if not user:
-                app.logger.warning('[WebSocket] Invalid user for client %s', request.sid)
+            décodé = decode_token(token)
+            id_utilisateur = décodé.get('sub')
+            utilisateur = db.session.get(User, id_utilisateur) if id_utilisateur is not None else None
+            if not utilisateur:
+                sid = getattr(request, 'sid', 'unknown')
+                app.logger.warning('[WebSocket] Utilisateur invalide pour le client %s', sid)
                 return False
 
-            # Join user-specific room
-            join_room(f'user_{user.id}')
-            rooms_joined = [f'user_{user.id}']
+            # Rejoindre la salle spécifique à l'utilisateur
+            join_room(f'user_{utilisateur.id}')
+            salons_rejoints = [f'user_{utilisateur.id}']
             
-            # Join admin room if admin
-            if user.role == 'admin':
+            # Rejoindre la salle admin si admin
+            if utilisateur.role == 'admin':
                 join_room('admin')
-                rooms_joined.append('admin')
+                salons_rejoints.append('admin')
             
-            app.logger.info(f'[WebSocket] Client {request.sid} connected - User: {user.email} (ID: {user.id}) - Rooms: {rooms_joined}')
+            sid = getattr(request, 'sid', 'unknown')
+            app.logger.info(f'[WebSocket] Client {sid} connecté - Utilisateur: {utilisateur.email} (ID: {utilisateur.id}) - Salons: {salons_rejoints}')
         except Exception as exc:
-            app.logger.warning('[WebSocket] Token validation failed for client %s: %s', request.sid, exc)
+            sid = getattr(request, 'sid', 'unknown')
+            app.logger.warning('[WebSocket] Validation du jeton échouée pour le client %s: %s', sid, exc)
             return False
     
     @socketio.on('disconnect')
-    def handle_disconnect():
-        """Handle client disconnection"""
-        app.logger.info(f'[WebSocket] Client disconnected: {request.sid}')
+    def gérer_déconnexion():
+        """Gérer la déconnexion du client"""
+        sid = getattr(request, 'sid', 'unknown')
+        app.logger.info(f'[WebSocket] Client déconnecté: {sid}')
     
     @socketio.on('subscribe_sensors')
-    def handle_subscribe_sensors(data):
-        """Handle sensor subscription from client"""
-        app.logger.info(f'[WebSocket] Client {request.sid} subscribed to sensor updates')
+    def gérer_abonnement_capteurs(data):
+        """Gérer l'abonnement aux capteurs depuis le client"""
+        sid = getattr(request, 'sid', 'unknown')
+        app.logger.info(f'[WebSocket] Client {sid} abonné aux mises à jour des capteurs')
 
-    # Register blueprints
-    app.logger.info('[INFO] Registering API blueprints...')
+    # Enregistrer les blueprints
+    app.logger.info('[INFO] Enregistrement des blueprints API...')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(sensors_bp, url_prefix='/api/sensors')
-    app.register_blueprint(readings_bp, url_prefix='/api/readings')
-    app.register_blueprint(users_bp, url_prefix='/api/users')
-    app.register_blueprint(alerts_bp, url_prefix='/api/alerts')
-    app.register_blueprint(reports_bp, url_prefix='/api/reports')
+    app.register_blueprint(capteurs_bp, url_prefix='/api/sensors')
+    app.register_blueprint(lectures_bp, url_prefix='/api/readings')
+    app.register_blueprint(utilisateurs_bp, url_prefix='/api/users')
+    app.register_blueprint(alertes_bp, url_prefix='/api/alerts')
+    app.register_blueprint(rapports_bp, url_prefix='/api/reports')
     app.register_blueprint(maintenance_bp, url_prefix='/api/maintenance')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
-    app.logger.info('[OK] All API blueprints registered')
+    app.logger.info('[OK] Tous les blueprints API enregistrés')
     
-    # Health check endpoint
+    # Point de terminaison de vérification de santé
     @app.route('/api/health')
-    def health_check():
+    def vérification_santé():
         return jsonify({
             'status': 'healthy',
-            'message': 'Aerium API is running',
+            'message': 'L\'API Aerium fonctionne',
             'features': {
-                'email_notifications': app.config.get('ENABLE_EMAIL_NOTIFICATIONS', False),
                 'rate_limiting': app.config.get('ENABLE_RATE_LIMITING', False)
             }
         }), 200
     
-    # API documentation endpoint
+    # Point de terminaison de documentation API
     @app.route('/api/docs')
-    def api_docs():
+    def docs_api():
         return jsonify({
             'api_version': '1.0.0',
-            'title': 'Aerium Air Quality Dashboard API',
-            'description': 'REST API for real-time air quality monitoring',
+            'title': 'API du tableau de bord de qualité de l\'air Aerium',
+            'description': 'API REST pour la surveillance de la qualité de l\'air en temps réel',
             'endpoints': {
-                'auth': '/api/auth - Authentication endpoints',
-                'sensors': '/api/sensors - Sensor management',
-                'readings': '/api/readings - Sensor readings',
-                'alerts': '/api/alerts - Alert management',
-                'users': '/api/users - User management',
-                'reports': '/api/reports - Reports generation'
+                'auth': '/api/auth - Points de terminaison d\'authentification',
+                'sensors': '/api/sensors - Gestion des capteurs',
+                'readings': '/api/readings - Lectures des capteurs',
+                'alerts': '/api/alerts - Gestion des alertes',
+                'users': '/api/users - Gestion des utilisateurs',
+                'reports': '/api/reports - Génération de rapports'
             }
         }), 200
 
-    # Audio proxy to avoid cross-origin issues when loading remote audio files
+    # Proxy audio pour éviter les problèmes d'origine croisée pour le chargement de fichiers audio distants
     @app.route('/api/proxy-audio')
     def proxy_audio():
-        """Proxy a remote audio URL and stream it back to the frontend with proper CORS headers.
+        """Proxy une URL audio distante et la renvoyer au frontend avec les en-têtes CORS appropriés.
 
-        Query params:
-            url: full remote URL to fetch
+        Paramètres de requête:
+            url: URL distant complet à récupérer
         """
         url = request.args.get('url')
         if not url:
-            return jsonify({'error': 'Missing url parameter'}), 400
+            return jsonify({'error': 'Paramètre url manquant'}), 400
 
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Aerium-Audio-Proxy'})
-            remote = urllib.request.urlopen(req, timeout=15)
+            distant = urllib.request.urlopen(req, timeout=15)
 
-            content_type = remote.headers.get_content_type() or 'audio/mpeg'
+            type_contenu = distant.headers.get_content_type() or 'audio/mpeg'
 
-            def generate():
+            def générer():
                 try:
                     while True:
-                        chunk = remote.read(8192)
+                        chunk = distant.read(8192)
                         if not chunk:
                             break
                         yield chunk
                 finally:
                     try:
-                        remote.close()
+                        distant.close()
                     except Exception:
                         pass
 
-            return Response(stream_with_context(generate()), content_type=content_type)
+            return Response(stream_with_context(générer()), content_type=type_contenu)
         except Exception as e:
-            app.logger.error(f'Audio proxy error fetching {url}: {e}')
-            return jsonify({'error': 'Failed to fetch remote audio'}), 502
+            app.logger.error(f'Erreur de proxy audio lors de la récupération {url}: {e}')
+            return jsonify({'error': 'Échec de la récupération de l\'audio distant'}), 502
     
-    # Error handlers
+    # Gestionnaires d'erreur
     @app.errorhandler(404)
-    def not_found(error):
-        return jsonify({'error': 'Resource not found'}), 404
+    def non_trouvé(error):
+        return jsonify({'error': 'Ressource non trouvée'}), 404
     
     @app.errorhandler(500)
-    def internal_error(error):
-        app.logger.error(f'Server error: {error}')
-        return jsonify({'error': 'Internal server error'}), 500
+    def erreur_interne(error):
+        app.logger.error(f'Erreur du serveur: {error}')
+        return jsonify({'error': 'Erreur interne du serveur'}), 500
     
     @app.errorhandler(429)
-    def ratelimit_handler(e):
-        return jsonify({'error': 'Rate limit exceeded. Try again later.'}), 429
+    def gestionnaire_limite_débit(e):
+        return jsonify({'error': 'Limite de débit dépassée. Réessayez plus tard.'}), 429
     
-    # JWT error handlers
+    # Gestionnaires d'erreur JWT
     @jwt.expired_token_loader
-    def expired_token_callback(jwt_header, jwt_payload):
-        return jsonify({'error': 'Token has expired'}), 401
+    def rappel_jeton_expiré(jwt_header, jwt_payload):
+        return jsonify({'error': 'Le jeton a expiré'}), 401
     
     @jwt.invalid_token_loader
-    def invalid_token_callback(error):
-        return jsonify({'error': 'Invalid token'}), 401
+    def rappel_jeton_invalide(error):
+        return jsonify({'error': 'Jeton invalide'}), 401
     
     @jwt.unauthorized_loader
-    def missing_token_callback(error):
-        return jsonify({'error': 'Authorization token is missing'}), 401
+    def rappel_jeton_manquant(error):
+        return jsonify({'error': 'Le jeton d\'autorisation est manquant'}), 401
     
-    # Initialize database
+    # Initialiser la base de données
     with app.app_context():
         init_db()
-        check_sensor_threshold_columns(app)
-    app.logger.info('[OK] Database initialized')
+        vérifier_colonnes_seuil_capteur(app)
+    app.logger.info('[OK] Base de données initialisée')
     
-    # Initialize scheduler for sensor simulation
-    init_scheduler(app, socketio)
-    app.logger.info('[OK] Scheduler initialized for sensor simulation')
+    # Initialiser le planificateur pour la simulation des capteurs
+    initialiser_planificateur(app, socketio)
+    app.logger.info('[OK] Planificateur initialisé pour la simulation des capteurs')
     
-    app.logger.info('[SUCCESS] Aerium app initialized successfully')
+    app.logger.info('[SUCCÈS] Application Aerium initialisée avec succès')
     return app, socketio
 
-app, socketio = create_app()
+app, socketio = créer_app()
 
 if __name__ == '__main__':
     print("\n" + "="*80)
-    print("                   AERIUM - Air Quality Monitoring Platform")
+    print("                   AERIUM - Plateforme de surveillance de la qualité de l'air")
     print("="*80)
-    print("\n[START] Flask backend server starting...\n")
+    print("\n[DÉMARRRE] Le serveur backend Flask démarre...\n")
     print("[SERVICES]")
     print("  API:      http://0.0.0.0:5000")
     print("  WebSocket: ws://0.0.0.0:5000")
-    print("\n[DEBUG] Debug mode: ON")
-    print("[INFO] Press Ctrl+C to stop the server\n")
+    print("\n[DÉBOGAGE] Mode débogage: ON")
+    print("[INFO] Appuyez sur Ctrl+C pour arrêter le serveur\n")
     print("="*80 + "\n")
     
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)

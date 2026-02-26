@@ -1,74 +1,74 @@
 """
-Database migration: Add threshold columns to sensors table
-Run this script to add custom threshold columns without losing existing data
+Migration de base de données: Ajouter des colonnes de seuils à la table des capteurs
+Exécutez ce script pour ajouter des colonnes de seuils personnalisées sans perdre de données existantes
 """
 
 import sqlite3
 import os
 
-# Path to database
-DB_PATH = os.path.join(os.path.dirname(__file__), 'instance', 'aerium.db')
+# Chemin vers la base de données
+CHEMIN_BD = os.path.join(os.path.dirname(__file__), 'instance', 'aerium.db')
 
-def migrate():
-    print("Starting database migration...")
-    print(f"Database: {DB_PATH}")
+def migrer():
+    print("Démarrage de la migration de la base de données...")
+    print(f"Base de données: {CHEMIN_BD}")
     
-    if not os.path.exists(DB_PATH):
-        print("❌ Database not found! Run the application first to create it.")
+    if not os.path.exists(CHEMIN_BD):
+        print("❌ Base de données introuvable! Exécutez d'abord l'application pour la créer.")
         return
     
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    connexion = sqlite3.connect(CHEMIN_BD)
+    curseur = connexion.cursor()
     
-    # Check if columns already exist
-    cursor.execute("PRAGMA table_info(sensors)")
-    columns = [col[1] for col in cursor.fetchall()]
+    # Vérifier si les colonnes existent déjà
+    curseur.execute("PRAGMA table_info(sensors)")
+    colonnes = [col[1] for col in curseur.fetchall()]
     
-    migrations_needed = []
-    if 'threshold_co2' not in columns:
-        migrations_needed.append('threshold_co2')
-    if 'threshold_temp_min' not in columns:
-        migrations_needed.append('threshold_temp_min')
-    if 'threshold_temp_max' not in columns:
-        migrations_needed.append('threshold_temp_max')
-    if 'threshold_humidity' not in columns:
-        migrations_needed.append('threshold_humidity')
+    migrations_necessaires = []
+    if 'threshold_co2' not in colonnes:
+        migrations_necessaires.append('threshold_co2')
+    if 'threshold_temp_min' not in colonnes:
+        migrations_necessaires.append('threshold_temp_min')
+    if 'threshold_temp_max' not in colonnes:
+        migrations_necessaires.append('threshold_temp_max')
+    if 'threshold_humidity' not in colonnes:
+        migrations_necessaires.append('threshold_humidity')
     
-    if not migrations_needed:
-        print("✓ All threshold columns already exist. No migration needed.")
-        conn.close()
+    if not migrations_necessaires:
+        print("✓ Toutes les colonnes de seuils existent déjà. Aucune migration nécessaire.")
+        connexion.close()
         return
     
-    print(f"Adding columns: {', '.join(migrations_needed)}")
+    print(f"Ajout des colonnes: {', '.join(migrations_necessaires)}")
     
     try:
-        # Add threshold columns
-        if 'threshold_co2' in migrations_needed:
-            cursor.execute('ALTER TABLE sensors ADD COLUMN threshold_co2 FLOAT')
-            print("✓ Added threshold_co2")
+        # Ajouter les colonnes de seuils
+        if 'threshold_co2' in migrations_necessaires:
+            curseur.execute('ALTER TABLE sensors ADD COLUMN threshold_co2 FLOAT')
+            print("✓ Ajout de threshold_co2")
         
-        if 'threshold_temp_min' in migrations_needed:
-            cursor.execute('ALTER TABLE sensors ADD COLUMN threshold_temp_min FLOAT')
-            print("✓ Added threshold_temp_min")
+        if 'threshold_temp_min' in migrations_necessaires:
+            curseur.execute('ALTER TABLE sensors ADD COLUMN threshold_temp_min FLOAT')
+            print("✓ Ajout de threshold_temp_min")
         
-        if 'threshold_temp_max' in migrations_needed:
-            cursor.execute('ALTER TABLE sensors ADD COLUMN threshold_temp_max FLOAT')
-            print("✓ Added threshold_temp_max")
+        if 'threshold_temp_max' in migrations_necessaires:
+            curseur.execute('ALTER TABLE sensors ADD COLUMN threshold_temp_max FLOAT')
+            print("✓ Ajout de threshold_temp_max")
         
-        if 'threshold_humidity' in migrations_needed:
-            cursor.execute('ALTER TABLE sensors ADD COLUMN threshold_humidity FLOAT')
-            print("✓ Added threshold_humidity")
+        if 'threshold_humidity' in migrations_necessaires:
+            curseur.execute('ALTER TABLE sensors ADD COLUMN threshold_humidity FLOAT')
+            print("✓ Ajout de threshold_humidity")
         
-        conn.commit()
-        print("\n✅ Migration completed successfully!")
-        print("Restart the Flask server for changes to take effect.")
+        connexion.commit()
+        print("\n✅ Migration terminée avec succès!")
+        print("Redémarrez le serveur Flask pour que les modifications prennent effet.")
         
     except Exception as e:
-        conn.rollback()
-        print(f"\n❌ Migration failed: {e}")
+        connexion.rollback()
+        print(f"\n❌ Échec de la migration: {e}")
         
     finally:
-        conn.close()
+        connexion.close()
 
 if __name__ == '__main__':
-    migrate()
+    migrer()

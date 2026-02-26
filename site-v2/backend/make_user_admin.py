@@ -1,31 +1,31 @@
 """
-Upgrade a user to admin role
+Promouvoir un utilisateur au rôle d'administrateur
 Usage: python make_user_admin.py <email>
 """
 import sys
 from app import app
 from database import db, User
 
-def make_admin(email):
-    """Upgrade user to admin role"""
+def rendre_admin(email):
+    """Promouvoir un utilisateur au rôle d'administrateur"""
     with app.app_context():
-        user = User.query.filter_by(email=email).first()
+        utilisateur = User.query.filter_by(email=email).first()
         
-        if not user:
-            print(f"❌ User not found: {email}")
+        if not utilisateur:
+            print(f"❌ Utilisateur non trouvé: {email}")
             return False
         
-        user.role = 'admin'
+        utilisateur.role = 'admin'
         db.session.commit()
         
-        print(f"✅ User {email} is now an admin!")
+        print(f"✅ L'utilisateur {email} est maintenant administrateur!")
         return True
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("Usage: python make_user_admin.py <email>")
-        print("\nExample: python make_user_admin.py demo@aerium.app")
+        print("\nExemple: python make_user_admin.py demo@aerium.app")
         sys.exit(1)
     
     email = sys.argv[1]
-    make_admin(email)
+    rendre_admin(email)

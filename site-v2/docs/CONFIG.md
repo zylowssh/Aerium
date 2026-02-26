@@ -10,26 +10,12 @@ Créez un fichier `.env` à la racine du backend:
 # Backend Flask Configuration
 FLASK_ENV=production
 FLASK_DEBUG=False
-SECRET_KEY=your-secret-key-here-change-in-production
 
 # Database
 DATABASE_URL=sqlite:///instance/aerium.db
 
-# JWT Configuration
-JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
-JWT_ACCESS_TOKEN_EXPIRES=3600
-JWT_REFRESH_TOKEN_EXPIRES=2592000
-
 # CORS
 CORS_ORIGINS=http://localhost:5173,http://localhost:8080
-
-# Email Configuration (Optional)
-MAIL_SERVER=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USE_TLS=True
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
-ADMIN_EMAIL=admin@aerium.app
 
 # Logging
 LOG_LEVEL=INFO
@@ -38,6 +24,11 @@ LOG_FILE=logs/aerium.log
 # Rate Limiting
 RATELIMIT_ENABLED=True
 RATELIMIT_DEFAULT=100 per hour
+
+# Alert Thresholds
+ALERT_CO2_THRESHOLD=1200
+ALERT_TEMP_MIN=15
+ALERT_TEMP_MAX=28
 ```
 
 ### Explication des Variables
@@ -46,13 +37,8 @@ RATELIMIT_DEFAULT=100 per hour
 |----------|--------|-------------|
 | `FLASK_ENV` | production | Mode développement/production |
 | `FLASK_DEBUG` | False | Activer débogage (JAMAIS en production) |
-| `SECRET_KEY` | N/A | Clé secrète pour les sessions Flask |
 | `DATABASE_URL` | sqlite:///instance/aerium.db | URI de la base de données |
-| `JWT_SECRET_KEY` | N/A | Clé secrète pour les tokens JWT |
-| `JWT_ACCESS_TOKEN_EXPIRES` | 3600 | Durée d'accès en secondes (1h) |
-| `JWT_REFRESH_TOKEN_EXPIRES` | 2592000 | Durée rafraîchissement en secondes (30j) |
 | `CORS_ORIGINS` | localhost:5173 | Domaines autorisés CORS |
-| `MAIL_SERVER` | smtp.gmail.com | Serveur SMTP pour emails |
 | `LOG_LEVEL` | INFO | Niveau de logs (DEBUG/INFO/WARNING/ERROR) |
 | `RATELIMIT_ENABLED` | True | Activer limitation de débit |
 
@@ -155,42 +141,6 @@ SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://user:password@localhost:3306/aerium'
 
 ---
 
-## 📧 Configuration Email
-
-### Gmail (Recommandé)
-
-1. Activez l'authentification 2FA sur Gmail
-2. Générez un mot de passe d'application:
-   - https://myaccount.google.com/apppasswords
-3. Mettez à jour `.env`:
-
-```bash
-MAIL_SERVER=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USE_TLS=True
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-16-char-app-password
-```
-
-### SendGrid
-
-```bash
-MAIL_BACKEND=sendgrid
-SENDGRID_API_KEY=your-api-key
-```
-
-### SMTP Personnalisé
-
-```bash
-MAIL_SERVER=mail.example.com
-MAIL_PORT=587
-MAIL_USE_TLS=True
-MAIL_USERNAME=noreply@example.com
-MAIL_PASSWORD=your-password
-```
-
----
-
 ## 🔐 Configuration JWT
 
 ### Durées d'Expiration
@@ -240,35 +190,6 @@ def get_data():
 RATELIMIT_DEFAULT=100 per hour
 RATELIMIT_LOGIN=5 per minute
 RATELIMIT_API=100 per hour
-```
-
----
-
-## 🔔 Configuration Notifications
-
-### Email Alerts
-
-```python
-# backend/email_service.py
-ALERT_EMAIL_ENABLED = True
-ALERT_THRESHOLDS = {
-    'co2_warning': 1000,      # ppm
-    'co2_critical': 1200,
-    'temp_warning': 30,       # °C
-    'humidity_warning': 70    # %
-}
-```
-
-### Types de Notifications
-
-```python
-NOTIFICATION_TYPES = {
-    'alert_triggered': True,
-    'alert_resolved': True,
-    'sensor_offline': True,
-    'daily_report': True,
-    'weekly_summary': True
-}
 ```
 
 ---
