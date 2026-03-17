@@ -24,17 +24,8 @@ const useCases = [
 
 const UseCasesSection = () => {
   return (
-    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-background via-muted/30 to-background">
-      <motion.div
-        className="absolute top-1/2 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
-      />
-
+    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
         <motion.div
           className="text-center mb-20"
           initial={{ opacity: 0, y: 40 }}
@@ -43,7 +34,7 @@ const UseCasesSection = () => {
           transition={{ duration: 0.6 }}
         >
           <motion.span
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 text-sm font-medium mb-6 border border-cyan-500/25 font-manrope"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -52,43 +43,43 @@ const UseCasesSection = () => {
             <Lightbulb className="w-4 h-4" />
             Cas d'Usage
           </motion.span>
-          <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-            Parfait Pour
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl text-foreground mb-6 leading-tight">
+            <span className="block font-manrope font-semibold">Concu pour des contextes</span>
+            <span className="block font-editorial italic text-cyan-700/90 dark:text-cyan-300/90">reels et exigeants.</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Découvrez comment Aerium s'adapte à vos besoins spécifiques.
           </p>
         </motion.div>
 
-        {/* Use Cases Grid */}
         <div className="grid md:grid-cols-3 gap-6">
           {useCases.map((useCase, index) => (
             <motion.div
               key={index}
-              className="group relative"
+              className={`group relative ${index === 1 ? 'md:-translate-y-4' : ''}`}
               initial={{ opacity: 0, rotateY: 30, y: 40 }}
               whileInView={{ opacity: 1, rotateY: 0, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.15 }}
               whileHover={{ y: -8 }}
             >
-              <div className="p-8 rounded-2xl glass-card border border-border/50 h-full relative overflow-hidden shadow-lg hover:shadow-primary/20 hover:border-primary/30 transition-all duration-300">
-                {/* Animated gradient background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${useCase.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              <div className="p-8 rounded-[1.75rem] border border-white/45 dark:border-white/15 h-full relative overflow-hidden shadow-xl shadow-black/10 dark:shadow-black/35 bg-white/40 dark:bg-slate-950/60 backdrop-blur-xl hover:border-cyan-400/30 transition-all duration-300">
+                <div className={`absolute inset-0 bg-gradient-to-br ${useCase.gradient} dark:opacity-25 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                <div className="absolute -inset-12 opacity-45 bg-[radial-gradient(circle_at_20%_12%,rgba(255,255,255,0.65),transparent_35%)] dark:bg-[radial-gradient(circle_at_20%_12%,rgba(56,189,248,0.22),transparent_35%)] pointer-events-none" />
 
                 <div className="relative z-10">
                   <motion.div
                     whileHover={{ scale: 1.1, rotate: 10 }}
                     transition={{ duration: 0.3 }}
-                    className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-6 group-hover:from-primary/40 group-hover:to-accent/40 transition-all duration-300"
+                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-200/80 to-emerald-200/75 dark:from-cyan-400/30 dark:to-emerald-400/25 flex items-center justify-center mb-6 transition-all duration-300"
                   >
-                    <useCase.icon className="w-7 h-7 text-primary" />
+                    <useCase.icon className="w-7 h-7 text-cyan-900 dark:text-cyan-200" />
                   </motion.div>
 
-                  <h3 className="text-xl font-semibold text-foreground mb-3">
+                  <h3 className="text-xl font-semibold text-foreground mb-3 font-manrope">
                     {useCase.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-foreground/80 leading-relaxed">
                     {useCase.description}
                   </p>
                 </div>

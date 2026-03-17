@@ -43,11 +43,11 @@ const Landing = () => {
   };
 
   return (
-    <div className="landing-theme min-h-screen bg-background overflow-x-hidden">
+    <div className="landing-theme theme-smooth min-h-screen bg-background overflow-x-clip">
       <Navbar onScrollToSection={scrollToVideo} />
       
       <HeroSection onScrollToSection={scrollToVideo} />
-      
+
       <div ref={videoRef}>
         {shouldLoadVideoSection ? (
           <Suspense fallback={<div className="min-h-[420px] flex items-center justify-center text-muted-foreground">Chargement de la section video...</div>}>
@@ -57,13 +57,13 @@ const Landing = () => {
           <div className="min-h-[420px] flex items-center justify-center text-muted-foreground">Video chargee a l'approche de la section...</div>
         )}
       </div>
-      
+
       <FeaturesSection />
-      
+
       <HowItWorksSection />
-      
+
       <UseCasesSection />
-      
+
       <CTASection />
       
       <Footer />

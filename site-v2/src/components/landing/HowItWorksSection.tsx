@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Activity, Gauge, Terminal, BarChart3 } from 'lucide-react';
+import { Activity, Gauge, Terminal, BarChart3, Sparkles } from 'lucide-react';
 
 const steps = [
   { 
@@ -27,19 +27,8 @@ const steps = [
 
 const HowItWorksSection = () => {
   return (
-    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-muted/40 via-muted/60 to-muted/40" />
-      <motion.div
-        className="absolute top-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
-      />
-
+    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
         <motion.div
           className="text-center mb-20"
           initial={{ opacity: 0, y: 40 }}
@@ -48,7 +37,7 @@ const HowItWorksSection = () => {
           transition={{ duration: 0.6 }}
         >
           <motion.span
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-sm font-medium mb-6 border border-emerald-500/25 font-manrope"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -57,16 +46,30 @@ const HowItWorksSection = () => {
             <Activity className="w-4 h-4" />
             Architecture Simple
           </motion.span>
-          <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-            Comment Ça Marche
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl text-foreground mb-6 leading-tight">
+            <span className="block font-manrope font-semibold">Comment Aerium</span>
+            <span className="block font-editorial italic text-emerald-700/90 dark:text-emerald-300/90">orchestre chaque etape.</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Une architecture simple et efficace pour la surveillance en temps réel.
           </p>
         </motion.div>
 
-        {/* Steps Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <motion.div
+          className="mb-10 rounded-[2rem] border border-white/45 dark:border-white/15 bg-white/45 dark:bg-slate-950/55 backdrop-blur-2xl p-7 sm:p-8"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.55 }}
+        >
+          <p className="text-2xl sm:text-3xl text-foreground leading-snug font-editorial">
+            Du capteur a la decision, le flux est pense pour rester lisible,
+            rapide et utile meme quand les donnees accelerent.
+          </p>
+        </motion.div>
+
+        <div className="relative grid md:grid-cols-3 gap-8">
+          <div className="hidden md:block absolute top-1/2 left-[16%] right-[16%] -translate-y-1/2 h-px bg-gradient-to-r from-transparent via-emerald-400/35 to-transparent pointer-events-none" />
           {steps.map((step, index) => (
             <motion.div
               key={index}
@@ -79,14 +82,13 @@ const HowItWorksSection = () => {
               <motion.div
                 whileHover={{ y: -12 }}
                 transition={{ duration: 0.3 }}
-                className="p-8 rounded-2xl glass-card border border-border/50 hover:border-primary/50 transition-all duration-300 group h-full relative overflow-hidden shadow-lg hover:shadow-primary/20"
+                className="p-8 rounded-[1.75rem] border border-white/45 dark:border-white/15 bg-white/40 dark:bg-slate-950/60 backdrop-blur-xl transition-all duration-300 group h-full relative overflow-hidden shadow-xl shadow-black/10 dark:shadow-black/35"
               >
-                {/* Animated background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/70 via-cyan-100/50 to-white/35 dark:from-[#111c2f]/88 dark:via-[#13253d]/72 dark:to-[#0f141c]/45 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute -inset-16 opacity-50 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.55),transparent_35%)] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(15,20,28,0.72),transparent_35%)] pointer-events-none" />
 
-                {/* Number badge */}
                 <motion.div
-                  className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center text-primary font-bold text-2xl shadow-xl group-hover:from-primary/50 group-hover:to-accent/50 transition-all duration-300"
+                  className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-gradient-to-br from-emerald-300/80 to-cyan-200/70 dark:from-emerald-400/45 dark:to-cyan-400/35 flex items-center justify-center text-emerald-900 dark:text-emerald-100 font-semibold text-2xl shadow-xl transition-all duration-300"
                   whileHover={{ scale: 1.2, rotate: 15 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -98,16 +100,17 @@ const HowItWorksSection = () => {
                     <motion.div
                       whileHover={{ scale: 1.2, rotate: 5 }}
                       transition={{ duration: 0.2 }}
-                      className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center shadow-lg shadow-primary/30"
+                      className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-300/70 to-cyan-200/70 dark:from-emerald-400/30 dark:to-cyan-400/25 flex items-center justify-center shadow-lg shadow-emerald-500/20"
                     >
-                      <step.icon className="w-6 h-6 text-primary" />
+                      <step.icon className="w-6 h-6 text-emerald-900 dark:text-emerald-200" />
                     </motion.div>
-                    <h3 className="text-2xl font-bold text-foreground">
+                    <h3 className="text-2xl font-semibold text-foreground font-manrope">
                       {step.title}
                     </h3>
                   </div>
-                  <p className="text-muted-foreground mb-4 leading-relaxed">{step.description}</p>
-                  <p className="text-sm text-primary/70 font-medium">
+                  <p className="text-foreground/80 mb-4 leading-relaxed">{step.description}</p>
+                  <p className="text-sm text-emerald-700/80 dark:text-emerald-300/80 font-medium inline-flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
                     {step.details}
                   </p>
                 </div>

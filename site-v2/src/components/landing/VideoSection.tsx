@@ -13,7 +13,7 @@ import { DatabaseSchemaScene } from "@/remotion/compositions/DatabaseSchemaScene
 import { BackendArchitectureScene } from "@/remotion/compositions/BackendArchitectureScene";
 import { useState, forwardRef, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Copy, Check, Play } from "lucide-react";
+import { Download, Copy, Check, Play, Sparkles } from "lucide-react";
 
 const compositions = [
   { id: "full", label: "Vidéo Complète", frames: AERIUM_VIDEO_DURATION, component: AeriumVideo },
@@ -35,11 +35,9 @@ const VideoSection = forwardRef<HTMLDivElement>((props, ref) => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [copiedCommand, setCopiedCommand] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false);
   const scrollTargetRef = useRef<HTMLDivElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   const isLowEndDevice = (() => {
     if (typeof navigator === "undefined") {
@@ -80,27 +78,6 @@ const VideoSection = forwardRef<HTMLDivElement>((props, ref) => {
     };
   }, []);
 
-  // Debounce scroll to reduce animation triggers
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolling(true);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, 150);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const copyExportCommand = async (command: string) => {
     await navigator.clipboard.writeText(command);
     setCopiedCommand(true);
@@ -120,24 +97,35 @@ const VideoSection = forwardRef<HTMLDivElement>((props, ref) => {
   }, [ref]);
 
   return (
-    <section ref={sectionRef} className="min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-muted/20 to-muted/10">
+    <section ref={sectionRef} className="min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div ref={scrollTargetRef} className="w-full max-w-7xl">
         {/* Header Section */}
         <motion.div 
-          className="text-center mb-16"
+          className="text-center mb-16 relative z-10"
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.5 }}
           transition={{ duration: 0.6 }}
         >
+          <motion.span
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-sm font-medium mb-6 border border-emerald-500/25 font-manrope"
+            initial={{ opacity: 0, scale: 0.92 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: false, amount: 0.5 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Sparkles className="w-4 h-4" />
+            Demo Interactive
+          </motion.span>
           <motion.h2 
-            className="text-3xl sm:text-5xl font-bold text-foreground mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
+            className="text-4xl sm:text-5xl lg:text-6xl text-foreground mb-4 leading-tight"
             initial={{ opacity: 0, y: -10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.5 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            Découvrez Aerium en Action
+            <span className="block font-manrope font-semibold">Decouvrez Aerium</span>
+            <span className="block font-editorial italic text-cyan-700/90 dark:text-cyan-300/90">en action continue.</span>
           </motion.h2>
           <motion.p 
             className="text-lg text-muted-foreground max-w-2xl mx-auto"
@@ -155,67 +143,40 @@ const VideoSection = forwardRef<HTMLDivElement>((props, ref) => {
         {/* Scene selector - Deleted */}
 
         {/* Video player with pronounced depth effect */}
-        <div ref={videoContainerRef} className="relative mb-8">
-          {/* Far background depth layer - cyan/blue glow */}
-          {!isScrolling && (
-            <motion.div 
-              className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/30 via-accent/20 to-primary/30 blur-3xl -z-30 scale-125"
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 0.9, scale: 1.25 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              style={{ pointerEvents: "none" }}
-            />
-          )}
-          {isScrolling && (
-            <div 
-              className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/30 via-accent/20 to-primary/30 blur-3xl -z-30 scale-125 opacity-40"
-              style={{ pointerEvents: "none" }}
-            />
-          )}
-          
-          {/* Mid background depth layer - accent/purple glow */}
-          {!isScrolling && (
-            <motion.div 
-              className="absolute inset-0 rounded-3xl bg-gradient-to-tl from-accent/20 via-primary/15 to-accent/20 blur-2xl -z-20 scale-110"
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 0.7, scale: 1.15 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              style={{ pointerEvents: "none" }}
-            />
-          )}
-          {isScrolling && (
-            <div 
-              className="absolute inset-0 rounded-3xl bg-gradient-to-tl from-accent/20 via-primary/15 to-accent/20 blur-2xl -z-20 scale-110 opacity-30"
-              style={{ pointerEvents: "none" }}
-            />
-          )}
-          
-          {/* Foreground depth layer - primary/accent */}
-          {!isScrolling && (
-            <motion.div 
-              className="absolute inset-0 rounded-3xl bg-gradient-to-t from-primary/15 via-accent/10 to-transparent blur-xl -z-10 scale-105"
-              initial={{ opacity: 0, scale: 1.02 }}
-              animate={{ opacity: 0.6, scale: 1.08 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              style={{ pointerEvents: "none" }}
-            />
-          )}
-          {isScrolling && (
-            <div 
-              className="absolute inset-0 rounded-3xl bg-gradient-to-t from-primary/15 via-accent/10 to-transparent blur-xl -z-10 scale-105 opacity-20"
-              style={{ pointerEvents: "none" }}
-            />
-          )}
+        <div ref={videoContainerRef} className="relative mb-20 z-10">
+          <motion.div
+            className="absolute inset-0 rounded-3xl bg-gradient-to-br from-sky-700/34 via-blue-600/26 to-slate-700/30 dark:from-emerald-400/30 dark:via-cyan-400/25 dark:to-emerald-400/30 blur-2xl -z-30 scale-125"
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={isInView ? { opacity: [0.55, 0.9, 0.55], scale: [1.2, 1.26, 1.2] } : { opacity: 0.35, scale: 1.18 }}
+            transition={isInView ? { duration: 5, ease: "easeInOut", repeat: Infinity } : { duration: 0.4, ease: "easeOut" }}
+            style={{ pointerEvents: "none" }}
+          />
+
+          <motion.div
+            className="absolute inset-0 rounded-3xl bg-gradient-to-tl from-sky-500/26 via-blue-500/20 to-slate-600/24 dark:from-cyan-300/25 dark:via-emerald-300/20 dark:to-cyan-300/25 blur-2xl -z-20 scale-110"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={isInView ? { opacity: [0.45, 0.72, 0.45], scale: [1.1, 1.16, 1.1] } : { opacity: 0.28, scale: 1.08 }}
+            transition={isInView ? { duration: 6, ease: "easeInOut", repeat: Infinity } : { duration: 0.4, ease: "easeOut" }}
+            style={{ pointerEvents: "none" }}
+          />
+
+          <motion.div
+            className="absolute inset-0 rounded-3xl bg-gradient-to-t from-blue-600/24 via-sky-500/14 to-transparent dark:from-emerald-300/20 dark:via-cyan-300/12 dark:to-transparent blur-xl -z-10 scale-105"
+            initial={{ opacity: 0, scale: 1.02 }}
+            animate={isInView ? { opacity: [0.35, 0.62, 0.35], scale: [1.04, 1.08, 1.04] } : { opacity: 0.2, scale: 1.03 }}
+            transition={isInView ? { duration: 4.8, ease: "easeInOut", repeat: Infinity } : { duration: 0.4, ease: "easeOut" }}
+            style={{ pointerEvents: "none" }}
+          />
 
           {/* Main video player container */}
           <motion.div 
-            className="rounded-3xl overflow-hidden border-2 border-primary/30 shadow-2xl shadow-primary/20 bg-card/80 backdrop-blur-sm relative z-10 hover:border-primary/50 transition-colors"
+            className="rounded-3xl overflow-hidden border-2 border-slate-700/30 dark:border-white/20 shadow-2xl shadow-slate-900/25 dark:shadow-black/45 bg-white/45 dark:bg-slate-950/70 backdrop-blur-xl relative z-10 hover:border-sky-500/45 dark:hover:border-cyan-400/40 transition-colors"
             initial={{ opacity: 0, y: 40, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            whileHover={!isScrolling ? { boxShadow: "0 20px 50px rgba(var(--primary), 0.3)" } : undefined}
+            whileHover={{ boxShadow: "0 20px 50px rgba(var(--primary), 0.3)" }}
           >
-            <div className="aspect-video relative bg-gradient-to-br from-card/50 to-card/80">
+            <div className="aspect-video relative bg-gradient-to-br from-white/35 to-white/70 dark:from-slate-950/65 dark:to-slate-900/80">
               <AnimatePresence mode="wait">
                 {isInView && (
                   <motion.div

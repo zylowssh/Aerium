@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import heroDarkImage from '@/assets/landing/hero-dark-nature.png';
-import heroLightImage from '@/assets/landing/hero-light-nature.png';
+import heroDarkImage from '@/assets/landing/hero-dark-nature.jpg';
+import heroLightImage from '@/assets/landing/hero-light-nature.jpg';
 
 const heroVideoUrl = 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260228_065522_522e2295-ba22-457e-8fdb-fbcd68109c73.mp4';
 
@@ -11,7 +11,8 @@ interface HeroSectionProps {
 const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
   return (
     <section className="relative min-h-screen pt-28 pb-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none dark:hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-100 dark:opacity-0 scale-100 dark:scale-[1.03] blur-0 dark:blur-[4px] brightness-100 dark:brightness-75">
         <img
           src={heroLightImage}
           alt="Paysage naturel"
@@ -40,9 +41,9 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
           }}
         />
         <div className="absolute inset-0 opacity-35" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '56px 56px' }} />
-      </div>
+        </div>
 
-      <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
+        <div className="absolute inset-0 overflow-hidden transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-0 dark:opacity-100 scale-[1.03] dark:scale-100 blur-[4px] dark:blur-0 brightness-125 dark:brightness-100">
         <img
           src={heroDarkImage}
           alt="Paysage naturel de nuit"
@@ -89,6 +90,7 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
             ease: "easeInOut"
           }}
         />
+        </div>
       </div>
 
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/45 via-transparent to-transparent" />

@@ -66,22 +66,7 @@ const scaleInVariants = {
 
 const FeaturesSection = () => {
   return (
-    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-background via-muted/20 to-background">
-      <motion.div
-        className="absolute -top-20 left-[12%] w-[34rem] h-[34rem] bg-emerald-400/15 rounded-full blur-3xl pointer-events-none"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
-      />
-      <motion.div
-        className="absolute bottom-0 right-[8%] w-[30rem] h-[30rem] bg-sky-400/15 rounded-full blur-3xl pointer-events-none"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1.2, delay: 0.2 }}
-      />
-
+    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-7xl mx-auto relative z-10">
         <motion.div
           className="text-center mb-20"
@@ -105,7 +90,7 @@ const FeaturesSection = () => {
             <span className="block font-editorial italic text-primary/90">plus creatif que standard.</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Chaque fonctionnalite a ete repensee comme une experience de lecture,
+            Chaque fonctionnalite a ete repensée comme une experience de lecture,
             de decision et d'impact concret.
           </p>
         </motion.div>
@@ -117,7 +102,6 @@ const FeaturesSection = () => {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.55 }}
         >
-          <p className="text-sm uppercase tracking-[0.24em] text-foreground/60 mb-3 font-manrope">Manifeste de section</p>
           <p className="text-2xl sm:text-3xl text-foreground leading-snug font-editorial">
             Nous ne montrons pas seulement des chiffres: nous donnons une forme sensible
             a la qualite de l'air pour accelerer les bonnes decisions.

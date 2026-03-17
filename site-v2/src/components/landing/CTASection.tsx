@@ -12,33 +12,7 @@ const ctaHighlights = [
 
 const CTASection = () => {
   return (
-    <section className="relative py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-br from-emerald-500/15 via-cyan-400/10 to-sky-500/15"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
-      />
-      <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '64px 64px' }} />
-
-      <motion.div
-        className="absolute top-[14%] left-[12%] w-72 h-72 bg-primary/20 rounded-full blur-3xl"
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.3, 0.5, 0.3]
-        }}
-        transition={{ duration: 4, repeat: Infinity }}
-      />
-      <motion.div
-        className="absolute bottom-[8%] right-[10%] w-80 h-80 bg-accent/20 rounded-full blur-3xl"
-        animate={{
-          scale: [1.1, 1, 1.1],
-          opacity: [0.3, 0.5, 0.3]
-        }}
-        transition={{ duration: 5, repeat: Infinity, delay: 1 }}
-      />
-
+    <section className="relative py-32 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-6xl mx-auto relative z-10">
         <motion.div
           className="relative overflow-hidden rounded-[2.5rem] border border-white/45 dark:border-white/15 bg-white/45 dark:bg-black/35 backdrop-blur-2xl p-8 sm:p-10 lg:p-12"
@@ -84,7 +58,7 @@ const CTASection = () => {
 
                 <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.95 }}>
                   <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-                    <Button size="lg" variant="outline" className="h-14 px-8 rounded-full border-white/60 bg-white/20 dark:bg-black/20 hover:bg-white/40 dark:hover:bg-black/40 gap-2 font-manrope">
+                    <Button size="lg" variant="outline" className="h-14 px-8 rounded-full border-foreground/25 bg-foreground/[0.04] text-foreground hover:bg-foreground hover:text-background dark:border-white/30 dark:bg-white/5 dark:text-white dark:hover:bg-white/15 dark:hover:text-white gap-2 font-manrope">
                       <Github className="w-5 h-5" />
                       Parcourir le projet
                     </Button>
