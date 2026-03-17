@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { io, Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 
 interface WebSocketContextType {
   socket: Socket | null;
@@ -13,49 +13,65 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    const token = localStorage.getItem('access_token');
+    let isMounted = true;
+    let activeSocket: Socket | null = null;
 
-    if (!token) {
-      setSocket(null);
-      setIsConnected(false);
-      return;
-    }
+    const connectSocket = async () => {
+      const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+      const token = localStorage.getItem('access_token');
 
-    const newSocket = io(SOCKET_URL, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionDelay: 500,
-      reconnectionDelayMax: 3000,
-      reconnectionAttempts: 10,
-      autoConnect: true,
-      forceNew: false,
-      multiplex: true,
-    });
+      if (!token) {
+        setSocket(null);
+        setIsConnected(false);
+        return;
+      }
 
-    newSocket.on('connect', () => {
-      console.log('✓ Global WebSocket connected');
-      setIsConnected(true);
-    });
+      const { io } = await import('socket.io-client');
+      if (!isMounted) {
+        return;
+      }
 
-    newSocket.on('connect_error', (error) => {
-      console.warn('WebSocket connection error:', error?.message || error);
-    });
+      const newSocket = io(SOCKET_URL, {
+        auth: { token },
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 3000,
+        reconnectionAttempts: 10,
+        autoConnect: true,
+        forceNew: false,
+        multiplex: true,
+      });
 
-    newSocket.on('disconnect', (reason) => {
-      console.log('✗ Global WebSocket disconnected -', reason);
-      setIsConnected(false);
-    });
+      newSocket.on('connect', () => {
+        console.log('✓ Global WebSocket connected');
+        setIsConnected(true);
+      });
 
-    newSocket.on('error', (error) => {
-      console.error('WebSocket error:', error);
-    });
+      newSocket.on('connect_error', (error) => {
+        console.warn('WebSocket connection error:', error?.message || error);
+      });
 
-    setSocket(newSocket);
+      newSocket.on('disconnect', (reason) => {
+        console.log('✗ Global WebSocket disconnected -', reason);
+        setIsConnected(false);
+      });
+
+      newSocket.on('error', (error) => {
+        console.error('WebSocket error:', error);
+      });
+
+      activeSocket = newSocket;
+      setSocket(newSocket);
+    };
+
+    void connectSocket();
 
     return () => {
-      newSocket.close();
+      isMounted = false;
+      if (activeSocket) {
+        activeSocket.close();
+      }
     };
   }, []);
 

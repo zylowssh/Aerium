@@ -1,14 +1,8 @@
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Code2, Zap, Activity, Terminal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import heroDarkImage from '@/assets/landing/hero-dark-nature.png';
+import heroLightImage from '@/assets/landing/hero-light-nature.png';
 
-const techStack = [
-  { name: 'React + TypeScript', icon: Code2 },
-  { name: 'Python (Flask)', icon: Terminal },
-  { name: 'Temps Réel', icon: Zap },
-  { name: 'IoT Sensors', icon: Activity }
-];
+const heroVideoUrl = 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260228_065522_522e2295-ba22-457e-8fdb-fbcd68109c73.mp4';
 
 interface HeroSectionProps {
   onScrollToSection?: () => void;
@@ -16,9 +10,46 @@ interface HeroSectionProps {
 
 const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
   return (
-    <section className="relative min-h-screen pt-20 px-4 sm:px-6 lg:px-8 flex items-center justify-center overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <section className="relative min-h-screen pt-28 pb-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none dark:hidden">
+        <img
+          src={heroLightImage}
+          alt="Paysage naturel"
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
+        />
+        {/*}
+        <video
+          className="absolute inset-0 h-full w-full object-cover hidden sm:block"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          poster={heroFallbackImageUrl}
+          aria-hidden="true"
+        >
+          <source src={heroVideoUrl} type="video/mp4" />
+        </video> */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/35 to-black/70" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(circle at 18% 24%, rgba(16, 185, 129, 0.30), transparent 46%), radial-gradient(circle at 85% 72%, rgba(56, 189, 248, 0.18), transparent 36%)'
+          }}
+        />
+        <div className="absolute inset-0 opacity-35" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '56px 56px' }} />
+      </div>
+
+      <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
+        <img
+          src={heroDarkImage}
+          alt="Paysage naturel de nuit"
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/45 to-black/80" />
         <motion.div
           className="absolute top-20 left-10 w-72 h-72 bg-primary/15 rounded-full blur-3xl"
           animate={{
@@ -60,141 +91,77 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
         />
       </div>
 
-      <div className="max-w-6xl mx-auto text-center relative z-10">
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+
+      <div className="max-w-6xl w-full mx-auto relative z-10">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
         >
-          {/* Badge */}
           <motion.div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8 border border-primary/20 backdrop-blur-sm"
-            initial={{ opacity: 0, y: 20 }}
+            className="text-center mb-8 sm:mb-10 lg:mb-12 lg:mt-24 -mt-6 sm:-mt-8"
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            whileHover={{ scale: 1.05, boxShadow: "0 0 20px hsl(var(--primary) / 0.3)" }}
+            transition={{ delay: 0.2, duration: 0.7 }}
           >
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-            Projet de Surveillance de la Qualité de l'Air
+            <motion.p
+              className="font-manrope uppercase tracking-[0.2em] text-white/75 text-xs sm:text-sm mb-5"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              Projet NSI · Surveillance de la qualite de l'air
+            </motion.p>
+
+            <h1 className="leading-tight tracking-tight">
+              <motion.span
+                className="block font-manrope font-semibold text-[clamp(2.3rem,7.4vw,5rem)] text-white [text-shadow:0_10px_30px_rgba(0,0,0,0.45)]"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: 0.8, ease: 'easeOut' }}
+              >
+                Surveillance intelligente de la qualite de l'air
+              </motion.span>
+            </h1>
           </motion.div>
 
-          {/* Main Heading */}
-          <h1 className="text-5xl sm:text-6xl lg:text-8xl font-bold text-foreground mb-8 leading-tight tracking-tight">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-            >
-              <span className="block mb-2">Surveillez l'Air</span>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
-            >
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary animate-gradient">
-                en Temps Réel
-              </span>
-            </motion.div>
-          </h1>
-
-          {/* Description */}
-          <motion.p
-            className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.8 }}
-          >
-            Un dashboard interactif pour monitorer la qualité de l'air avec des capteurs IoT,
-            des analyses avancées et des alertes intelligentes en temps réel.
-          </motion.p>
-
-          {/* CTA Buttons */}
           <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.8 }}
-          >
-            <Link to="/dashboard">
-              <motion.div
-                whileHover={{ scale: 1.05, boxShadow: "0 20px 40px hsl(var(--primary) / 0.3)" }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  size="lg"
-                  className="gradient-primary text-primary-foreground px-8 h-12 text-base font-medium shadow-lg shadow-primary/25 rounded-full"
-                >
-                  Explorer le Dashboard
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </motion.div>
-            </Link>
-            
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative"
-            >
-              <Button
-                size="lg"
-                variant="outline"
-                className="px-8 h-12 text-base font-medium rounded-full border-2 hover:bg-primary/10 hover:border-primary/50 transition-all duration-300"
-                onClick={onScrollToSection}
-              >
-                En Savoir Plus
-              </Button>
-            </motion.div>
-          </motion.div>
-
-          {/* Tech Stack Pills */}
-          <motion.div
-            className="flex flex-wrap items-center justify-center gap-3 mb-16"
+            className="h-[220px] sm:h-[260px] lg:h-[300px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.1, duration: 0.8 }}
-          >
-            {techStack.map((tech, index) => (
-              <motion.div
-                key={index}
-                className="flex items-center gap-2 px-4 py-2 rounded-full glass-card border border-border/50 text-sm font-medium text-foreground hover:border-primary/50 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-lg"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1.2 + index * 0.1, duration: 0.5 }}
-                whileHover={{ scale: 1.05, y: -2 }}
-              >
-                <tech.icon className="w-4 h-4 text-primary group-hover:text-primary/80 transition-colors" />
-                <span>{tech.name}</span>
-              </motion.div>
-            ))}
-          </motion.div>
+            transition={{ delay: 0.75, duration: 0.6 }}
+          />
         </motion.div>
 
         {/* Scroll Indicator */}
         <motion.div
-          className="absolute left-1/2 -translate-x-1/2"
+          className="mt-16 sm:mt-20 flex justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 0.6 }}
         >
           <motion.button
             onClick={onScrollToSection}
-            className="flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
+            className="flex flex-col items-center gap-2 text-white/80 hover:text-white transition-colors cursor-pointer group"
             whileHover={{ scale: 1.05 }}
           >
             <span className="text-xs font-medium tracking-wider uppercase">Scroll to explore</span>
             <motion.div
-              className="w-6 h-10 rounded-full border-2 border-primary/30 flex items-start justify-center p-1 group-hover:border-primary/60 transition-colors"
+              className="w-6 h-10 rounded-full border-2 border-white/45 flex items-start justify-center p-1 group-hover:border-white transition-colors"
               animate={{ y: [0, 5, 0] }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
             >
-              <motion.div className="w-1 h-2 bg-primary rounded-full" />
+              <motion.div className="w-1 h-2 bg-white rounded-full" />
             </motion.div>
           </motion.button>
         </motion.div>
       </div>
+
     </section>
   );
 };
 
 export default HeroSection;
+
+

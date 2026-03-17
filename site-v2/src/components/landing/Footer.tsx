@@ -1,82 +1,137 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Github, Zap } from 'lucide-react';
+import { Facebook, Github, Instagram, Twitter } from 'lucide-react';
+import footerLightImage from '@/assets/landing/footer-light.png';
+import aeriumLogo from '@/assets/aerium-logo.png';
+
+const footerColumns = [
+  {
+    title: 'Main',
+    links: [
+      { label: 'Home', to: '/' },
+      { label: 'Early Access', to: '/dashboard' },
+      { label: 'Projects', to: '/sensors' },
+      { label: 'Blog', href: 'https://github.com' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About Us', href: 'https://github.com' },
+      { label: 'Careers', href: 'https://github.com' },
+      { label: 'Sustainability', href: 'https://github.com' },
+    ],
+  },
+  {
+    title: 'Application',
+    links: [
+      { label: 'Download for iOS', href: 'https://github.com' },
+      { label: 'Download for Android', href: 'https://github.com' },
+    ],
+  },
+  {
+    title: 'Legal Pages',
+    links: [
+      { label: 'Privacy Policy', href: 'https://github.com' },
+      { label: 'Terms & Conditions', href: 'https://github.com' },
+      { label: 'Cookie Policy', href: 'https://github.com' },
+    ],
+  },
+];
+
+const socialLinks = [
+  { label: 'GitHub', href: 'https://github.com', icon: Github },
+  { label: 'Facebook', href: 'https://facebook.com', icon: Facebook },
+  { label: 'Instagram', href: 'https://instagram.com', icon: Instagram },
+  { label: 'X (Twitter)', href: 'https://x.com', icon: Twitter },
+];
 
 const Footer = () => {
   return (
-    <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border bg-card/30">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          className="grid md:grid-cols-3 gap-12 mb-12"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          {/* Brand */}
-          <motion.div whileHover={{ y: -2 }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-                <Zap className="w-5 h-5 text-primary-foreground" />
+    <footer className="px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+      <motion.div
+        className="max-w-7xl mx-auto overflow-hidden border border-black/15 bg-[#eff1f2]"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.55, ease: 'easeOut' }}
+      >
+        <div className="px-6 sm:px-10 lg:px-12 py-8 sm:py-10 lg:py-11">
+          <div className="grid gap-10 lg:grid-cols-[0.9fr_2.1fr] items-start">
+            <div>
+              <div className="flex items-center gap-3">
+                <img src={aeriumLogo} alt="Aerium" className="h-8 w-auto" />
+                <span className="text-[2rem] sm:text-[2.1rem] font-manrope font-semibold text-[#12161d] leading-none">Aerium</span>
               </div>
-              <span className="font-semibold text-foreground text-lg">Aerium</span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Plateforme de surveillance de qualité de l'air en temps réel avec IA.
-            </p>
-          </motion.div>
 
-          {/* Quick Links */}
-          <motion.div>
-            <h4 className="font-semibold text-foreground mb-4">Accès Rapide</h4>
-            <div className="space-y-2">
-              <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group">
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-                Dashboard
-              </Link>
-              <Link to="/sensors" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group">
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-                Capteurs
-              </Link>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group">
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-                GitHub
-              </a>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-10">
+              {footerColumns.map((column) => (
+                <div key={column.title}>
+                  <h4 className="font-manrope font-semibold text-[1.9rem] leading-none text-[#171b23] mb-3">{column.title}</h4>
+                  <ul className="space-y-2.5">
+                    {column.links.map((link) => (
+                      <li key={link.label}>
+                        {'to' in link ? (
+                          <Link to={link.to} className="text-[1.06rem] text-black/62 hover:text-black transition-colors font-manrope">
+                            {link.label}
+                          </Link>
+                        ) : (
+                          <a href={link.href} target="_blank" rel="noopener noreferrer" className="text-[1.06rem] text-black/62 hover:text-black transition-colors font-manrope">
+                            {link.label}
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
-          </motion.div>
+          </div>
 
-          {/* Legal */}
-          <motion.div>
-            <h4 className="font-semibold text-foreground mb-4">Information</h4>
-            <p className="text-sm text-muted-foreground mb-3">
-              © 2026 Aerium - Projet de Surveillance de la Qualité de l'Air
-            </p>
-            <div className="flex gap-4">
-              <motion.a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center hover:border-primary/50 transition-colors"
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Github className="w-5 h-5 text-muted-foreground" />
-              </motion.a>
+          <div className="my-8 sm:my-9 border-t border-black/24" />
+
+          <div className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-start">
+            <div>
+              <h3 className="text-[clamp(2.2rem,4.1vw,3.45rem)] font-manrope font-semibold leading-[1.05] text-[#151922] max-w-xl mb-3">
+                Sustainability for the upcoming generation
+              </h3>
+              <p className="text-[1.08rem] max-w-lg leading-relaxed text-black/64 font-manrope">
+                Designing systems, products and environments that protect our planet while empowering future generations to thrive.
+              </p>
             </div>
-          </motion.div>
-        </motion.div>
 
-        {/* Bottom Bar */}
-        <motion.div
-          className="pt-8 border-t border-border/50 text-center text-sm text-muted-foreground"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <p>Conçu avec <span className="text-primary">❤</span> pour améliorer la qualité de l'air</p>
-        </motion.div>
-      </div>
+            <div className="lg:justify-self-start">
+              <h3 className="text-[clamp(2rem,3.1vw,2.65rem)] font-manrope font-semibold text-[#131821] mb-4 leading-none">
+                Socials
+              </h3>
+              <div className="flex items-center gap-3 sm:gap-4 text-black">
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.label}
+                    className="text-black/88 hover:text-black transition-colors"
+                  >
+                    <social.icon className="w-[1.8rem] h-[1.8rem]" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-[34vh] sm:h-[40vh] lg:h-[46vh] min-h-[220px] sm:min-h-[280px] max-h-[560px]">
+          <img
+            src={footerLightImage}
+            alt="Paysage naturel en pied de page"
+            className="h-full w-full object-cover object-center"
+            loading="lazy"
+          />
+        </div>
+      </motion.div>
     </footer>
   );
 };

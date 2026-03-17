@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -113,6 +113,75 @@
     --sidebar-border: 220 15% 88%;
     --sidebar-ring: 174 70% 40%;
   }
+
+  /* Landing-page-only palette: soft sky + nature greens */
+  .landing-theme {
+    --background: 200 37% 10%;
+    --foreground: 196 55% 95%;
+
+    --card: 199 34% 14%;
+    --card-foreground: 195 53% 95%;
+
+    --popover: 199 34% 14%;
+    --popover-foreground: 195 53% 95%;
+
+    --primary: 160 57% 48%;
+    --primary-foreground: 196 56% 10%;
+
+    --secondary: 199 24% 20%;
+    --secondary-foreground: 196 40% 89%;
+
+    --muted: 200 23% 19%;
+    --muted-foreground: 194 22% 72%;
+
+    --accent: 196 76% 57%;
+    --accent-foreground: 195 56% 11%;
+
+    --border: 196 26% 31%;
+    --input: 196 26% 31%;
+    --ring: 160 57% 48%;
+
+    --aerium-bg-primary: 200 37% 10%;
+    --aerium-bg-secondary: 200 31% 14%;
+    --aerium-card: 199 34% 14%;
+    --aerium-card-secondary: 199 31% 12%;
+    --aerium-border: 196 25% 30%;
+    --aerium-glow: 160 57% 48%;
+  }
+
+  .light .landing-theme {
+    --background: 193 58% 95%;
+    --foreground: 199 39% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 199 39% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 199 39% 17%;
+
+    --primary: 160 50% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 193 34% 89%;
+    --secondary-foreground: 199 30% 24%;
+
+    --muted: 194 28% 88%;
+    --muted-foreground: 199 17% 40%;
+
+    --accent: 198 68% 49%;
+    --accent-foreground: 0 0% 100%;
+
+    --border: 193 26% 79%;
+    --input: 193 26% 79%;
+    --ring: 160 50% 40%;
+
+    --aerium-bg-primary: 193 58% 95%;
+    --aerium-bg-secondary: 193 37% 90%;
+    --aerium-card: 0 0% 100%;
+    --aerium-card-secondary: 193 31% 92%;
+    --aerium-border: 193 26% 78%;
+    --aerium-glow: 160 50% 40%;
+  }
 }
 
 @layer base {
@@ -164,6 +233,14 @@
 }
 
 @layer utilities {
+  .font-editorial {
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+  }
+
+  .font-manrope {
+    font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  }
+
   .glow-primary {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.1);
   }
@@ -182,6 +259,10 @@
 
   .gradient-primary {
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(174 80% 45%));
+  }
+
+  .landing-theme .gradient-primary {
+    background: linear-gradient(135deg, hsl(160 53% 43%), hsl(197 72% 51%));
   }
 
   .gradient-card {

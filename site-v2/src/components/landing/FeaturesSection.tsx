@@ -1,36 +1,48 @@
 import { motion } from 'framer-motion';
-import { BarChart3, Bell, TrendingUp, Wind, Gauge, Lightbulb, Zap } from 'lucide-react';
+import { BarChart3, Bell, TrendingUp, Wind, Gauge, Lightbulb, Sparkles } from 'lucide-react';
 
 const features = [
   {
     icon: BarChart3,
-    title: 'Dashboard Avancé',
-    description: 'Visualisez les données en temps réel avec des graphiques interactifs et des analyses détaillées.'
+    title: 'Cartographie Vivante',
+    description: "Visualisez les variations de l'air comme un paysage dynamique, pas comme un tableau figé.",
+    tone: 'from-emerald-200/70 via-teal-100/65 to-cyan-100/55',
+    offset: 'lg:-translate-y-3'
   },
   {
     icon: Bell,
-    title: "Système d'Alertes",
-    description: 'Notifications intelligentes basées sur des seuils personnalisés pour chaque capteur.'
+    title: 'Alertes Sensibles',
+    description: 'Des notifications contextualisees qui distinguent incident ponctuel et tendance profonde.',
+    tone: 'from-amber-200/70 via-orange-100/60 to-rose-100/45',
+    offset: 'lg:translate-y-4'
   },
   {
     icon: TrendingUp,
-    title: 'Analyses Tendances',
-    description: "Comparez les données historiques et identifiez les patterns de qualité de l'air."
+    title: 'Recits de Tendances',
+    description: "Comparez les trajectoires historiques pour lire l'evolution de vos espaces comme une histoire.",
+    tone: 'from-sky-200/70 via-indigo-100/55 to-white/40',
+    offset: 'lg:-translate-y-2'
   },
   {
     icon: Wind,
-    title: 'Support Multi-Capteurs',
-    description: 'Compatible avec une large gamme de capteurs IoT pour une flexibilité maximale.'
+    title: 'Orchestre Multi-Capteurs',
+    description: 'SCD30, CO2, temperature, humidite: chaque source trouve sa place dans une vue harmonisee.',
+    tone: 'from-emerald-100/75 via-lime-100/55 to-white/45',
+    offset: 'lg:translate-y-5'
   },
   {
     icon: Gauge,
-    title: 'Métriques Détaillées',
-    description: 'Suivi complet de CO2, humidité, température et autres paramètres clés.'
+    title: 'Metriques Poids Plume',
+    description: 'Des indicateurs precis, hierarchises et legers a parcourir meme sous pression.',
+    tone: 'from-violet-200/70 via-fuchsia-100/55 to-rose-100/45',
+    offset: 'lg:-translate-y-1'
   },
   {
     icon: Lightbulb,
-    title: 'Recommandations',
-    description: "Suggestions intelligentes pour améliorer la qualité de l'air de vos espaces."
+    title: 'Actions Creables',
+    description: "Des recommandations immediates pour passer de l'observation a l'amelioration durable.",
+    tone: 'from-cyan-200/70 via-blue-100/55 to-white/45',
+    offset: 'lg:translate-y-3'
   }
 ];
 
@@ -54,18 +66,23 @@ const scaleInVariants = {
 
 const FeaturesSection = () => {
   return (
-    <section className="py-32 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-background via-muted/30 to-background">
-      {/* Background decoration */}
+    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-background via-muted/20 to-background">
       <motion.div
-        className="absolute top-1/4 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"
+        className="absolute -top-20 left-[12%] w-[34rem] h-[34rem] bg-emerald-400/15 rounded-full blur-3xl pointer-events-none"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1 }}
       />
+      <motion.div
+        className="absolute bottom-0 right-[8%] w-[30rem] h-[30rem] bg-sky-400/15 rounded-full blur-3xl pointer-events-none"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.2, delay: 0.2 }}
+      />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Section Header */}
         <motion.div
           className="text-center mb-20"
           variants={fadeUpVariants}
@@ -74,68 +91,70 @@ const FeaturesSection = () => {
           viewport={{ once: true, amount: 0.3 }}
         >
           <motion.span
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20 font-manrope"
             variants={scaleInVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
           >
-            <Zap className="w-4 h-4" />
-            Caractéristiques Puissantes
+            <Sparkles className="w-4 h-4" />
+            Atelier des Possibles
           </motion.span>
-          <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-            Fonctionnalités
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl text-foreground mb-6 leading-tight">
+            <span className="block font-manrope font-semibold">Un outillage environnemental</span>
+            <span className="block font-editorial italic text-primary/90">plus creatif que standard.</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Un ensemble complet d'outils pour une surveillance efficace de la qualité de l'air.
+            Chaque fonctionnalite a ete repensee comme une experience de lecture,
+            de decision et d'impact concret.
           </p>
         </motion.div>
 
-        {/* Features Grid */}
+        <motion.div
+          className="mb-8 rounded-[2rem] border border-white/45 dark:border-white/15 bg-white/45 dark:bg-black/30 backdrop-blur-2xl p-7 sm:p-8"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.55 }}
+        >
+          <p className="text-sm uppercase tracking-[0.24em] text-foreground/60 mb-3 font-manrope">Manifeste de section</p>
+          <p className="text-2xl sm:text-3xl text-foreground leading-snug font-editorial">
+            Nous ne montrons pas seulement des chiffres: nous donnons une forme sensible
+            a la qualite de l'air pour accelerer les bonnes decisions.
+          </p>
+        </motion.div>
+
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
-            <motion.div
+            <motion.article
               key={index}
-              className="group relative"
+              className={`group relative overflow-hidden rounded-[2rem] border border-white/40 dark:border-white/15 p-7 shadow-xl backdrop-blur-xl bg-white/35 dark:bg-black/30 ${feature.offset}`}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ y: -10, rotate: index % 2 === 0 ? -0.45 : 0.45 }}
             >
-              <motion.div
-                whileHover={{ y: -8, scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-                className="p-8 rounded-2xl glass-card border border-border/50 hover:border-primary/50 transition-all duration-300 h-full relative overflow-hidden shadow-lg hover:shadow-primary/20"
-              >
-                {/* Animated gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-accent/0 group-hover:from-primary/10 group-hover:via-accent/5 group-hover:to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.tone} dark:opacity-25 opacity-90 pointer-events-none`} />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <span className="w-14 h-14 rounded-2xl bg-black/10 dark:bg-white/10 border border-black/10 dark:border-white/20 flex items-center justify-center shadow-sm">
+                    <feature.icon className="w-7 h-7 text-foreground" />
+                  </span>
+                  <span className="text-xs font-semibold tracking-[0.22em] text-foreground/65 font-manrope">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                </div>
 
-                {/* Icon with glow effect */}
-                <motion.div
-                  className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-6 group-hover:from-primary/40 group-hover:to-accent/40 transition-all duration-300 relative z-10 shadow-lg shadow-primary/20 group-hover:shadow-primary/40"
-                  whileHover={{ rotate: 10, scale: 1.15 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <feature.icon className="w-8 h-8 text-primary" />
-                </motion.div>
-
-                <h3 className="text-lg font-bold text-foreground mb-3 relative z-10">
+                <h3 className="text-2xl font-semibold text-foreground mb-3 leading-tight font-manrope">
                   {feature.title}
                 </h3>
 
-                <p className="text-muted-foreground leading-relaxed relative z-10 text-sm">
+                <p className="text-foreground/80 leading-relaxed text-sm font-manrope">
                   {feature.description}
                 </p>
-
-                {/* Animated border accent */}
-                <motion.div
-                  className="absolute top-0 left-0 h-1 bg-gradient-to-r from-primary via-accent to-primary"
-                  initial={{ width: '0%' }}
-                  whileHover={{ width: '100%' }}
-                  transition={{ duration: 0.4 }}
-                />
-              </motion.div>
-            </motion.div>
+              </div>
+            </motion.article>
           ))}
         </div>
       </div>
