@@ -10,9 +10,9 @@ interface HeroSectionProps {
 
 const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
   return (
-    <section className="relative min-h-screen pt-28 pb-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-100 dark:opacity-0 scale-100 dark:scale-[1.03] blur-0 dark:blur-[4px] brightness-100 dark:brightness-75">
+        <div className="absolute inset-0 transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-100 dark:opacity-0 scale-100 dark:scale-[1.03] blur-0 dark:blur-[4px] brightness-100 dark:brightness-75">
         <img
           src={heroLightImage}
           alt="Paysage naturel"
@@ -43,7 +43,7 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
         <div className="absolute inset-0 opacity-35" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '56px 56px' }} />
         </div>
 
-        <div className="absolute inset-0 overflow-hidden transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-0 dark:opacity-100 scale-[1.03] dark:scale-100 blur-[4px] dark:blur-0 brightness-125 dark:brightness-100">
+        <div className="absolute inset-0 overflow-hidden transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-0 dark:opacity-100 scale-[1.03] dark:scale-100 blur-[4px] dark:blur-0 brightness-125 dark:brightness-100">
         <img
           src={heroDarkImage}
           alt="Paysage naturel de nuit"
@@ -102,7 +102,7 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
           transition={{ duration: 1 }}
         >
           <motion.div
-            className="text-center mb-8 sm:mb-10 lg:mb-12 lg:mt-24 -mt-6 sm:-mt-8"
+            className="text-center mb-6 sm:mb-10 lg:mb-12 lg:mt-24 -mt-4 sm:-mt-8"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.7 }}
@@ -118,7 +118,7 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
 
             <h1 className="leading-tight tracking-tight">
               <motion.span
-                className="block font-manrope font-semibold text-[clamp(2.3rem,7.4vw,5rem)] text-white [text-shadow:0_10px_30px_rgba(0,0,0,0.45)]"
+                className="block font-manrope font-semibold text-[clamp(1.8rem,6vw,5rem)] text-white [text-shadow:0_10px_30px_rgba(0,0,0,0.45)]"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.45, duration: 0.8, ease: 'easeOut' }}
@@ -129,7 +129,7 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
           </motion.div>
 
           <motion.div
-            className="h-[220px] sm:h-[260px] lg:h-[300px]"
+            className="h-[160px] sm:h-[220px] lg:h-[300px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.75, duration: 0.6 }}
@@ -138,7 +138,7 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
 
         {/* Scroll Indicator */}
         <motion.div
-          className="mt-16 sm:mt-20 flex justify-center"
+          className="mt-8 sm:mt-16 lg:mt-20 flex justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 0.6 }}

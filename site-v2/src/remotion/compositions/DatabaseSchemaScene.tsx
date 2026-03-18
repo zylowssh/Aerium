@@ -1,31 +1,23 @@
-import { AbsoluteFill, useCurrentFrame, interpolate, Easing, spring, useVideoConfig } from "remotion";
-import { Database, Key, Shield, Table2 } from "lucide-react";
+import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { Database, Key } from "lucide-react";
 import { AnimatedBackground, SceneTransition } from "../components";
 
 const tables = [
   {
     name: "profiles",
-    icon: "👤",
-    color: "hsl(165, 70%, 55%)",
-    columns: ["id", "user_id", "full_name", "email", "avatar_url"],
+    columns: ["id", "user_id", "full_name", "email"],
   },
   {
     name: "sensors",
-    icon: "📡",
-    color: "hsl(190, 80%, 50%)",
-    columns: ["id", "name", "location", "sensor_type", "status", "battery"],
+    columns: ["id", "name", "location", "status"],
   },
   {
     name: "sensor_readings",
-    icon: "📊",
-    color: "hsl(220, 60%, 55%)",
-    columns: ["id", "sensor_id", "co2", "temperature", "humidity", "recorded_at"],
+    columns: ["id", "sensor_id", "co2", "temperature"],
   },
   {
     name: "user_roles",
-    icon: "🔐",
-    color: "hsl(260, 60%, 55%)",
-    columns: ["id", "user_id", "role (admin | user)"],
+    columns: ["id", "user_id", "role"],
   },
 ];
 
@@ -33,51 +25,24 @@ export const DatabaseSchemaScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const titleOpacity = interpolate(frame, [10, 30], [0, 1], { extrapolateRight: "clamp" });
-  const titleY = interpolate(frame, [10, 30], [40, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.out(Easing.exp),
+  // Title animation
+  const titleSpring = spring({
+    frame: frame - 15,
+    fps,
+    config: { damping: 18, stiffness: 100 },
   });
 
-  const subtitleOpacity = interpolate(frame, [30, 50], [0, 1], { extrapolateRight: "clamp" });
-  const rlsOpacity = interpolate(frame, [120, 140], [0, 1], { extrapolateRight: "clamp" });
+  const accentColor = "#10b981";
+
+  // Info badge animation
+  const infoOpacity = interpolate(frame, [120, 140], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
   return (
-    <AbsoluteFill style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-      <AnimatedBackground variant="default" particleCount={15} />
-
-      {/* Grid pattern background */}
-      <svg
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          opacity: 0.03,
-        }}
-      >
-        {[...Array(20)].map((_, i) => (
-          <g key={i}>
-            <line
-              x1="0"
-              y1={i * 60}
-              x2="1920"
-              y2={i * 60}
-              stroke="hsl(165, 70%, 55%)"
-              strokeWidth="1"
-            />
-            <line
-              x1={i * 100}
-              y1="0"
-              x2={i * 100}
-              y2="1080"
-              stroke="hsl(165, 70%, 55%)"
-              strokeWidth="1"
-            />
-          </g>
-        ))}
-      </svg>
+    <AbsoluteFill style={{ fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif" }}>
+      <AnimatedBackground variant="cool" />
 
       {/* Content */}
       <div
@@ -88,40 +53,50 @@ export const DatabaseSchemaScene: React.FC = () => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 30,
-          padding: 50,
+          padding: 80,
         }}
       >
         {/* Title */}
         <div
           style={{
-            textAlign: "center",
-            opacity: titleOpacity,
-            transform: `translateY(${titleY}px)`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 48,
+            opacity: titleSpring,
+            transform: `translateY(${interpolate(titleSpring, [0, 1], [25, 0])}px)`,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
-            <Database size={36} color="hsl(165, 70%, 55%)" />
-            <h2 style={{ fontSize: 48, fontWeight: 700, margin: 0 }}>
-              <span style={{ color: "hsl(210, 40%, 98%)" }}>Schéma </span>
-              <span
-                style={{
-                  background: "linear-gradient(135deg, hsl(165, 70%, 55%) 0%, hsl(190, 80%, 50%) 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                Base de Données
-              </span>
-            </h2>
-          </div>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 500,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: accentColor,
+            }}
+          >
+            Données
+          </span>
+          <h2
+            style={{
+              fontSize: 48,
+              fontWeight: 600,
+              margin: 0,
+              color: "#fafafa",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Schéma Base de Données
+          </h2>
           <p
             style={{
-              fontSize: 20,
-              color: "hsl(215, 20%, 60%)",
-              margin: 0,
-              marginTop: 10,
-              opacity: subtitleOpacity,
+              fontSize: 16,
+              fontWeight: 400,
+              color: "rgba(250, 250, 250, 0.5)",
+              margin: "4px 0 0 0",
+              opacity: interpolate(titleSpring, [0.5, 1], [0, 1], { extrapolateLeft: "clamp" }),
             }}
           >
             SQLite — Stockage local efficace et relationnel
@@ -133,24 +108,16 @@ export const DatabaseSchemaScene: React.FC = () => {
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 20,
+            gap: 16,
           }}
         >
           {tables.map((table, index) => {
             const delay = 45 + index * 12;
-            const scale = spring({
+            
+            const cardSpring = spring({
               frame: frame - delay,
               fps,
-              config: { damping: 14, stiffness: 100 },
-            });
-            const opacity = interpolate(frame - delay, [0, 18], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            });
-            const yOffset = spring({
-              frame: frame - delay,
-              fps,
-              config: { damping: 12, stiffness: 80 },
+              config: { damping: 16, stiffness: 100 },
             });
 
             return (
@@ -159,37 +126,32 @@ export const DatabaseSchemaScene: React.FC = () => {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  borderRadius: 16,
-                  background: "hsla(220, 20%, 8%, 0.95)",
-                  border: `1px solid ${table.color}40`,
-                  backdropFilter: "blur(20px)",
-                  transform: `scale(${scale}) translateY(${(1 - yOffset) * 20}px)`,
-                  opacity,
+                  borderRadius: 12,
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
                   overflow: "hidden",
-                  boxShadow: `
-                    0 0 25px ${table.color}15,
-                    0 15px 45px -15px hsla(220, 30%, 0%, 0.6)
-                  `,
+                  opacity: cardSpring,
+                  transform: `translateY(${interpolate(cardSpring, [0, 1], [25, 0])}px)`,
                 }}
               >
                 {/* Table header */}
                 <div
                   style={{
-                    background: `${table.color}20`,
-                    padding: "14px 16px",
+                    backgroundColor: `${accentColor}12`,
+                    padding: "12px 14px",
                     display: "flex",
                     alignItems: "center",
-                    gap: 10,
-                    borderBottom: `1px solid ${table.color}30`,
+                    gap: 8,
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
                   }}
                 >
-                  <span style={{ fontSize: 20 }}>{table.icon}</span>
+                  <Database size={14} color={accentColor} strokeWidth={1.5} />
                   <span
                     style={{
-                      fontSize: 16,
+                      fontSize: 13,
                       fontWeight: 600,
-                      color: table.color,
-                      fontFamily: "monospace",
+                      color: accentColor,
+                      fontFamily: "'JetBrains Mono', monospace",
                     }}
                   >
                     {table.name}
@@ -197,21 +159,21 @@ export const DatabaseSchemaScene: React.FC = () => {
                 </div>
 
                 {/* Columns */}
-                <div style={{ padding: "12px 16px" }}>
+                <div style={{ padding: "10px 14px" }}>
                   {table.columns.map((col, i) => (
                     <div
                       key={col}
                       style={{
-                        fontSize: 12,
-                        color: i === 0 ? "hsl(45, 90%, 55%)" : "hsl(215, 20%, 65%)",
-                        fontFamily: "monospace",
-                        padding: "4px 0",
+                        fontSize: 11,
+                        color: i === 0 ? "#eab308" : "rgba(250, 250, 250, 0.5)",
+                        fontFamily: "'JetBrains Mono', monospace",
+                        padding: "3px 0",
                         display: "flex",
                         alignItems: "center",
                         gap: 6,
                       }}
                     >
-                      {i === 0 && <Key size={10} color="hsl(45, 90%, 55%)" />}
+                      {i === 0 && <Key size={9} color="#eab308" strokeWidth={2} />}
                       {col}
                     </div>
                   ))}
@@ -221,32 +183,33 @@ export const DatabaseSchemaScene: React.FC = () => {
           })}
         </div>
 
-        {/* Database info */}
+        {/* Info badge */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 16,
-            padding: "16px 28px",
-            borderRadius: 12,
-            background: "hsla(165, 70%, 55%, 0.1)",
-            border: "1px solid hsla(165, 70%, 55%, 0.3)",
-            opacity: rlsOpacity,
+            gap: 12,
+            padding: "14px 24px",
+            borderRadius: 10,
+            backgroundColor: `${accentColor}08`,
+            border: `1px solid ${accentColor}20`,
+            marginTop: 40,
+            opacity: infoOpacity,
           }}
         >
-          <Shield size={24} color="hsl(165, 70%, 55%)" />
-          <div>
-            <p style={{ fontSize: 16, fontWeight: 600, color: "hsl(165, 70%, 55%)", margin: 0 }}>
-              Données Persistantes
-            </p>
-            <p style={{ fontSize: 13, color: "hsl(215, 20%, 65%)", margin: "4px 0 0 0" }}>
-              Stockage SQLite avec relations entre tables — Requêtes optimisées avec SQLAlchemy ORM
-            </p>
-          </div>
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 500,
+              color: "rgba(250, 250, 250, 0.7)",
+            }}
+          >
+            Stockage SQLite avec SQLAlchemy ORM
+          </span>
         </div>
       </div>
 
-      <SceneTransition durationInFrames={180} type="slide" direction="both" color="hsl(225, 30%, 10%)" />
+      <SceneTransition durationInFrames={180} type="fade" direction="both" />
     </AbsoluteFill>
   );
 };

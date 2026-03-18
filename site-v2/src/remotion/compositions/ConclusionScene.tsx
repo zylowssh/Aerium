@@ -1,83 +1,49 @@
-import { AbsoluteFill, useCurrentFrame, interpolate, Easing, spring, useVideoConfig, Img, staticFile } from "remotion";
-import { Sparkles } from "lucide-react";
-import { AnimatedBackground, SceneTransition, WaveformVisualization } from "../components";
+import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig, Img, staticFile } from "remotion";
+import { AnimatedBackground, SceneTransition } from "../components";
 
 export const ConclusionScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const logoScale = spring({
-    frame: frame - 15,
+  // Logo animation
+  const logoSpring = spring({
+    frame: frame - 20,
     fps,
-    config: { damping: 10, stiffness: 100, mass: 0.8 },
+    config: { damping: 14, stiffness: 80 },
   });
-  const logoRotation = interpolate(frame, [15, 35], [-3, 0], {
+
+  // Tagline animations
+  const taglineOpacity = interpolate(frame, [50, 70], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const titleOpacity = interpolate(frame, [35, 55], [0, 1], { extrapolateRight: "clamp" });
-  const titleY = interpolate(frame, [35, 55], [35, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.out(Easing.cubic),
-  });
-
-  const sloganOpacity = interpolate(frame, [60, 80], [0, 1], { extrapolateRight: "clamp" });
-  const sloganY = interpolate(frame, [60, 80], [25, 0], {
+  const sloganOpacity = interpolate(frame, [80, 100], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const glowIntensity = interpolate(frame % 60, [0, 30, 60], [0.5, 1, 0.5]);
-
-  // Sparkle effects
-  const sparkles = [
-    { x: -320, y: -140, delay: 0 },
-    { x: 340, y: -120, delay: 15 },
-    { x: -280, y: 160, delay: 25 },
-    { x: 300, y: 140, delay: 35 },
-  ];
+  const accentColor = "#10b981";
 
   return (
-    <AbsoluteFill style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-      <AnimatedBackground variant="solution" particleCount={30} />
+    <AbsoluteFill style={{ fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif" }}>
+      <AnimatedBackground variant="accent" />
 
-      {/* Large glowing orb */}
+      {/* Subtle glow behind logo */}
       <div
         style={{
           position: "absolute",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: 800,
-          height: 800,
+          transform: "translate(-50%, -55%)",
+          width: 500,
+          height: 500,
           borderRadius: "50%",
-          background: "radial-gradient(circle, hsla(165, 70%, 55%, 0.2) 0%, transparent 50%)",
-          opacity: glowIntensity,
-          filter: "blur(100px)",
+          background: `radial-gradient(circle, ${accentColor}10 0%, transparent 70%)`,
+          filter: "blur(80px)",
+          opacity: logoSpring,
         }}
       />
-
-      {/* Sparkles */}
-      {sparkles.map((s, i) => {
-        const sparkleOpacity = interpolate((frame + s.delay) % 50, [0, 25, 50], [0, 1, 0]);
-        const sparkleScale = interpolate((frame + s.delay) % 50, [0, 25, 50], [0.5, 1, 0.5]);
-        return (
-          <div
-            key={i}
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: `translate(calc(-50% + ${s.x}px), calc(-50% + ${s.y}px)) scale(${sparkleScale})`,
-              opacity: sparkleOpacity * 0.6,
-            }}
-          >
-            <Sparkles size={20} color="hsl(165, 70%, 55%)" />
-          </div>
-        );
-      })}
 
       {/* Content */}
       <div
@@ -88,101 +54,82 @@ export const ConclusionScene: React.FC = () => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 28,
-          padding: 60,
+          padding: 80,
         }}
       >
-        {/* Logo */}
+        {/* Logo + Brand */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: 20,
-            transform: `scale(${logoScale}) rotate(${logoRotation}deg)`,
+            opacity: logoSpring,
+            transform: `scale(${interpolate(logoSpring, [0, 1], [0.9, 1])})`,
           }}
         >
           <Img
             src={staticFile("favicon.png")}
             style={{
-              width: 90,
-              height: 90,
-              filter: `drop-shadow(0 0 ${35 * glowIntensity}px hsla(165, 70%, 55%, 0.6))`,
+              width: 72,
+              height: 72,
             }}
           />
+
           <h1
             style={{
-              fontSize: 72,
-              fontWeight: 700,
+              fontSize: 64,
+              fontWeight: 600,
               margin: 0,
+              letterSpacing: "-0.03em",
             }}
           >
-            <span style={{ color: "hsl(210, 40%, 98%)" }}>Aer</span>
-            <span
-              style={{
-                background: "linear-gradient(135deg, hsl(165, 70%, 55%) 0%, hsl(190, 80%, 50%) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              ium
-            </span>
+            <span style={{ color: "#fafafa" }}>Aer</span>
+            <span style={{ color: accentColor }}>ium</span>
           </h1>
         </div>
 
-        {/* Slogan */}
-        <div
-          style={{
-            textAlign: "center",
-            opacity: titleOpacity,
-            transform: `translateY(${titleY}px)`,
-          }}
-        >
-          <p
-            style={{
-              fontSize: 40,
-              fontWeight: 600,
-              margin: 0,
-              background: "linear-gradient(135deg, hsl(165, 70%, 55%) 0%, hsl(190, 80%, 50%) 50%, hsl(165, 60%, 45%) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Rendre l'invisible visible
-          </p>
-        </div>
-
+        {/* Main tagline */}
         <p
           style={{
-            fontSize: 30,
-            color: "hsl(198, 45%, 90%)",
-            margin: 0,
-            textAlign: "center",
+            fontSize: 32,
+            fontWeight: 500,
+            color: accentColor,
+            margin: "32px 0 0 0",
+            opacity: taglineOpacity,
+          }}
+        >
+          Rendre l'invisible visible
+        </p>
+
+        {/* Secondary slogan */}
+        <p
+          style={{
+            fontSize: 20,
+            fontWeight: 400,
+            color: "rgba(250, 250, 250, 0.6)",
+            margin: "20px 0 0 0",
             opacity: sloganOpacity,
-            transform: `translateY(${sloganY}px)`,
-            fontWeight: 600,
           }}
         >
           Mesurer. Comprendre. Respirer mieux.
         </p>
 
-        {/* Waveform */}
+        {/* Accent line */}
         <div
           style={{
-            opacity: sloganOpacity * 0.8,
-            marginTop: 10,
+            width: interpolate(frame, [100, 130], [0, 100], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+            }),
+            height: 2,
+            backgroundColor: `${accentColor}60`,
+            borderRadius: 1,
+            marginTop: 40,
           }}
-        >
-          <WaveformVisualization
-            barCount={40}
-            width={400}
-            height={50}
-            color="hsl(165, 70%, 55%)"
-          />
-        </div>
-
+        />
       </div>
 
-      <SceneTransition durationInFrames={180} type="fade" direction="in" color="hsl(202, 30%, 8%)" />
+      <SceneTransition durationInFrames={180} type="fade" direction="in" />
     </AbsoluteFill>
   );
 };
