@@ -1,50 +1,51 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Facebook, Github, Instagram, Twitter } from 'lucide-react';
+import { BookOpenText, Github, ShieldCheck } from 'lucide-react';
 import footerDarkImage from '@/assets/landing/footer-dark.png';
 import footerLightImage from '@/assets/landing/footer-light.png';
 import aeriumLogo from '@/assets/aerium-logo.png';
 
 const footerColumns = [
   {
-    title: 'Main',
+    title: 'Plateforme',
     links: [
-      { label: 'Home', to: '/' },
-      { label: 'Early Access', to: '/dashboard' },
-      { label: 'Projects', to: '/sensors' },
-      { label: 'Blog', href: 'https://github.com' },
+      { label: 'Accueil', to: '/' },
+      { label: 'Connexion', to: '/auth' },
+      { label: 'Dashboard', to: '/dashboard' },
+      { label: 'Analytics', to: '/analytics' },
     ],
   },
   {
-    title: 'Company',
+    title: 'Surveillance',
     links: [
-      { label: 'About Us', href: 'https://github.com' },
-      { label: 'Careers', href: 'https://github.com' },
-      { label: 'Sustainability', href: 'https://github.com' },
+      { label: 'Capteurs', to: '/sensors' },
+      { label: 'Carte des capteurs', to: '/sensor-map' },
+      { label: 'Alertes', to: '/alerts' },
+      { label: 'Rapports', to: '/reports' },
     ],
   },
   {
-    title: 'Application',
+    title: 'Ressources',
     links: [
-      { label: 'Download for iOS', href: 'https://github.com' },
-      { label: 'Download for Android', href: 'https://github.com' },
+      { label: 'Repository GitHub', href: 'https://github.com/zylowssh/Aerium' },
+      { label: 'Documentation site-v2', href: 'https://github.com/zylowssh/Aerium/tree/main/site-v2/docs' },
+      { label: 'Guide de demarrage', href: 'https://github.com/zylowssh/Aerium/blob/main/site-v2/docs/fr/QUICKSTART.md' },
     ],
   },
   {
-    title: 'Legal Pages',
+    title: 'Juridique',
     links: [
-      { label: 'Privacy Policy', href: 'https://github.com' },
-      { label: 'Terms & Conditions', href: 'https://github.com' },
-      { label: 'Cookie Policy', href: 'https://github.com' },
+      { label: 'Licence MIT', href: 'https://github.com/zylowssh/Aerium/blob/main/LICENSE' },
+      { label: 'Code source', href: 'https://github.com/zylowssh/Aerium' },
+      { label: 'Signaler un probleme', href: 'https://github.com/zylowssh/Aerium/issues' },
     ],
   },
 ];
 
 const socialLinks = [
-  { label: 'GitHub', href: 'https://github.com', icon: Github },
-  { label: 'Facebook', href: 'https://facebook.com', icon: Facebook },
-  { label: 'Instagram', href: 'https://instagram.com', icon: Instagram },
-  { label: 'X (Twitter)', href: 'https://x.com', icon: Twitter },
+  { label: 'GitHub', href: 'https://github.com/zylowssh/Aerium', icon: Github },
+  { label: 'Documentation', href: 'https://github.com/zylowssh/Aerium/tree/main/site-v2/docs', icon: BookOpenText },
+  { label: 'Issues', href: 'https://github.com/zylowssh/Aerium/issues', icon: ShieldCheck },
 ];
 
 const Footer = () => {
@@ -71,7 +72,7 @@ const Footer = () => {
         />
 
         <div className="relative z-20 min-h-screen flex flex-col justify-start">
-          <div className="px-4 sm:px-8 lg:px-12 pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-28 lg:pb-11">
+          <div className="px-4 sm:px-8 lg:px-12 pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-20 lg:pb-11">
             <div className="grid gap-8 sm:gap-10 lg:grid-cols-[0.9fr_2.1fr] items-start">
               <div>
                 <div className="flex items-center gap-3">
@@ -108,17 +109,17 @@ const Footer = () => {
 
             <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-start">
               <div>
-                <h3 className="text-[clamp(1.5rem,4vw,3rem)] font-manrope font-semibold leading-[1.1] text-foreground max-w-xl mb-3">
-                  Sustainability for the upcoming generation
+                <h3 className="text-[clamp(1.5rem,4vw,2rem)] font-manrope font-semibold leading-[1.1] text-foreground max-w-xl mb-3">
+                  Une qualite de l'air plus saine, mesuree en continu
                 </h3>
                 <p className="text-[1.08rem] max-w-lg leading-relaxed text-foreground/70 font-manrope">
-                  Designing systems, products and environments that protect our planet while empowering future generations to thrive.
+                  Aerium centralise les mesures CO2, temperature et humidite pour aider les equipes a agir plus vite, avec des donnees claires et des alertes fiables.
                 </p>
               </div>
 
-              <div className="lg:justify-self-start">
-                <h3 className="text-[clamp(1.3rem,3vw,2.2rem)] font-manrope font-semibold text-foreground mb-4 leading-none">
-                  Socials
+              <div className="lg:justify-self-end">
+                <h3 className="text-[clamp(1.3rem,3vw,2rem)] font-manrope font-semibold text-foreground mb-4 leading-none">
+                  Liens utiles
                 </h3>
                 <div className="flex items-center gap-3 sm:gap-4 text-foreground">
                   {socialLinks.map((social) => (

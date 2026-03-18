@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { useTheme } from "./hooks/useTheme";
 
 const AppOverlays = lazy(() => import("./components/AppOverlays"));
 const Landing = lazy(() => import("./pages/Landing"));
@@ -32,36 +33,41 @@ const RouteLoader = () => (
   </div>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <SettingsProvider>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Suspense fallback={<RouteLoader />}>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/landing-2" element={<Landing2 />} />
-            <Route path="/auth" element={<AppOverlays><Auth /></AppOverlays>} />
-            <Route path="/dashboard" element={<ProtectedAppShell><Dashboard /></ProtectedAppShell>} />
-            <Route path="/analytics" element={<ProtectedAppShell><Analytics /></ProtectedAppShell>} />
-            <Route path="/comparison" element={<ProtectedAppShell><Comparison /></ProtectedAppShell>} />
-            <Route path="/sensors" element={<ProtectedAppShell><Sensors /></ProtectedAppShell>} />
-            <Route path="/sensors/:sensorId" element={<ProtectedAppShell><SensorDetail /></ProtectedAppShell>} />
-            <Route path="/sensor-map" element={<ProtectedAppShell><SensorMap /></ProtectedAppShell>} />
-            <Route path="/alerts" element={<ProtectedAppShell><Alerts /></ProtectedAppShell>} />
-            <Route path="/alert-history" element={<ProtectedAppShell><AlertHistory /></ProtectedAppShell>} />
-            <Route path="/reports" element={<ProtectedAppShell><Reports /></ProtectedAppShell>} />
-            <Route path="/recommendations" element={<ProtectedAppShell><Recommendations /></ProtectedAppShell>} />
-            <Route path="/maintenance" element={<ProtectedAppShell><Maintenance /></ProtectedAppShell>} />
-            <Route path="/settings" element={<ProtectedAppShell><Settings /></ProtectedAppShell>} />
-            <Route path="/admin" element={<ProtectedAppShell><Admin /></ProtectedAppShell>} />
-            <Route path="/video" element={<ProtectedAppShell><Video /></ProtectedAppShell>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </SettingsProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Ensure the global light/dark class is always applied, even on routes without theme controls.
+  useTheme();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SettingsProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <Suspense fallback={<RouteLoader />}>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/landing-2" element={<Landing2 />} />
+              <Route path="/auth" element={<AppOverlays><Auth /></AppOverlays>} />
+              <Route path="/dashboard" element={<ProtectedAppShell><Dashboard /></ProtectedAppShell>} />
+              <Route path="/analytics" element={<ProtectedAppShell><Analytics /></ProtectedAppShell>} />
+              <Route path="/comparison" element={<ProtectedAppShell><Comparison /></ProtectedAppShell>} />
+              <Route path="/sensors" element={<ProtectedAppShell><Sensors /></ProtectedAppShell>} />
+              <Route path="/sensors/:sensorId" element={<ProtectedAppShell><SensorDetail /></ProtectedAppShell>} />
+              <Route path="/sensor-map" element={<ProtectedAppShell><SensorMap /></ProtectedAppShell>} />
+              <Route path="/alerts" element={<ProtectedAppShell><Alerts /></ProtectedAppShell>} />
+              <Route path="/alert-history" element={<ProtectedAppShell><AlertHistory /></ProtectedAppShell>} />
+              <Route path="/reports" element={<ProtectedAppShell><Reports /></ProtectedAppShell>} />
+              <Route path="/recommendations" element={<ProtectedAppShell><Recommendations /></ProtectedAppShell>} />
+              <Route path="/maintenance" element={<ProtectedAppShell><Maintenance /></ProtectedAppShell>} />
+              <Route path="/settings" element={<ProtectedAppShell><Settings /></ProtectedAppShell>} />
+              <Route path="/admin" element={<ProtectedAppShell><Admin /></ProtectedAppShell>} />
+              <Route path="/video" element={<ProtectedAppShell><Video /></ProtectedAppShell>} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </SettingsProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

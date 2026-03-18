@@ -14,49 +14,68 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="theme-smooth relative min-h-screen overflow-hidden bg-[#eff1f2] dark:bg-[#0f141c]">
-      {/* Background Images with smooth light/dark transition */}
-      <div className="absolute inset-0">
-        {/* Light mode image */}
-        <img
-          src={heroLightImage}
-          alt="Paysage naturel"
-          className="absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-out opacity-100 dark:opacity-0 scale-100 dark:scale-[1.02]"
-          loading="eager"
-        />
-        {/* Dark mode image */}
-        <img
-          src={heroDarkImage}
-          alt="Paysage naturel nocturne"
-          className="absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-out opacity-0 dark:opacity-100 scale-[1.02] dark:scale-100"
-          loading="eager"
-        />
-        
-        {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#eff1f2]/20 via-[#eff1f2]/30 to-[#eff1f2]/70 dark:from-[#0f141c]/30 dark:via-[#0f141c]/45 dark:to-[#0f141c]/80 transition-colors duration-1000" />
-        
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.04)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:48px_48px] opacity-40 dark:opacity-30" />
-        
-        {/* Accent glow spots */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div 
-            className="absolute top-1/4 left-1/5 w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] rounded-full blur-[100px] opacity-25 dark:opacity-20"
-            style={{ background: 'radial-gradient(circle, rgba(16, 185, 129, 0.5), transparent 70%)' }}
+    <div className="landing-theme theme-smooth relative min-h-screen overflow-hidden bg-background text-foreground">
+      {/* Background Images with hero-equivalent light/dark styling */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-100 dark:opacity-0 scale-100 dark:scale-[1.03] blur-0 dark:blur-[4px] brightness-100 dark:brightness-75">
+          <img
+            src={heroLightImage}
+            alt="Paysage naturel"
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="eager"
           />
-          <div 
-            className="absolute bottom-1/3 right-1/4 w-[250px] h-[250px] sm:w-[350px] sm:h-[350px] rounded-full blur-[90px] opacity-20 dark:opacity-15"
-            style={{ background: 'radial-gradient(circle, rgba(34, 211, 238, 0.5), transparent 70%)' }}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/35 to-black/10" />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at 18% 24%, rgba(16, 185, 129, 0.30), transparent 46%), radial-gradient(circle at 85% 72%, rgba(56, 189, 248, 0.18), transparent 36%)"
+            }}
+          />
+          <div
+            className="absolute inset-0 opacity-35"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)",
+              backgroundSize: "56px 56px"
+            }}
+          />
+        </div>
+
+        <div className="absolute inset-0 overflow-hidden transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-0 dark:opacity-100 scale-[1.03] dark:scale-100 blur-[4px] dark:blur-0 brightness-125 dark:brightness-100">
+          <img
+            src={heroDarkImage}
+            alt="Paysage naturel nocturne"
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="eager"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/45 to-black/80" />
+          <motion.div
+            className="absolute top-20 left-10 w-72 h-72 bg-primary/15 rounded-full blur-3xl"
+            animate={{ y: [0, 30, 0], x: [0, -20, 0], scale: [1, 1.1, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
+            animate={{ y: [0, -30, 0], x: [0, 20, 0], scale: [1, 1.15, 1] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          />
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
       </div>
+
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/45 via-transparent to-transparent" />
 
       <main className="relative z-10 min-h-screen px-4 sm:px-6 lg:px-8 flex items-center justify-center py-12">
         <motion.section
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full max-w-3xl rounded-xl sm:rounded-2xl lg:rounded-[2rem] border border-white/50 dark:border-white/15 bg-white/60 dark:bg-[#0f141c]/50 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 p-5 sm:p-8 lg:p-10"
+          className="w-full max-w-3xl rounded-xl sm:rounded-2xl lg:rounded-[2rem] border border-black/10 dark:border-white/15 bg-white/68 dark:bg-[#0f141c]/55 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 p-5 sm:p-8 lg:p-10"
         >
           {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 dark:border-emerald-400/25 bg-emerald-100/60 dark:bg-emerald-500/10 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-emerald-800 dark:text-emerald-300 font-manrope">

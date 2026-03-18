@@ -1004,7 +1004,7 @@ export default function Landing2() {
                   Capteurs
                 </Link>
                 <a
-                  href="https://github.com"
+                  href="https://github.com/zylowssh/Aerium"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
@@ -1019,11 +1019,14 @@ export default function Landing2() {
             <motion.div>
               <h4 className="font-semibold text-foreground mb-4">Information</h4>
               <p className="text-sm text-muted-foreground mb-3">
-                © 2026 Aerium - Projet de Surveillance de la Qualité de l'Air
+                © 2026 Aerium - Plateforme de surveillance de la qualite de l'air
               </p>
               <div className="flex gap-4">
                 <motion.a
-                  href="#"
+                  href="https://github.com/zylowssh/Aerium"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Repository GitHub Aerium"
                   className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center hover:border-primary/50 transition-colors"
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   whileTap={{ scale: 0.95 }}
@@ -1043,7 +1046,7 @@ export default function Landing2() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <p>
-              Conçu avec <span className="text-primary">❤</span> pour améliorer la qualité de l'air
+              Concu pour ameliorer la qualite de l'air, avec des donnees fiables et actionnables
             </p>
           </motion.div>
         </div>
