@@ -1,5 +1,5 @@
 import { AbsoluteFill, useCurrentFrame, interpolate, Easing, spring, useVideoConfig } from "remotion";
-import { AnimatedBackground, GlowingText, SceneTransition, WaveformVisualization } from "../components";
+import { AnimatedBackground, SceneTransition, WaveformVisualization } from "../components";
 
 export const IntroductionScene: React.FC = () => {
   const frame = useCurrentFrame();
@@ -37,7 +37,7 @@ export const IntroductionScene: React.FC = () => {
   const waveOpacity = interpolate(frame, [130, 150], [0, 1], { extrapolateRight: "clamp" });
 
   return (
-    <AbsoluteFill style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+    <AbsoluteFill style={{ fontFamily: "'Manrope', 'Space Grotesk', sans-serif" }}>
       <AnimatedBackground variant="intro" particleCount={25} />
 
       {/* Breathing rings */}
@@ -72,6 +72,19 @@ export const IntroductionScene: React.FC = () => {
           textAlign: "center",
         }}
       >
+        <div
+          style={{
+            fontSize: 20,
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            color: "hsla(180, 36%, 86%, 0.72)",
+            marginBottom: -10,
+            opacity: interpolate(frame, [0, 24], [0, 1], { extrapolateRight: "clamp" }),
+          }}
+        >
+          Projet Aerium
+        </div>
+
         {/* Main question */}
         <h1
           style={{
@@ -80,7 +93,7 @@ export const IntroductionScene: React.FC = () => {
             margin: 0,
             opacity: questionOpacity,
             transform: `translateY(${questionY}px) scale(${questionScale})`,
-            background: "linear-gradient(135deg, hsl(165, 70%, 55%) 0%, hsl(190, 80%, 50%) 50%, hsl(165, 60%, 45%) 100%)",
+            background: "linear-gradient(130deg, hsl(161, 80%, 66%) 0%, hsl(188, 90%, 67%) 48%, hsl(201, 88%, 73%) 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             lineHeight: 1.2,
@@ -89,6 +102,22 @@ export const IntroductionScene: React.FC = () => {
         >
           Et si nous pouvions voir l'air que nous respirons ?
         </h1>
+
+        <p
+          style={{
+            fontSize: 40,
+            color: "hsla(188, 48%, 85%, 0.95)",
+            margin: 0,
+            maxWidth: 980,
+            letterSpacing: 0.1,
+            fontStyle: "italic",
+            fontFamily: "'Times New Roman', serif",
+            opacity: interpolate(frame, [44, 72], [0, 1], { extrapolateRight: "clamp" }),
+            transform: `translateY(${interpolate(frame, [44, 72], [24, 0], { extrapolateRight: "clamp" })}px)`,
+          }}
+        >
+          Rendre l'invisible lisible.
+        </p>
 
         {/* Answer text */}
         <div
@@ -103,9 +132,10 @@ export const IntroductionScene: React.FC = () => {
           <p
             style={{
               fontSize: 28,
-              color: "hsl(210, 40%, 90%)",
+              color: "hsla(205, 48%, 92%, 0.98)",
               margin: 0,
               lineHeight: 1.6,
+              maxWidth: 1150,
             }}
           >
             La qualité de l'air influence notre santé, notre environnement, et notre quotidien.
@@ -113,10 +143,11 @@ export const IntroductionScene: React.FC = () => {
           <p
             style={{
               fontSize: 24,
-              color: "hsl(215, 20%, 55%)",
+              color: "hsla(199, 36%, 74%, 0.85)",
               margin: 0,
               lineHeight: 1.5,
               opacity: secondaryOpacity,
+              maxWidth: 1150,
             }}
           >
             Pourtant, ces données restent souvent invisibles, complexes, ou inaccessibles.
@@ -129,13 +160,13 @@ export const IntroductionScene: React.FC = () => {
             barCount={50}
             width={500}
             height={60}
-            color="hsl(165, 70%, 55%)"
+            color="hsl(168, 78%, 60%)"
           />
         </div>
       </div>
 
       {/* Scene transitions */}
-      <SceneTransition durationInFrames={180} type="fade" direction="both" />
+      <SceneTransition durationInFrames={180} type="zoom" direction="both" color="hsl(206, 34%, 8%)" />
     </AbsoluteFill>
   );
 };

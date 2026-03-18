@@ -186,7 +186,7 @@ export const UseCasesScene: React.FC = () => {
         </div>
       </div>
 
-      <SceneTransition durationInFrames={150} type="fade" direction="both" />
+      <SceneTransition durationInFrames={150} type="wipe" direction="both" color="hsl(200, 34%, 10%)" />
     </AbsoluteFill>
   );
 };

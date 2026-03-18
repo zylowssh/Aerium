@@ -274,7 +274,7 @@ export const BackendArchitectureScene: React.FC = () => {
         </div>
       </div>
 
-      <SceneTransition durationInFrames={180} type="fade" direction="in" />
+      <SceneTransition durationInFrames={180} type="blur" direction="both" color="hsl(214, 30%, 9%)" />
     </AbsoluteFill>
   );
 };

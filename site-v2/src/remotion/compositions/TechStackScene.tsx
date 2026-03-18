@@ -244,7 +244,7 @@ export const TechStackScene: React.FC = () => {
         </p>
       </div>
 
-      <SceneTransition durationInFrames={180} type="fade" direction="both" />
+      <SceneTransition durationInFrames={180} type="zoom" direction="both" color="hsl(210, 32%, 8%)" />
     </AbsoluteFill>
   );
 };

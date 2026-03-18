@@ -179,7 +179,7 @@ export const FeaturesScene: React.FC = () => {
         </div>
       </div>
 
-      <SceneTransition durationInFrames={150} type="fade" direction="both" />
+      <SceneTransition durationInFrames={150} type="zoom" direction="both" color="hsl(206, 32%, 9%)" />
     </AbsoluteFill>
   );
 };

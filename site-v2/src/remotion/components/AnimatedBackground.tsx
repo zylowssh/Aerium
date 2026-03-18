@@ -27,24 +27,24 @@ const generateParticles = (count: number, colors: string[]): Particle[] => {
 
 const backgroundConfigs = {
   intro: {
-    gradient: "linear-gradient(135deg, hsl(220, 30%, 4%) 0%, hsl(180, 25%, 6%) 50%, hsl(220, 25%, 8%) 100%)",
-    colors: ["hsla(165, 70%, 55%, 0.5)", "hsla(190, 80%, 50%, 0.4)", "hsla(220, 60%, 55%, 0.3)"],
-    glowColor: "hsla(165, 70%, 55%, 0.2)",
+    gradient: "linear-gradient(132deg, hsl(214, 37%, 8%) 0%, hsl(195, 38%, 9%) 38%, hsl(214, 32%, 10%) 72%, hsl(222, 36%, 11%) 100%)",
+    colors: ["hsla(160, 78%, 58%, 0.52)", "hsla(188, 86%, 62%, 0.42)", "hsla(204, 84%, 66%, 0.35)"],
+    glowColor: "hsla(160, 78%, 58%, 0.24)",
   },
   problem: {
-    gradient: "linear-gradient(135deg, hsl(220, 30%, 4%) 0%, hsl(0, 15%, 6%) 50%, hsl(220, 25%, 8%) 100%)",
-    colors: ["hsla(0, 70%, 55%, 0.4)", "hsla(35, 80%, 55%, 0.3)", "hsla(45, 90%, 55%, 0.3)"],
-    glowColor: "hsla(0, 70%, 50%, 0.12)",
+    gradient: "linear-gradient(132deg, hsl(220, 32%, 8%) 0%, hsl(8, 28%, 10%) 42%, hsl(220, 24%, 11%) 100%)",
+    colors: ["hsla(10, 86%, 66%, 0.44)", "hsla(32, 92%, 64%, 0.34)", "hsla(46, 92%, 62%, 0.28)"],
+    glowColor: "hsla(12, 88%, 62%, 0.16)",
   },
   solution: {
-    gradient: "linear-gradient(135deg, hsl(220, 30%, 4%) 0%, hsl(165, 20%, 6%) 50%, hsl(220, 25%, 8%) 100%)",
-    colors: ["hsla(165, 70%, 55%, 0.6)", "hsla(190, 80%, 50%, 0.5)", "hsla(165, 60%, 45%, 0.4)"],
-    glowColor: "hsla(165, 70%, 55%, 0.18)",
+    gradient: "linear-gradient(132deg, hsl(214, 35%, 8%) 0%, hsl(165, 32%, 10%) 48%, hsl(208, 30%, 10%) 100%)",
+    colors: ["hsla(158, 76%, 58%, 0.6)", "hsla(190, 86%, 60%, 0.48)", "hsla(175, 70%, 52%, 0.4)"],
+    glowColor: "hsla(162, 78%, 58%, 0.22)",
   },
   default: {
-    gradient: "linear-gradient(135deg, hsl(220, 30%, 4%) 0%, hsl(220, 30%, 8%) 50%, hsl(200, 25%, 6%) 100%)",
-    colors: ["hsla(165, 70%, 55%, 0.4)", "hsla(190, 80%, 50%, 0.35)", "hsla(220, 60%, 55%, 0.3)"],
-    glowColor: "hsla(190, 80%, 50%, 0.1)",
+    gradient: "linear-gradient(132deg, hsl(216, 34%, 8%) 0%, hsl(212, 33%, 10%) 45%, hsl(196, 36%, 10%) 100%)",
+    colors: ["hsla(166, 76%, 56%, 0.42)", "hsla(192, 84%, 60%, 0.36)", "hsla(206, 76%, 64%, 0.3)"],
+    glowColor: "hsla(192, 84%, 60%, 0.14)",
   },
 };
 
@@ -57,23 +57,36 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   const particles = generateParticles(particleCount, config.colors);
 
   // Multiple glow layers with different timing
-  const glow1Opacity = interpolate(frame % 120, [0, 60, 120], [0.3, 0.7, 0.3]);
-  const glow2Opacity = interpolate((frame + 40) % 90, [0, 45, 90], [0.2, 0.5, 0.2]);
-  const glow1Scale = interpolate(frame % 180, [0, 90, 180], [1, 1.15, 1]);
+  const glow1Opacity = interpolate(frame % 120, [0, 60, 120], [0.25, 0.62, 0.25]);
+  const glow2Opacity = interpolate((frame + 40) % 90, [0, 45, 90], [0.18, 0.42, 0.18]);
+  const glow1Scale = interpolate(frame % 180, [0, 90, 180], [1, 1.12, 1]);
+  const meshShift = interpolate(frame % 240, [0, 240], [0, 24]);
 
   return (
     <AbsoluteFill style={{ background: config.gradient }}>
-      {/* Grid overlay */}
+      {/* Mesh grid overlay */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           backgroundImage: `
-            linear-gradient(hsla(220, 40%, 30%, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, hsla(220, 40%, 30%, 0.03) 1px, transparent 1px)
+            linear-gradient(hsla(188, 55%, 70%, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, hsla(188, 55%, 70%, 0.06) 1px, transparent 1px)
           `,
-          backgroundSize: "60px 60px",
-          opacity: 0.5,
+          backgroundSize: "56px 56px",
+          backgroundPosition: `${meshShift}px ${meshShift * 0.65}px`,
+          opacity: 0.33,
+        }}
+      />
+
+      {/* Atmospheric gradients inspired by landing cards */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(circle at 14% 18%, rgba(16,185,129,0.24), transparent 40%), radial-gradient(circle at 86% 76%, rgba(34,211,238,0.2), transparent 42%)",
+          opacity: 0.75,
         }}
       />
 
@@ -89,7 +102,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
           borderRadius: "50%",
           background: `radial-gradient(circle, ${config.glowColor} 0%, transparent 60%)`,
           opacity: glow1Opacity,
-          filter: "blur(100px)",
+          filter: "blur(110px)",
         }}
       />
 
@@ -104,7 +117,16 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
           borderRadius: "50%",
           background: `radial-gradient(circle, ${config.glowColor} 0%, transparent 70%)`,
           opacity: glow2Opacity,
-          filter: "blur(80px)",
+          filter: "blur(90px)",
+        }}
+      />
+
+      {/* Bottom cinematic vignette for better text readability */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(to top, rgba(2, 8, 23, 0.52) 0%, rgba(2, 8, 23, 0.18) 35%, transparent 62%)",
         }}
       />
 
@@ -146,7 +168,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
         style={{
           position: "absolute",
           inset: 0,
-          opacity: 0.03,
+          opacity: 0.035,
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
         }}
       />

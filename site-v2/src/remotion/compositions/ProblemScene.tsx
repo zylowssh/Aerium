@@ -1,11 +1,11 @@
 import { AbsoluteFill, useCurrentFrame, interpolate, Easing, spring, useVideoConfig } from "remotion";
-import { AlertTriangle, MapPin, Clock, XCircle, Activity } from "lucide-react";
-import { AnimatedBackground, AnimatedCard, GlowingText, SceneTransition } from "../components";
+import { AlertTriangle, MapPin, Clock, XCircle } from "lucide-react";
+import { AnimatedBackground, SceneTransition } from "../components";
 
 const problems = [
-  { icon: MapPin, text: "Les stations de mesure officielles sont peu nombreuses", color: "hsl(0, 70%, 55%)", emoji: "🗺️" },
-  { icon: Clock, text: "Les données sont difficiles à consulter et rarement en temps réel", color: "hsl(35, 80%, 55%)", emoji: "⏱️" },
-  { icon: XCircle, text: "Il manque un outil simple, local, et compréhensible par tous", color: "hsl(45, 90%, 55%)", emoji: "❌" },
+  { icon: MapPin, label: "Couverture locale", value: "Faible", color: "hsl(8, 86%, 64%)" },
+  { icon: Clock, label: "Donnees en direct", value: "Limitees", color: "hsl(32, 92%, 64%)" },
+  { icon: XCircle, label: "Lecture publique", value: "Complexe", color: "hsl(45, 90%, 62%)" },
 ];
 
 export const ProblemScene: React.FC = () => {
@@ -90,24 +90,26 @@ export const ProblemScene: React.FC = () => {
               fontSize: 52,
               fontWeight: 700,
               margin: 0,
-              color: "hsl(0, 70%, 60%)",
+              color: "hsl(10, 84%, 66%)",
             }}
           >
-            Le Problème
+            Constat Terrain
           </h2>
         </div>
 
         {/* Problem cards */}
         <div
           style={{
-            display: "flex",
-            flexDirection: "column",
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
             gap: 20,
+            width: "100%",
+            maxWidth: 1200,
           }}
         >
           {problems.map((problem, index) => {
             const delay = 40 + index * 20;
-            const slideX = interpolate(frame - delay, [0, 25], [index % 2 === 0 ? -50 : 50, 0], {
+            const slideY = interpolate(frame - delay, [0, 25], [50, 0], {
               extrapolateLeft: "clamp",
               extrapolateRight: "clamp",
               easing: Easing.out(Easing.cubic),
@@ -123,16 +125,17 @@ export const ProblemScene: React.FC = () => {
                 key={index}
                 style={{
                   display: "flex",
-                  alignItems: "center",
-                  gap: 20,
-                  padding: "22px 32px",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: 14,
+                  padding: "24px 24px",
                   borderRadius: 18,
                   background: "hsla(220, 20%, 8%, 0.9)",
                   border: `1px solid ${problem.color}40`,
                   backdropFilter: "blur(20px)",
-                  transform: `translateX(${slideX}px)`,
+                  transform: `translateY(${slideY}px)`,
                   opacity: itemOpacity,
-                  maxWidth: 850,
+                  minHeight: 230,
                   boxShadow: `
                     0 0 30px ${problem.color}15,
                     0 10px 40px -10px hsla(220, 30%, 0%, 0.5),
@@ -157,21 +160,49 @@ export const ProblemScene: React.FC = () => {
                 </div>
                 <span
                   style={{
-                    fontSize: 22,
-                    color: "hsl(210, 40%, 92%)",
-                    fontWeight: 500,
-                    lineHeight: 1.4,
+                    fontSize: 18,
+                    color: "hsl(210, 30%, 72%)",
+                    fontWeight: 600,
+                    lineHeight: 1.35,
                   }}
                 >
-                  {problem.text}
+                  {problem.label}
                 </span>
+                <span
+                  style={{
+                    fontSize: 36,
+                    color: "hsl(210, 40%, 92%)",
+                    fontWeight: 700,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  {problem.value}
+                </span>
+                <div
+                  style={{
+                    width: "100%",
+                    height: 6,
+                    borderRadius: 999,
+                    background: "hsla(210, 30%, 22%, 0.45)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${interpolate(frame - delay, [0, 30], [0, 100], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })}%`,
+                      height: "100%",
+                      borderRadius: 999,
+                      background: `linear-gradient(90deg, ${problem.color}, hsla(190, 85%, 62%, 0.9))`,
+                    }}
+                  />
+                </div>
               </div>
             );
           })}
         </div>
       </div>
 
-      <SceneTransition durationInFrames={150} type="fade" direction="both" />
+      <SceneTransition durationInFrames={150} type="wipe" direction="both" color="hsl(10, 32%, 9%)" />
     </AbsoluteFill>
   );
 };

@@ -71,7 +71,7 @@ const Footer = () => {
         />
 
         <div className="relative z-20 min-h-screen flex flex-col justify-start">
-          <div className="px-6 sm:px-10 lg:px-12 pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-40 lg:pb-11">
+          <div className="px-6 sm:px-10 lg:px-12 pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-35 lg:pb-11">
             <div className="grid gap-10 lg:grid-cols-[0.9fr_2.1fr] items-start">
               <div>
                 <div className="flex items-center gap-3">

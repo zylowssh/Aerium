@@ -13,7 +13,7 @@ import { DatabaseSchemaScene } from "@/remotion/compositions/DatabaseSchemaScene
 import { BackendArchitectureScene } from "@/remotion/compositions/BackendArchitectureScene";
 import { useState, forwardRef, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Copy, Check, Play, Sparkles } from "lucide-react";
+import { Play, Sparkles } from "lucide-react";
 
 const compositions = [
   { id: "full", label: "Vidéo Complète", frames: AERIUM_VIDEO_DURATION, component: AeriumVideo },
@@ -30,13 +30,10 @@ const compositions = [
   { id: "conclusion", label: "Conclusion", frames: 180, component: ConclusionScene },
 ];
 
-const VideoSection = forwardRef<HTMLDivElement>((props, ref) => {
+const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
   const [activeScene, setActiveScene] = useState("full");
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [copiedCommand, setCopiedCommand] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const scrollTargetRef = useRef<HTMLDivElement>(null);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   const isLowEndDevice = (() => {
@@ -77,17 +74,6 @@ const VideoSection = forwardRef<HTMLDivElement>((props, ref) => {
       }
     };
   }, []);
-
-  const copyExportCommand = async (command: string) => {
-    await navigator.clipboard.writeText(command);
-    setCopiedCommand(true);
-    setTimeout(() => setCopiedCommand(false), 2000);
-  };
-
-  const exportCommands = {
-    full: "npx remotion render src/remotion/index.ts AeriumVideo out/aerium-video.mp4",
-    scene: `npx remotion render src/remotion/index.ts ${activeScene} out/${activeScene}.mp4`,
-  };
 
   // Expose scroll target through ref
   useEffect(() => {
@@ -142,40 +128,51 @@ const VideoSection = forwardRef<HTMLDivElement>((props, ref) => {
 
         {/* Scene selector - Deleted */}
 
-        {/* Video player with pronounced depth effect */}
-        <div ref={videoContainerRef} className="relative mb-20 z-10">
+        {/* Video player with layered card treatment matching the landing style */}
+        <div className="relative mb-20 z-10">
           <motion.div
-            className="absolute inset-0 rounded-3xl bg-gradient-to-br from-sky-700/34 via-blue-600/26 to-slate-700/30 dark:from-emerald-400/30 dark:via-cyan-400/25 dark:to-emerald-400/30 blur-2xl -z-30 scale-125"
+            className="absolute -inset-8 rounded-[2.5rem] bg-[radial-gradient(circle_at_15%_20%,rgba(16,185,129,0.24),transparent_42%),radial-gradient(circle_at_85%_82%,rgba(34,211,238,0.2),transparent_44%)] dark:bg-[radial-gradient(circle_at_15%_20%,rgba(16,185,129,0.3),transparent_42%),radial-gradient(circle_at_85%_82%,rgba(34,211,238,0.24),transparent_44%)] blur-2xl -z-30"
             initial={{ opacity: 0, scale: 1.1 }}
-            animate={isInView ? { opacity: [0.55, 0.9, 0.55], scale: [1.2, 1.26, 1.2] } : { opacity: 0.35, scale: 1.18 }}
-            transition={isInView ? { duration: 5, ease: "easeInOut", repeat: Infinity } : { duration: 0.4, ease: "easeOut" }}
+            animate={isInView ? { opacity: [0.28, 0.46, 0.28], scale: [1.02, 1.06, 1.02] } : { opacity: 0.2, scale: 1.01 }}
+            transition={isInView ? { duration: 6.5, ease: "easeInOut", repeat: Infinity } : { duration: 0.4, ease: "easeOut" }}
             style={{ pointerEvents: "none" }}
           />
 
           <motion.div
-            className="absolute inset-0 rounded-3xl bg-gradient-to-tl from-sky-500/26 via-blue-500/20 to-slate-600/24 dark:from-cyan-300/25 dark:via-emerald-300/20 dark:to-cyan-300/25 blur-2xl -z-20 scale-110"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={isInView ? { opacity: [0.45, 0.72, 0.45], scale: [1.1, 1.16, 1.1] } : { opacity: 0.28, scale: 1.08 }}
-            transition={isInView ? { duration: 6, ease: "easeInOut", repeat: Infinity } : { duration: 0.4, ease: "easeOut" }}
-            style={{ pointerEvents: "none" }}
-          />
-
-          <motion.div
-            className="absolute inset-0 rounded-3xl bg-gradient-to-t from-blue-600/24 via-sky-500/14 to-transparent dark:from-emerald-300/20 dark:via-cyan-300/12 dark:to-transparent blur-xl -z-10 scale-105"
-            initial={{ opacity: 0, scale: 1.02 }}
-            animate={isInView ? { opacity: [0.35, 0.62, 0.35], scale: [1.04, 1.08, 1.04] } : { opacity: 0.2, scale: 1.03 }}
-            transition={isInView ? { duration: 4.8, ease: "easeInOut", repeat: Infinity } : { duration: 0.4, ease: "easeOut" }}
+            className="absolute -inset-px rounded-[2rem] bg-gradient-to-br from-white/80 via-white/40 to-transparent dark:from-white/20 dark:via-white/10 dark:to-transparent -z-10"
+            initial={{ opacity: 0.4 }}
+            animate={{ opacity: isInView ? 0.72 : 0.5 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             style={{ pointerEvents: "none" }}
           />
 
           {/* Main video player container */}
           <motion.div 
-            className="rounded-3xl overflow-hidden border-2 border-slate-700/30 dark:border-white/20 shadow-2xl shadow-slate-900/25 dark:shadow-black/45 bg-white/45 dark:bg-slate-950/70 backdrop-blur-xl relative z-10 hover:border-sky-500/45 dark:hover:border-cyan-400/40 transition-colors"
+            className="relative rounded-[2rem] overflow-hidden border border-white/55 dark:border-white/15 shadow-[0_24px_70px_-26px_rgba(15,23,42,0.55)] dark:shadow-[0_24px_70px_-26px_rgba(0,0,0,0.85)] bg-white/45 dark:bg-slate-950/65 backdrop-blur-2xl z-10"
             initial={{ opacity: 0, y: 40, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            whileHover={{ boxShadow: "0 20px 50px rgba(var(--primary), 0.3)" }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+            whileHover={{ y: -4 }}
           >
+            <div className="pointer-events-none absolute inset-0 z-20">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(15,23,42,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.07)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:58px_58px] opacity-[0.22]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/22 via-transparent to-transparent" />
+            </div>
+
+            <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/45 dark:border-white/20 bg-white/70 dark:bg-black/35 px-3 py-1.5 backdrop-blur-md">
+                <span className="relative inline-flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </span>
+                <span className="text-[0.68rem] tracking-[0.16em] uppercase text-foreground/80 font-manrope">Visualisation en direct</span>
+              </div>
+
+              <div className="rounded-full border border-white/45 dark:border-white/20 bg-white/70 dark:bg-black/35 px-3 py-1.5 text-[0.68rem] tracking-[0.16em] uppercase text-foreground/75 font-manrope backdrop-blur-md">
+                {currentComposition.frames} frames
+              </div>
+            </div>
+
             <div className="aspect-video relative bg-gradient-to-br from-white/35 to-white/70 dark:from-slate-950/65 dark:to-slate-900/80">
               <AnimatePresence mode="wait">
                 {isInView && (
@@ -223,10 +220,14 @@ const VideoSection = forwardRef<HTMLDivElement>((props, ref) => {
                     >
                       <Play className="w-8 h-8 text-primary/60 mx-auto" />
                     </motion.div>
-                    <p className="text-muted-foreground text-sm">Vidéo en attente...</p>
+                    <p className="text-muted-foreground text-sm">Video en attente...</p>
                   </motion.div>
                 </motion.div>
               )}
+            </div>
+
+            <div className="absolute bottom-4 left-4 z-30 rounded-full border border-white/45 dark:border-white/20 bg-white/70 dark:bg-black/35 px-3 py-1.5 text-[0.68rem] tracking-[0.14em] uppercase text-foreground/75 font-manrope backdrop-blur-md">
+              Aerium Experience
             </div>
           </motion.div>
         </div>

@@ -33,7 +33,7 @@ export const SolutionScene: React.FC = () => {
     easing: Easing.out(Easing.cubic),
   });
 
-  // Description animation
+  // Action pills animation
   const descOpacity = interpolate(frame, [90, 115], [0, 1], { extrapolateRight: "clamp" });
   const descY = interpolate(frame, [90, 115], [25, 0], {
     extrapolateLeft: "clamp",
@@ -47,6 +47,8 @@ export const SolutionScene: React.FC = () => {
 
   // Glow pulse
   const glowIntensity = interpolate(frame % 60, [0, 30, 60], [0.4, 0.8, 0.4]);
+
+  const actionPills = ["Collecter", "Analyser", "Agir"];
 
   return (
     <AbsoluteFill style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -104,15 +106,15 @@ export const SolutionScene: React.FC = () => {
         {/* Intro text */}
         <p
           style={{
-            fontSize: 26,
-            color: "hsl(215, 20%, 65%)",
+            fontSize: 24,
+            color: "hsl(195, 34%, 74%)",
             margin: 0,
             opacity: introOpacity,
             transform: `translateY(${introY}px)`,
             textAlign: "center",
           }}
         >
-          C'est pour répondre à ce problème que nous avons créé
+          Une plateforme visuelle pour la qualite de l'air
         </p>
 
         {/* Logo + Brand */}
@@ -163,25 +165,60 @@ export const SolutionScene: React.FC = () => {
         {/* Description */}
         <p
           style={{
-            fontSize: 26,
-            color: "hsl(215, 20%, 75%)",
+            fontSize: 30,
+            color: "hsl(205, 42%, 90%)",
             margin: 0,
             textAlign: "center",
             maxWidth: 900,
-            lineHeight: 1.6,
+            lineHeight: 1.35,
+            opacity: descOpacity,
+            transform: `translateY(${descY}px)`,
+            fontWeight: 600,
+          }}
+        >
+          Mesurer. Comprendre. Decider.
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
             opacity: descOpacity,
             transform: `translateY(${descY}px)`,
           }}
         >
-          Un système permettant de <span style={{ color: "hsl(165, 70%, 55%)" }}>collecter</span>,{" "}
-          <span style={{ color: "hsl(190, 80%, 50%)" }}>traiter</span> et{" "}
-          <span style={{ color: "hsl(220, 60%, 60%)" }}>visualiser</span>
-          <br />
-          des données de qualité de l'air, de manière claire et accessible.
-        </p>
+          {actionPills.map((pill, index) => {
+            const pillScale = spring({
+              frame: frame - (106 + index * 6),
+              fps,
+              config: { damping: 14, stiffness: 110 },
+            });
+
+            return (
+              <div
+                key={pill}
+                style={{
+                  padding: "11px 20px",
+                  borderRadius: 999,
+                  border: "1px solid hsla(180, 50%, 85%, 0.28)",
+                  background: "linear-gradient(135deg, hsla(165, 70%, 55%, 0.2), hsla(190, 80%, 50%, 0.16))",
+                  color: "hsl(195, 52%, 92%)",
+                  fontSize: 20,
+                  fontWeight: 600,
+                  letterSpacing: "0.01em",
+                  transform: `scale(${pillScale})`,
+                  boxShadow: "0 10px 26px -14px hsla(165, 70%, 55%, 0.6)",
+                }}
+              >
+                {pill}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <SceneTransition durationInFrames={180} type="fade" direction="both" />
+      <SceneTransition durationInFrames={180} type="slide" direction="both" color="hsl(196, 36%, 9%)" />
     </AbsoluteFill>
   );
 };

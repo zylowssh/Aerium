@@ -187,7 +187,7 @@ export const ObjectiveScene: React.FC = () => {
         </div>
       </div>
 
-      <SceneTransition durationInFrames={150} type="fade" direction="both" />
+      <SceneTransition durationInFrames={150} type="blur" direction="both" color="hsl(214, 28%, 10%)" />
     </AbsoluteFill>
   );
 };

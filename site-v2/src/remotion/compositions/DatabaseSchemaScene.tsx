@@ -246,7 +246,7 @@ export const DatabaseSchemaScene: React.FC = () => {
         </div>
       </div>
 
-      <SceneTransition durationInFrames={180} type="fade" direction="in" />
+      <SceneTransition durationInFrames={180} type="slide" direction="both" color="hsl(225, 30%, 10%)" />
     </AbsoluteFill>
   );
 };
