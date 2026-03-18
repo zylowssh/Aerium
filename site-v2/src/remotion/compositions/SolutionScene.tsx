@@ -1,94 +1,65 @@
 import { AbsoluteFill, useCurrentFrame, interpolate, Easing, spring, useVideoConfig, Img, staticFile } from "remotion";
 import { AnimatedBackground, SceneTransition } from "../components";
-import { Sparkles } from "lucide-react";
 
 export const SolutionScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Intro text
-  const introOpacity = interpolate(frame, [10, 35], [0, 1], { extrapolateRight: "clamp" });
-  const introY = interpolate(frame, [10, 35], [30, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.out(Easing.cubic),
-  });
-
-  // Logo animation with bounce
-  const logoScale = spring({
-    frame: frame - 45,
+  // Logo animation
+  const logoSpring = spring({
+    frame: frame - 25,
     fps,
-    config: { damping: 10, stiffness: 100, mass: 0.8 },
+    config: { damping: 14, stiffness: 80 },
   });
-  const logoRotation = interpolate(frame, [45, 65], [-5, 0], {
+
+  // Brand name animation
+  const brandSpring = spring({
+    frame: frame - 40,
+    fps,
+    config: { damping: 18, stiffness: 100 },
+  });
+
+  // Tagline
+  const taglineOpacity = interpolate(frame, [70, 90], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-
-  // Title animation
-  const titleOpacity = interpolate(frame, [55, 75], [0, 1], { extrapolateRight: "clamp" });
-  const titleX = interpolate(frame, [55, 75], [40, 0], {
+  const taglineY = interpolate(frame, [70, 90], [15, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.out(Easing.cubic),
   });
 
-  // Action pills animation
-  const descOpacity = interpolate(frame, [90, 115], [0, 1], { extrapolateRight: "clamp" });
-  const descY = interpolate(frame, [90, 115], [25, 0], {
+  // Pills animation
+  const pillsOpacity = interpolate(frame, [100, 120], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  // Sparkle effects
-  const sparkle1Opacity = interpolate((frame + 10) % 40, [0, 20, 40], [0, 1, 0]);
-  const sparkle2Opacity = interpolate((frame + 25) % 40, [0, 20, 40], [0, 1, 0]);
-  const sparkle3Opacity = interpolate((frame + 35) % 40, [0, 20, 40], [0, 1, 0]);
+  const pills = ["Collecter", "Analyser", "Agir"];
 
-  // Glow pulse
-  const glowIntensity = interpolate(frame % 60, [0, 30, 60], [0.4, 0.8, 0.4]);
-
-  const actionPills = ["Collecter", "Analyser", "Agir"];
+  // Accent color
+  const accentColor = "#10b981";
 
   return (
-    <AbsoluteFill style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-      <AnimatedBackground variant="solution" particleCount={30} />
+    <AbsoluteFill style={{ fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif" }}>
+      <AnimatedBackground variant="accent" />
 
-      {/* Large central glow */}
+      {/* Subtle glow behind logo */}
       <div
         style={{
           position: "absolute",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: 700,
-          height: 700,
+          transform: "translate(-50%, -60%)",
+          width: 400,
+          height: 400,
           borderRadius: "50%",
-          background: "radial-gradient(circle, hsla(165, 70%, 55%, 0.2) 0%, transparent 60%)",
-          opacity: glowIntensity,
-          filter: "blur(80px)",
+          background: `radial-gradient(circle, ${accentColor}15 0%, transparent 70%)`,
+          filter: "blur(60px)",
+          opacity: logoSpring,
         }}
       />
-
-      {/* Sparkle decorations */}
-      {[
-        { x: -280, y: -100, opacity: sparkle1Opacity, scale: 0.8 },
-        { x: 300, y: -80, opacity: sparkle2Opacity, scale: 1 },
-        { x: 250, y: 120, opacity: sparkle3Opacity, scale: 0.6 },
-      ].map((s, i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: `translate(calc(-50% + ${s.x}px), calc(-50% + ${s.y}px)) scale(${s.scale})`,
-            opacity: s.opacity * 0.7,
-          }}
-        >
-          <Sparkles size={24} color="hsl(165, 70%, 55%)" />
-        </div>
-      ))}
 
       {/* Content */}
       <div
@@ -99,116 +70,105 @@ export const SolutionScene: React.FC = () => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 32,
-          padding: 60,
+          padding: 80,
         }}
       >
-        {/* Intro text */}
-        <p
+        {/* Label */}
+        <span
           style={{
-            fontSize: 24,
-            color: "hsl(195, 34%, 74%)",
-            margin: 0,
-            opacity: introOpacity,
-            transform: `translateY(${introY}px)`,
-            textAlign: "center",
+            fontSize: 13,
+            fontWeight: 500,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            color: accentColor,
+            marginBottom: 40,
+            opacity: interpolate(frame, [15, 30], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
           }}
         >
-          Une plateforme visuelle pour la qualite de l'air
-        </p>
+          La solution
+        </span>
 
         {/* Logo + Brand */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 24,
-            transform: `scale(${logoScale}) rotate(${logoRotation}deg)`,
+            gap: 20,
           }}
         >
           <div
             style={{
-              position: "relative",
+              opacity: logoSpring,
+              transform: `scale(${logoSpring})`,
             }}
           >
             <Img
               src={staticFile("favicon.png")}
               style={{
-                width: 110,
-                height: 110,
-                filter: `drop-shadow(0 0 ${30 * glowIntensity}px hsla(165, 70%, 55%, 0.5))`,
+                width: 80,
+                height: 80,
               }}
             />
           </div>
+
           <h1
             style={{
-              fontSize: 90,
-              fontWeight: 700,
+              fontSize: 72,
+              fontWeight: 600,
               margin: 0,
-              opacity: titleOpacity,
-              transform: `translateX(${titleX}px)`,
+              letterSpacing: "-0.03em",
+              opacity: brandSpring,
+              transform: `translateX(${interpolate(brandSpring, [0, 1], [20, 0])}px)`,
             }}
           >
-            <span style={{ color: "hsl(210, 40%, 98%)" }}>Aer</span>
-            <span
-              style={{
-                background: "linear-gradient(135deg, hsl(165, 70%, 55%) 0%, hsl(190, 80%, 50%) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              ium
-            </span>
+            <span style={{ color: "#fafafa" }}>Aer</span>
+            <span style={{ color: accentColor }}>ium</span>
           </h1>
         </div>
 
-        {/* Description */}
+        {/* Tagline */}
         <p
           style={{
-            fontSize: 30,
-            color: "hsl(205, 42%, 90%)",
-            margin: 0,
-            textAlign: "center",
-            maxWidth: 900,
-            lineHeight: 1.35,
-            opacity: descOpacity,
-            transform: `translateY(${descY}px)`,
-            fontWeight: 600,
+            fontSize: 24,
+            fontWeight: 500,
+            color: "rgba(250, 250, 250, 0.7)",
+            margin: "32px 0 0 0",
+            opacity: taglineOpacity,
+            transform: `translateY(${taglineY}px)`,
           }}
         >
-          Mesurer. Comprendre. Decider.
+          Une plateforme visuelle pour la qualité de l'air
         </p>
 
+        {/* Action pills */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: 14,
-            opacity: descOpacity,
-            transform: `translateY(${descY}px)`,
+            gap: 12,
+            marginTop: 40,
+            opacity: pillsOpacity,
           }}
         >
-          {actionPills.map((pill, index) => {
-            const pillScale = spring({
-              frame: frame - (106 + index * 6),
+          {pills.map((pill, index) => {
+            const pillSpring = spring({
+              frame: frame - (105 + index * 8),
               fps,
-              config: { damping: 14, stiffness: 110 },
+              config: { damping: 18, stiffness: 120 },
             });
 
             return (
               <div
                 key={pill}
                 style={{
-                  padding: "11px 20px",
-                  borderRadius: 999,
-                  border: "1px solid hsla(180, 50%, 85%, 0.28)",
-                  background: "linear-gradient(135deg, hsla(165, 70%, 55%, 0.2), hsla(190, 80%, 50%, 0.16))",
-                  color: "hsl(195, 52%, 92%)",
-                  fontSize: 20,
-                  fontWeight: 600,
-                  letterSpacing: "0.01em",
-                  transform: `scale(${pillScale})`,
-                  boxShadow: "0 10px 26px -14px hsla(165, 70%, 55%, 0.6)",
+                  padding: "10px 20px",
+                  borderRadius: 100,
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  color: "rgba(250, 250, 250, 0.9)",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  transform: `scale(${pillSpring})`,
+                  opacity: pillSpring,
                 }}
               >
                 {pill}
@@ -218,7 +178,7 @@ export const SolutionScene: React.FC = () => {
         </div>
       </div>
 
-      <SceneTransition durationInFrames={180} type="slide" direction="both" color="hsl(196, 36%, 9%)" />
+      <SceneTransition durationInFrames={180} type="fade" direction="both" />
     </AbsoluteFill>
   );
 };

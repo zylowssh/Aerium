@@ -1,50 +1,29 @@
 import { AbsoluteFill, useCurrentFrame, interpolate, Easing, spring, useVideoConfig } from "remotion";
-import { Eye, Users, GitBranch, Target } from "lucide-react";
-import { AnimatedBackground, SceneTransition, FlowingConnector } from "../components";
+import { Eye, Users, GitBranch } from "lucide-react";
+import { AnimatedBackground, SceneTransition } from "../components";
 
 const objectives = [
-  { icon: Eye, text: "Rendre visibles des données invisibles", color: "hsl(165, 70%, 55%)", emoji: "👁️" },
-  { icon: Users, text: "Permettre à chacun de comprendre l'environnement qui l'entoure", color: "hsl(190, 80%, 50%)", emoji: "👥" },
-  { icon: GitBranch, text: "Proposer une solution open-source, modulaire et évolutive", color: "hsl(220, 60%, 55%)", emoji: "🔗" },
+  { icon: Eye, text: "Rendre visibles des données invisibles" },
+  { icon: Users, text: "Permettre à chacun de comprendre son environnement" },
+  { icon: GitBranch, text: "Proposer une solution open-source et modulaire" },
 ];
 
 export const ObjectiveScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const titleOpacity = interpolate(frame, [10, 30], [0, 1], { extrapolateRight: "clamp" });
-  const titleY = interpolate(frame, [10, 30], [40, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.out(Easing.exp),
-  });
-  const titleScale = spring({
-    frame: frame - 10,
+  // Title animation
+  const titleSpring = spring({
+    frame: frame - 15,
     fps,
-    config: { damping: 12, stiffness: 80 },
+    config: { damping: 18, stiffness: 100 },
   });
+
+  const accentColor = "#10b981";
 
   return (
-    <AbsoluteFill style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-      <AnimatedBackground variant="default" particleCount={20} />
-
-      {/* Decorative rings */}
-      {[0, 1].map((i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 900 + i * 150,
-            height: 900 + i * 150,
-            borderRadius: "50%",
-            border: `1px solid hsla(165, 70%, 55%, ${0.08 - i * 0.03})`,
-            opacity: 0.5,
-          }}
-        />
-      ))}
+    <AbsoluteFill style={{ fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif" }}>
+      <AnimatedBackground variant="accent" />
 
       {/* Content */}
       <div
@@ -55,139 +34,145 @@ export const ObjectiveScene: React.FC = () => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 50,
-          padding: 60,
+          padding: 80,
         }}
       >
         {/* Title */}
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            gap: 20,
-            opacity: titleOpacity,
-            transform: `translateY(${titleY}px) scale(${titleScale})`,
+            gap: 12,
+            marginBottom: 56,
+            opacity: titleSpring,
+            transform: `translateY(${interpolate(titleSpring, [0, 1], [25, 0])}px)`,
           }}
         >
-          <div
+          <span
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: 14,
-              background: "hsla(165, 70%, 55%, 0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 30px hsla(165, 70%, 55%, 0.3)",
+              fontSize: 13,
+              fontWeight: 500,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: accentColor,
             }}
           >
-            <Target size={28} color="hsl(165, 70%, 55%)" />
-          </div>
-          <h2 style={{ fontSize: 52, fontWeight: 700, margin: 0 }}>
-            <span style={{ color: "hsl(210, 40%, 98%)" }}>Objectif du </span>
-            <span
-              style={{
-                background: "linear-gradient(135deg, hsl(165, 70%, 55%) 0%, hsl(190, 80%, 50%) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              Projet
-            </span>
+            Notre mission
+          </span>
+          <h2
+            style={{
+              fontSize: 48,
+              fontWeight: 600,
+              margin: 0,
+              color: "#fafafa",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Objectifs du Projet
           </h2>
         </div>
 
-        {/* Objectives with connectors */}
+        {/* Objectives list */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 12,
+            gap: 16,
+            maxWidth: 700,
           }}
         >
           {objectives.map((obj, index) => {
-            const delay = 40 + index * 22;
-            const scale = spring({
+            const delay = 40 + index * 18;
+            
+            const itemSpring = spring({
               frame: frame - delay,
               fps,
-              config: { damping: 15, stiffness: 100 },
+              config: { damping: 16, stiffness: 100 },
             });
-            const opacity = interpolate(frame - delay, [0, 20], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            });
-            const slideX = interpolate(frame - delay, [0, 20], [index % 2 === 0 ? -40 : 40, 0], {
+
+            const Icon = obj.icon;
+
+            // Line drawing animation
+            const lineProgress = interpolate(frame - delay, [0, 25], [0, 1], {
               extrapolateLeft: "clamp",
               extrapolateRight: "clamp",
               easing: Easing.out(Easing.cubic),
             });
-            const Icon = obj.icon;
-            const glowIntensity = interpolate((frame + index * 20) % 90, [0, 45, 90], [0.3, 0.6, 0.3]);
 
             return (
-              <div key={index} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div
+                key={index}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 20,
+                  padding: "20px 24px",
+                  borderRadius: 12,
+                  backgroundColor: "rgba(255, 255, 255, 0.02)",
+                  border: "1px solid rgba(255, 255, 255, 0.05)",
+                  opacity: itemSpring,
+                  transform: `translateX(${interpolate(itemSpring, [0, 1], [-30, 0])}px)`,
+                }}
+              >
+                {/* Number indicator */}
                 <div
                   style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    backgroundColor: `${accentColor}15`,
                     display: "flex",
                     alignItems: "center",
-                    gap: 20,
-                    padding: "20px 28px",
-                    borderRadius: 18,
-                    background: "hsla(220, 20%, 8%, 0.9)",
-                    border: `1px solid ${obj.color}40`,
-                    backdropFilter: "blur(20px)",
-                    transform: `scale(${scale}) translateX(${slideX}px)`,
-                    opacity,
-                    boxShadow: `
-                      0 0 ${25 * glowIntensity}px ${obj.color}20,
-                      0 10px 40px -10px hsla(220, 30%, 0%, 0.5),
-                      inset 0 1px 0 hsla(210, 40%, 98%, 0.05)
-                    `,
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={18} color={accentColor} strokeWidth={1.5} />
+                </div>
+
+                {/* Text */}
+                <span
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 450,
+                    color: "rgba(250, 250, 250, 0.85)",
+                    flex: 1,
+                  }}
+                >
+                  {obj.text}
+                </span>
+
+                {/* Progress indicator */}
+                <div
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: "50%",
+                    border: `2px solid ${accentColor}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
                   }}
                 >
                   <div
                     style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 13,
-                      background: `${obj.color}20`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      boxShadow: `0 0 15px ${obj.color}30`,
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: accentColor,
+                      transform: `scale(${lineProgress})`,
                     }}
-                  >
-                    <Icon size={26} color={obj.color} />
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 22,
-                      color: "hsl(210, 40%, 92%)",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {obj.text}
-                  </span>
+                  />
                 </div>
-                {index < objectives.length - 1 && (
-                  <div style={{ margin: "4px 0" }}>
-                    <FlowingConnector
-                      startDelay={delay + 15}
-                      duration={20}
-                      color={obj.color}
-                      direction="vertical"
-                      length={24}
-                    />
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
       </div>
 
-      <SceneTransition durationInFrames={150} type="blur" direction="both" color="hsl(214, 28%, 10%)" />
+      <SceneTransition durationInFrames={150} type="fade" direction="both" />
     </AbsoluteFill>
   );
 };
