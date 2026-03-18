@@ -100,7 +100,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
             viewport={{ once: true, amount: 0.5 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <span className="block font-manrope font-semibold">Decouvrez Aerium</span>
+            <span className="block font-manrope font-semibold">Découvrez Aerium</span>
             <span className="block font-editorial italic text-cyan-700/90 dark:text-cyan-300/90">en action.</span>
           </motion.h2>
 
@@ -111,7 +111,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
             viewport={{ once: true, amount: 0.5 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Visualisez comment notre technologie surveille et analyse la qualite de l'air en temps reel.
+            Visualisez comment notre technologie surveille et analyse la qualité de l'air en temps réel.
           </motion.p>
         </motion.div>
 
@@ -171,7 +171,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
                   >
                     <Play className="w-10 h-10 sm:w-12 sm:h-12 text-foreground/40" />
                     <p className="text-xs sm:text-sm text-muted-foreground font-manrope">
-                      Defilez pour voir la demo
+                      Défilez pour voir la démo
                     </p>
                   </motion.div>
                 </div>
@@ -249,7 +249,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
         >
-          Projet Aerium - Surveillance IoT de la qualite de l'air
+          Projet Aerium - Surveillance IoT de la qualité de l'air
         </motion.p>
       </div>
     </section>

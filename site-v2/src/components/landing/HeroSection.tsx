@@ -113,7 +113,7 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
             >
-              Projet NSI · Surveillance de la qualite de l'air
+              Projet NSI · Surveillance de la qualité de l'air
             </motion.p>
 
             <h1 className="leading-tight tracking-tight">
@@ -123,7 +123,15 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.45, duration: 0.8, ease: 'easeOut' }}
               >
-                Surveillance intelligente de la qualite de l'air
+                Aerium
+              </motion.span>
+              <motion.span
+                className="mt-3 block font-manrope font-medium text-[clamp(1rem,2.3vw,1.6rem)] text-white/88"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.55, duration: 0.8, ease: 'easeOut' }}
+              >
+                Surveillance intelligente de la qualité de l'air
               </motion.span>
             </h1>
           </motion.div>

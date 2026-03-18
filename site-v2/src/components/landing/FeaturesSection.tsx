@@ -12,35 +12,35 @@ const features = [
   {
     icon: Bell,
     title: 'Alertes Sensibles',
-    description: 'Des notifications contextualisees qui distinguent incident ponctuel et tendance profonde.',
+    description: 'Des notifications contextualisées qui distinguent un incident ponctuel d\'une tendance profonde.',
     tone: 'from-amber-200/70 via-orange-100/60 to-rose-100/45',
     offset: 'lg:translate-y-4'
   },
   {
     icon: TrendingUp,
-    title: 'Recits de Tendances',
-    description: "Comparez les trajectoires historiques pour lire l'evolution de vos espaces comme une histoire.",
+    title: 'Récits de Tendances',
+    description: "Comparez les trajectoires historiques pour lire l\'évolution de vos espaces comme une histoire.",
     tone: 'from-sky-200/70 via-indigo-100/55 to-white/40',
     offset: 'lg:-translate-y-2'
   },
   {
     icon: Wind,
     title: 'Orchestre Multi-Capteurs',
-    description: 'SCD30, CO2, temperature, humidite: chaque source trouve sa place dans une vue harmonisee.',
+    description: 'SCD30, CO2, température, humidité : chaque source trouve sa place dans une vue harmonisée.',
     tone: 'from-emerald-100/75 via-lime-100/55 to-white/45',
     offset: 'lg:translate-y-5'
   },
   {
     icon: Gauge,
-    title: 'Metriques Poids Plume',
-    description: 'Des indicateurs precis, hierarchises et legers a parcourir meme sous pression.',
+    title: 'Métriques Poids Plume',
+    description: 'Des indicateurs précis, hiérarchisés et légers à parcourir même sous pression.',
     tone: 'from-violet-200/70 via-fuchsia-100/55 to-rose-100/45',
     offset: 'lg:-translate-y-1'
   },
   {
     icon: Lightbulb,
-    title: 'Actions Creables',
-    description: "Des recommandations immediates pour passer de l'observation a l'amelioration durable.",
+    title: 'Actions Créables',
+    description: "Des recommandations immédiates pour passer de l\'observation à l\'amélioration durable.",
     tone: 'from-cyan-200/70 via-blue-100/55 to-white/45',
     offset: 'lg:translate-y-3'
   }
@@ -87,11 +87,11 @@ const FeaturesSection = () => {
           </motion.span>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl text-foreground mb-6 leading-tight">
             <span className="block font-manrope font-semibold">Un outillage environnemental</span>
-            <span className="block font-editorial italic text-primary/90">plus creatif que standard.</span>
+            <span className="block font-editorial italic text-primary/90">plus créatif que standard.</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Chaque fonctionnalite a ete repensée comme une experience de lecture,
-            de decision et d'impact concret.
+            Chaque fonctionnalité a été repensée comme une expérience de lecture,
+            de décision et d'impact concret.
           </p>
         </motion.div>
 
@@ -104,7 +104,7 @@ const FeaturesSection = () => {
         >
           <p className="text-lg sm:text-2xl lg:text-3xl text-foreground leading-snug font-editorial">
             Nous ne montrons pas seulement des chiffres: nous donnons une forme sensible
-            a la qualite de l'air pour accelerer les bonnes decisions.
+            à la qualité de l'air pour accélérer les bonnes décisions.
           </p>
         </motion.div>
 

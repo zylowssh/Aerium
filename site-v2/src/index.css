@@ -116,7 +116,8 @@
 
   /* Landing-page-only palette: soft sky + nature greens */
   .landing-theme {
-    --background: 200 37% 10%;
+    /*--background: 217 30% 8%;*/
+    --background: transparent;
     --foreground: 196 55% 95%;
 
     --card: 199 34% 14%;
@@ -150,7 +151,7 @@
   }
 
   .light .landing-theme {
-    --background: 193 58% 95%;
+    --background: 200 10% 94%;
     --foreground: 199 39% 17%;
 
     --card: 0 0% 100%;
@@ -192,7 +193,6 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
-    margin-top: -45px;
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--primary) / 0.5) hsl(var(--background));
   }

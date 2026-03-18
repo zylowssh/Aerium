@@ -4,15 +4,15 @@ import { Sparkles, BarChart3, Bell, ArrowRight, Github, Wind, Clock3 } from 'luc
 import { Button } from '@/components/ui/button';
 
 const ctaHighlights = [
-  { icon: Wind, label: 'Flux Continu', description: "Des capteurs qui racontent ce qu'il se passe maintenant." },
-  { icon: BarChart3, label: 'Lecture Immediate', description: 'Des visualisations faites pour decider sans hesiter.' },
-  { icon: Clock3, label: 'Impact Durable', description: 'Des routines quotidiennes qui produisent des effets long terme.' },
-  { icon: Bell, label: 'Signal Prioritaire', description: 'Des alertes intelligentes selon le niveau de criticite.' }
+  { icon: Wind, label: 'Flux continu', description: "Des capteurs qui racontent ce qu'il se passe maintenant." },
+  { icon: BarChart3, label: 'Lecture immédiate', description: 'Des visualisations faites pour décider sans hésiter.' },
+  { icon: Clock3, label: 'Impact durable', description: 'Des routines quotidiennes qui produisent des effets à long terme.' },
+  { icon: Bell, label: 'Signal Prioritaire', description: 'Des alertes intelligentes selon le niveau de criticité.' }
 ];
 
 const CTASection = () => {
   return (
-    <section className="relative py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
+    <section className="relative z-20 -mb-2 rounded-b-[2rem] sm:rounded-b-[3rem] lg:rounded-b-[3.5rem] py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-6xl mx-auto relative z-10">
         <motion.div
           className="relative overflow-hidden rounded-xl sm:rounded-[2rem] lg:rounded-[2.5rem] border border-white/45 dark:border-white/15 bg-white/45 dark:bg-black/35 backdrop-blur-2xl p-5 sm:p-8 lg:p-12"
@@ -43,7 +43,7 @@ const CTASection = () => {
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-6 sm:mb-8 lg:mb-10 max-w-2xl lg:max-w-none font-manrope">
                 Un environnement plus sain commence par une lecture plus claire de l'air.
-                Passez de la surveillance passive a une pratique active, quotidienne et mesurable.
+                Passez de la surveillance passive à une pratique active, quotidienne et mesurable.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4">
