@@ -24,10 +24,10 @@ const useCases = [
 
 const UseCasesSection = () => {
   return (
-    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
+    <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-7xl mx-auto relative z-10">
         <motion.div
-          className="text-center mb-20"
+          className="text-center mb-12 sm:mb-16 lg:mb-20"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -52,7 +52,7 @@ const UseCasesSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {useCases.map((useCase, index) => (
             <motion.div
               key={index}
@@ -63,7 +63,7 @@ const UseCasesSection = () => {
               transition={{ duration: 0.6, delay: index * 0.15 }}
               whileHover={{ y: -8 }}
             >
-              <div className="p-8 rounded-[1.75rem] border border-white/45 dark:border-white/15 h-full relative overflow-hidden shadow-xl shadow-black/10 dark:shadow-black/35 bg-white/40 dark:bg-slate-950/60 backdrop-blur-xl hover:border-cyan-400/30 transition-all duration-300">
+              <div className="p-5 sm:p-6 lg:p-8 rounded-xl sm:rounded-[1.75rem] border border-white/45 dark:border-white/15 h-full relative overflow-hidden shadow-xl shadow-black/10 dark:shadow-black/35 bg-white/40 dark:bg-slate-950/60 backdrop-blur-xl hover:border-cyan-400/30 transition-all duration-300">
                 <div className={`absolute inset-0 bg-gradient-to-br ${useCase.gradient} dark:opacity-25 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                 <div className="absolute -inset-12 opacity-45 bg-[radial-gradient(circle_at_20%_12%,rgba(255,255,255,0.65),transparent_35%)] dark:bg-[radial-gradient(circle_at_20%_12%,rgba(56,189,248,0.22),transparent_35%)] pointer-events-none" />
 
