@@ -66,10 +66,10 @@ const scaleInVariants = {
 
 const FeaturesSection = () => {
   return (
-    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
+    <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-7xl mx-auto relative z-10">
         <motion.div
-          className="text-center mb-20"
+          className="text-center mb-12 sm:mb-16 lg:mb-20"
           variants={fadeUpVariants}
           initial="hidden"
           whileInView="visible"
@@ -96,23 +96,23 @@ const FeaturesSection = () => {
         </motion.div>
 
         <motion.div
-          className="mb-8 rounded-[2rem] border border-white/45 dark:border-white/15 bg-white/45 dark:bg-black/30 backdrop-blur-2xl p-7 sm:p-8"
+          className="mb-6 sm:mb-8 rounded-xl sm:rounded-[2rem] border border-white/45 dark:border-white/15 bg-white/45 dark:bg-black/30 backdrop-blur-2xl p-5 sm:p-7 lg:p-8"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.55 }}
         >
-          <p className="text-2xl sm:text-3xl text-foreground leading-snug font-editorial">
+          <p className="text-lg sm:text-2xl lg:text-3xl text-foreground leading-snug font-editorial">
             Nous ne montrons pas seulement des chiffres: nous donnons une forme sensible
             a la qualite de l'air pour accelerer les bonnes decisions.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {features.map((feature, index) => (
             <motion.article
               key={index}
-              className={`group relative overflow-hidden rounded-[2rem] border border-white/40 dark:border-white/15 p-7 shadow-xl backdrop-blur-xl bg-white/35 dark:bg-black/30 ${feature.offset}`}
+              className={`group relative overflow-hidden rounded-xl sm:rounded-[2rem] border border-white/40 dark:border-white/15 p-5 sm:p-7 shadow-xl backdrop-blur-xl bg-white/35 dark:bg-black/30 ${feature.offset}`}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

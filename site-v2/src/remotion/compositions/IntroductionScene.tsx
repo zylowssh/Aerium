@@ -1,64 +1,50 @@
 import { AbsoluteFill, useCurrentFrame, interpolate, Easing, spring, useVideoConfig } from "remotion";
-import { AnimatedBackground, SceneTransition, WaveformVisualization } from "../components";
+import { AnimatedBackground, SceneTransition } from "../components";
 
 export const IntroductionScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Question animation with more dramatic entrance
-  const questionOpacity = interpolate(frame, [15, 40], [0, 1], { extrapolateRight: "clamp" });
-  const questionY = interpolate(frame, [15, 40], [60, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.out(Easing.exp),
-  });
-  const questionScale = spring({
-    frame: frame - 15,
+  // Staggered text animations with spring physics
+  const labelSpring = spring({
+    frame: frame - 20,
     fps,
-    config: { damping: 15, stiffness: 80 },
+    config: { damping: 20, stiffness: 120 },
   });
 
-  // Answer animation
-  const answerOpacity = interpolate(frame, [70, 95], [0, 1], { extrapolateRight: "clamp" });
-  const answerY = interpolate(frame, [70, 95], [40, 0], {
+  const questionSpring = spring({
+    frame: frame - 35,
+    fps,
+    config: { damping: 18, stiffness: 100 },
+  });
+
+  const subtitleOpacity = interpolate(frame, [70, 90], [0, 1], { 
+    extrapolateLeft: "clamp", 
+    extrapolateRight: "clamp" 
+  });
+  const subtitleY = interpolate(frame, [70, 90], [20, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.out(Easing.cubic),
   });
 
-  // Secondary text animation
-  const secondaryOpacity = interpolate(frame, [110, 130], [0, 1], { extrapolateRight: "clamp" });
+  const descriptionOpacity = interpolate(frame, [100, 120], [0, 1], { 
+    extrapolateLeft: "clamp", 
+    extrapolateRight: "clamp" 
+  });
 
-  // Breathing ring effect
-  const ringScale = interpolate(frame % 90, [0, 45, 90], [1, 1.15, 1]);
-  const ringOpacity = interpolate(frame % 90, [0, 45, 90], [0.3, 0.6, 0.3]);
-
-  // Waveform entrance
-  const waveOpacity = interpolate(frame, [130, 150], [0, 1], { extrapolateRight: "clamp" });
+  // Accent line animation
+  const lineWidth = interpolate(frame, [130, 160], [0, 120], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.out(Easing.cubic),
+  });
 
   return (
-    <AbsoluteFill style={{ fontFamily: "'Manrope', 'Space Grotesk', sans-serif" }}>
-      <AnimatedBackground variant="intro" particleCount={25} />
+    <AbsoluteFill style={{ fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif" }}>
+      <AnimatedBackground variant="accent" />
 
-      {/* Breathing rings */}
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: `translate(-50%, -50%) scale(${ringScale * (1 + i * 0.1)})`,
-            width: 400 + i * 150,
-            height: 400 + i * 150,
-            borderRadius: "50%",
-            border: `1px solid hsla(165, 70%, 55%, ${0.15 - i * 0.04})`,
-            opacity: ringOpacity * (1 - i * 0.3),
-          }}
-        />
-      ))}
-
-      {/* Content */}
+      {/* Content container */}
       <div
         style={{
           position: "absolute",
@@ -67,19 +53,21 @@ export const IntroductionScene: React.FC = () => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 40,
           padding: 80,
           textAlign: "center",
         }}
       >
+        {/* Label */}
         <div
           style={{
-            fontSize: 20,
-            letterSpacing: "0.22em",
+            fontSize: 14,
+            fontWeight: 500,
+            letterSpacing: "0.2em",
             textTransform: "uppercase",
-            color: "hsla(180, 36%, 86%, 0.72)",
-            marginBottom: -10,
-            opacity: interpolate(frame, [0, 24], [0, 1], { extrapolateRight: "clamp" }),
+            color: "rgba(16, 185, 129, 0.9)",
+            marginBottom: 32,
+            opacity: labelSpring,
+            transform: `translateY(${interpolate(labelSpring, [0, 1], [15, 0])}px)`,
           }}
         >
           Projet Aerium
@@ -88,85 +76,64 @@ export const IntroductionScene: React.FC = () => {
         {/* Main question */}
         <h1
           style={{
-            fontSize: 60,
-            fontWeight: 700,
+            fontSize: 64,
+            fontWeight: 600,
+            lineHeight: 1.15,
             margin: 0,
-            opacity: questionOpacity,
-            transform: `translateY(${questionY}px) scale(${questionScale})`,
-            background: "linear-gradient(130deg, hsl(161, 80%, 66%) 0%, hsl(188, 90%, 67%) 48%, hsl(201, 88%, 73%) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            lineHeight: 1.2,
-            maxWidth: 1100,
+            maxWidth: 900,
+            color: "#fafafa",
+            letterSpacing: "-0.02em",
+            opacity: questionSpring,
+            transform: `translateY(${interpolate(questionSpring, [0, 1], [30, 0])}px)`,
           }}
         >
           Et si nous pouvions voir l'air que nous respirons ?
         </h1>
 
+        {/* Subtitle */}
         <p
           style={{
-            fontSize: 40,
-            color: "hsla(188, 48%, 85%, 0.95)",
-            margin: 0,
-            maxWidth: 980,
-            letterSpacing: 0.1,
+            fontSize: 28,
+            fontWeight: 400,
             fontStyle: "italic",
-            fontFamily: "'Times New Roman', serif",
-            opacity: interpolate(frame, [44, 72], [0, 1], { extrapolateRight: "clamp" }),
-            transform: `translateY(${interpolate(frame, [44, 72], [24, 0], { extrapolateRight: "clamp" })}px)`,
+            color: "rgba(250, 250, 250, 0.7)",
+            margin: "28px 0 0 0",
+            opacity: subtitleOpacity,
+            transform: `translateY(${subtitleY}px)`,
           }}
         >
           Rendre l'invisible lisible.
         </p>
 
-        {/* Answer text */}
+        {/* Accent line */}
         <div
           style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            opacity: answerOpacity,
-            transform: `translateY(${answerY}px)`,
+            width: lineWidth,
+            height: 2,
+            backgroundColor: "rgba(16, 185, 129, 0.6)",
+            borderRadius: 1,
+            marginTop: 40,
+          }}
+        />
+
+        {/* Description */}
+        <p
+          style={{
+            fontSize: 18,
+            fontWeight: 400,
+            lineHeight: 1.7,
+            color: "rgba(250, 250, 250, 0.55)",
+            margin: "32px 0 0 0",
+            maxWidth: 700,
+            opacity: descriptionOpacity,
           }}
         >
-          <p
-            style={{
-              fontSize: 28,
-              color: "hsla(205, 48%, 92%, 0.98)",
-              margin: 0,
-              lineHeight: 1.6,
-              maxWidth: 1150,
-            }}
-          >
-            La qualité de l'air influence notre santé, notre environnement, et notre quotidien.
-          </p>
-          <p
-            style={{
-              fontSize: 24,
-              color: "hsla(199, 36%, 74%, 0.85)",
-              margin: 0,
-              lineHeight: 1.5,
-              opacity: secondaryOpacity,
-              maxWidth: 1150,
-            }}
-          >
-            Pourtant, ces données restent souvent invisibles, complexes, ou inaccessibles.
-          </p>
-        </div>
-
-        {/* Audio waveform visualization */}
-        <div style={{ opacity: waveOpacity, marginTop: 20 }}>
-          <WaveformVisualization
-            barCount={50}
-            width={500}
-            height={60}
-            color="hsl(168, 78%, 60%)"
-          />
-        </div>
+          La qualité de l'air influence notre santé, notre environnement, et notre quotidien.
+          Pourtant, ces données restent souvent invisibles, complexes, ou inaccessibles.
+        </p>
       </div>
 
-      {/* Scene transitions */}
-      <SceneTransition durationInFrames={180} type="zoom" direction="both" color="hsl(206, 34%, 8%)" />
+      <SceneTransition durationInFrames={180} type="fade" direction="both" />
     </AbsoluteFill>
   );
 };

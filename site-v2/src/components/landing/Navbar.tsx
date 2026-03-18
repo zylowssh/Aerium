@@ -36,8 +36,8 @@ const Navbar = ({ onScrollToSection }: NavbarProps) => {
         ease: [0.22, 1, 0.36, 1],
       }}
       style={{
-        top: isScrolled ? '14px' : '18px',
-        width: 'min(980px, calc(100vw - 20px))',
+        top: isScrolled ? '10px' : '14px',
+        width: 'min(980px, calc(100vw - 16px))',
         transition: 'top 0.5s cubic-bezier(0.22, 1, 0.36, 1), width 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
       }}
     >
@@ -57,7 +57,7 @@ const Navbar = ({ onScrollToSection }: NavbarProps) => {
         }}
       >
         <div
-          className="px-4 sm:px-5 lg:px-7 flex items-center justify-between w-full h-[68px] gap-3"
+          className="px-3 sm:px-5 lg:px-7 flex items-center justify-between w-full h-[56px] sm:h-[64px] lg:h-[68px] gap-2 sm:gap-3"
         >
           {/* Logo */}
           <motion.div

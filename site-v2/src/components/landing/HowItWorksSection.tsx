@@ -27,10 +27,10 @@ const steps = [
 
 const HowItWorksSection = () => {
   return (
-    <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
+    <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-7xl mx-auto relative z-10">
         <motion.div
-          className="text-center mb-20"
+          className="text-center mb-12 sm:mb-16 lg:mb-20"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -56,19 +56,19 @@ const HowItWorksSection = () => {
         </motion.div>
 
         <motion.div
-          className="mb-10 rounded-[2rem] border border-white/45 dark:border-white/15 bg-white/45 dark:bg-slate-950/55 backdrop-blur-2xl p-7 sm:p-8"
+          className="mb-6 sm:mb-8 lg:mb-10 rounded-xl sm:rounded-[2rem] border border-white/45 dark:border-white/15 bg-white/45 dark:bg-slate-950/55 backdrop-blur-2xl p-5 sm:p-7 lg:p-8"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.55 }}
         >
-          <p className="text-2xl sm:text-3xl text-foreground leading-snug font-editorial">
+          <p className="text-lg sm:text-2xl lg:text-3xl text-foreground leading-snug font-editorial">
             Du capteur a la decision, le flux est pense pour rester lisible,
             rapide et utile meme quand les donnees accelerent.
           </p>
         </motion.div>
 
-        <div className="relative grid md:grid-cols-3 gap-8">
+        <div className="relative grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           <div className="hidden md:block absolute top-1/2 left-[16%] right-[16%] -translate-y-1/2 h-px bg-gradient-to-r from-transparent via-emerald-400/35 to-transparent pointer-events-none" />
           {steps.map((step, index) => (
             <motion.div
@@ -82,7 +82,7 @@ const HowItWorksSection = () => {
               <motion.div
                 whileHover={{ y: -12 }}
                 transition={{ duration: 0.3 }}
-                className="p-8 rounded-[1.75rem] border border-white/45 dark:border-white/15 bg-white/40 dark:bg-slate-950/60 backdrop-blur-xl transition-all duration-300 group h-full relative overflow-hidden shadow-xl shadow-black/10 dark:shadow-black/35"
+                className="p-5 sm:p-6 lg:p-8 rounded-xl sm:rounded-[1.75rem] border border-white/45 dark:border-white/15 bg-white/40 dark:bg-slate-950/60 backdrop-blur-xl transition-all duration-300 group h-full relative overflow-hidden shadow-xl shadow-black/10 dark:shadow-black/35"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/70 via-cyan-100/50 to-white/35 dark:from-[#111c2f]/88 dark:via-[#13253d]/72 dark:to-[#0f141c]/45 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="absolute -inset-16 opacity-50 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.55),transparent_35%)] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(15,20,28,0.72),transparent_35%)] pointer-events-none" />

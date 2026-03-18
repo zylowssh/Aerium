@@ -1,52 +1,30 @@
 import { AbsoluteFill, useCurrentFrame, interpolate, Easing, spring, useVideoConfig } from "remotion";
-import { AlertTriangle, MapPin, Clock, XCircle } from "lucide-react";
+import { MapPin, Clock, XCircle } from "lucide-react";
 import { AnimatedBackground, SceneTransition } from "../components";
 
 const problems = [
-  { icon: MapPin, label: "Couverture locale", value: "Faible", color: "hsl(8, 86%, 64%)" },
-  { icon: Clock, label: "Donnees en direct", value: "Limitees", color: "hsl(32, 92%, 64%)" },
-  { icon: XCircle, label: "Lecture publique", value: "Complexe", color: "hsl(45, 90%, 62%)" },
+  { icon: MapPin, label: "Couverture locale", value: "Faible" },
+  { icon: Clock, label: "Données en direct", value: "Limitées" },
+  { icon: XCircle, label: "Lecture publique", value: "Complexe" },
 ];
 
 export const ProblemScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const titleOpacity = interpolate(frame, [10, 30], [0, 1], { extrapolateRight: "clamp" });
-  const titleY = interpolate(frame, [10, 30], [40, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.out(Easing.exp),
-  });
-  const titleScale = spring({
-    frame: frame - 10,
+  // Title animation
+  const titleSpring = spring({
+    frame: frame - 15,
     fps,
-    config: { damping: 12, stiffness: 80 },
+    config: { damping: 18, stiffness: 100 },
   });
 
-  // Warning pulse effect
-  const pulseOpacity = interpolate(frame % 45, [0, 22, 45], [0.3, 0.7, 0.3]);
-  const pulseScale = interpolate(frame % 45, [0, 22, 45], [0.95, 1.05, 0.95]);
+  // Accent color for problem theme
+  const accentColor = "#f97316";
 
   return (
-    <AbsoluteFill style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-      <AnimatedBackground variant="problem" particleCount={15} />
-
-      {/* Warning glow effect */}
-      <div
-        style={{
-          position: "absolute",
-          top: "10%",
-          left: "50%",
-          transform: `translate(-50%, 0) scale(${pulseScale})`,
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          background: "radial-gradient(circle, hsla(0, 70%, 50%, 0.2) 0%, transparent 70%)",
-          opacity: pulseOpacity,
-          filter: "blur(60px)",
-        }}
-      />
+    <AbsoluteFill style={{ fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif" }}>
+      <AnimatedBackground variant="warm" />
 
       {/* Content */}
       <div
@@ -57,40 +35,39 @@ export const ProblemScene: React.FC = () => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 50,
-          padding: 60,
+          padding: 80,
         }}
       >
-        {/* Title with warning icon */}
+        {/* Title */}
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            gap: 20,
-            opacity: titleOpacity,
-            transform: `translateY(${titleY}px) scale(${titleScale})`,
+            gap: 12,
+            marginBottom: 60,
+            opacity: titleSpring,
+            transform: `translateY(${interpolate(titleSpring, [0, 1], [25, 0])}px)`,
           }}
         >
-          <div
+          <span
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: 14,
-              background: "hsla(0, 70%, 55%, 0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 30px hsla(0, 70%, 55%, 0.3)",
+              fontSize: 13,
+              fontWeight: 500,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: accentColor,
             }}
           >
-            <AlertTriangle size={28} color="hsl(0, 70%, 60%)" />
-          </div>
+            Le problème
+          </span>
           <h2
             style={{
-              fontSize: 52,
-              fontWeight: 700,
+              fontSize: 48,
+              fontWeight: 600,
               margin: 0,
-              color: "hsl(10, 84%, 66%)",
+              color: "#fafafa",
+              letterSpacing: "-0.02em",
             }}
           >
             Constat Terrain
@@ -100,24 +77,19 @@ export const ProblemScene: React.FC = () => {
         {/* Problem cards */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: 20,
-            width: "100%",
-            maxWidth: 1200,
+            display: "flex",
+            gap: 24,
           }}
         >
           {problems.map((problem, index) => {
-            const delay = 40 + index * 20;
-            const slideY = interpolate(frame - delay, [0, 25], [50, 0], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-              easing: Easing.out(Easing.cubic),
+            const delay = 40 + index * 15;
+            
+            const cardSpring = spring({
+              frame: frame - delay,
+              fps,
+              config: { damping: 16, stiffness: 100 },
             });
-            const itemOpacity = interpolate(frame - delay, [0, 20], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            });
+
             const Icon = problem.icon;
 
             return (
@@ -127,72 +99,77 @@ export const ProblemScene: React.FC = () => {
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "flex-start",
-                  gap: 14,
-                  padding: "24px 24px",
-                  borderRadius: 18,
-                  background: "hsla(220, 20%, 8%, 0.9)",
-                  border: `1px solid ${problem.color}40`,
-                  backdropFilter: "blur(20px)",
-                  transform: `translateY(${slideY}px)`,
-                  opacity: itemOpacity,
-                  minHeight: 230,
-                  boxShadow: `
-                    0 0 30px ${problem.color}15,
-                    0 10px 40px -10px hsla(220, 30%, 0%, 0.5),
-                    inset 0 1px 0 hsla(210, 40%, 98%, 0.05)
-                  `,
+                  gap: 20,
+                  padding: 32,
+                  width: 280,
+                  borderRadius: 16,
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  opacity: cardSpring,
+                  transform: `translateY(${interpolate(cardSpring, [0, 1], [40, 0])}px)`,
                 }}
               >
+                {/* Icon */}
                 <div
                   style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 13,
-                    background: `${problem.color}20`,
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    backgroundColor: `${accentColor}15`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    flexShrink: 0,
-                    boxShadow: `0 0 20px ${problem.color}30`,
                   }}
                 >
-                  <Icon size={26} color={problem.color} />
+                  <Icon size={24} color={accentColor} strokeWidth={1.5} />
                 </div>
+
+                {/* Label */}
                 <span
                   style={{
-                    fontSize: 18,
-                    color: "hsl(210, 30%, 72%)",
-                    fontWeight: 600,
-                    lineHeight: 1.35,
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: "rgba(250, 250, 250, 0.5)",
+                    letterSpacing: "0.01em",
                   }}
                 >
                   {problem.label}
                 </span>
+
+                {/* Value */}
                 <span
                   style={{
-                    fontSize: 36,
-                    color: "hsl(210, 40%, 92%)",
-                    fontWeight: 700,
-                    letterSpacing: "0.01em",
+                    fontSize: 32,
+                    fontWeight: 600,
+                    color: "#fafafa",
+                    letterSpacing: "-0.02em",
+                    marginTop: -8,
                   }}
                 >
                   {problem.value}
                 </span>
+
+                {/* Progress bar */}
                 <div
                   style={{
                     width: "100%",
-                    height: 6,
-                    borderRadius: 999,
-                    background: "hsla(210, 30%, 22%, 0.45)",
+                    height: 3,
+                    borderRadius: 2,
+                    backgroundColor: "rgba(255, 255, 255, 0.06)",
                     overflow: "hidden",
+                    marginTop: 8,
                   }}
                 >
                   <div
                     style={{
-                      width: `${interpolate(frame - delay, [0, 30], [0, 100], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })}%`,
+                      width: `${interpolate(frame - delay, [0, 30], [0, 100], { 
+                        extrapolateLeft: "clamp", 
+                        extrapolateRight: "clamp",
+                        easing: Easing.out(Easing.cubic),
+                      })}%`,
                       height: "100%",
-                      borderRadius: 999,
-                      background: `linear-gradient(90deg, ${problem.color}, hsla(190, 85%, 62%, 0.9))`,
+                      backgroundColor: accentColor,
+                      borderRadius: 2,
                     }}
                   />
                 </div>
@@ -202,7 +179,7 @@ export const ProblemScene: React.FC = () => {
         </div>
       </div>
 
-      <SceneTransition durationInFrames={150} type="wipe" direction="both" color="hsl(10, 32%, 9%)" />
+      <SceneTransition durationInFrames={150} type="fade" direction="both" />
     </AbsoluteFill>
   );
 };
