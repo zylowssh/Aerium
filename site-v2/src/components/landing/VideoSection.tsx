@@ -101,7 +101,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <span className="block font-manrope font-semibold">Découvrez Aerium</span>
-            <span className="block font-editorial italic text-cyan-700/90 dark:text-cyan-300/90">en action.</span>
+            <span className="block font-editorial italic text-cyan-700/90 dark:text-cyan-300/90">en vidéo.</span>
           </motion.h2>
 
           <motion.p
@@ -130,16 +130,6 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
           <div className="relative rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden border border-white/50 dark:border-white/10 shadow-2xl shadow-black/20 dark:shadow-black/40 bg-white/30 dark:bg-slate-950/50 backdrop-blur-xl">
             {/* Top bar with status indicators */}
             <div className="absolute top-0 left-0 right-0 z-20 p-3 sm:p-4 flex items-center justify-between bg-gradient-to-b from-black/30 to-transparent">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-emerald-500" />
-                </span>
-                <span className="text-[10px] sm:text-xs text-white/90 font-medium tracking-wide uppercase font-manrope">
-                  En direct
-                </span>
-              </div>
-
               <div className="flex items-center gap-2 sm:gap-3 text-white/80">
                 <span className="text-[10px] sm:text-xs font-medium font-manrope hidden sm:inline">
                   {Math.round(AERIUM_VIDEO_DURATION / 30)}s
@@ -226,10 +216,6 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3">
-                <span className="text-[10px] sm:text-xs text-white/80 font-manrope px-2 py-1 rounded-full bg-white/10 backdrop-blur-sm">
-                  Aerium Demo
-                </span>
-
                 <button
                   className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm flex items-center justify-center transition-colors hidden sm:flex"
                   aria-label="Fullscreen"
@@ -249,7 +235,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
         >
-          Projet Aerium - Surveillance IoT de la qualité de l'air
+          Projet Aerium - Surveillance de la qualité de l'air
         </motion.p>
       </div>
     </section>

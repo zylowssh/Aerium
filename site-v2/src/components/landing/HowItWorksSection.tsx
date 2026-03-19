@@ -30,7 +30,7 @@ const HowItWorksSection = () => {
     <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-7xl mx-auto relative z-10">
         <motion.div
-          className="text-center mb-12 sm:mb-16 lg:mb-20"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -48,7 +48,7 @@ const HowItWorksSection = () => {
           </motion.span>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl text-foreground mb-6 leading-tight">
             <span className="block font-manrope font-semibold">Comment Aerium</span>
-            <span className="block font-editorial italic text-emerald-700/90 dark:text-emerald-300/90">orchestre chaque etape.</span>
+            <span className="block font-editorial italic text-emerald-700/90 dark:text-emerald-300/90">orchestre chaque étape.</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Une architecture simple et efficace pour la surveillance en temps réel.
@@ -63,8 +63,8 @@ const HowItWorksSection = () => {
           transition={{ duration: 0.55 }}
         >
           <p className="text-lg sm:text-2xl lg:text-3xl text-foreground leading-snug font-editorial">
-            Du capteur a la decision, le flux est pense pour rester lisible,
-            rapide et utile meme quand les donnees accelerent.
+            Du capteur à la décision, le flux est pensé pour rester lisible,
+            rapide et utile même quand les données accélèrent.
           </p>
         </motion.div>
 

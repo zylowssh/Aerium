@@ -69,7 +69,7 @@ const FeaturesSection = () => {
     <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#eff1f2] via-[#eff1f2] to-[#eff1f2] dark:from-[#0f141c] dark:via-[#0f141c] dark:to-[#0f141c]">
       <div className="max-w-7xl mx-auto relative z-10">
         <motion.div
-          className="text-center mb-12 sm:mb-16 lg:mb-20"
+          className="text-center mb-12"
           variants={fadeUpVariants}
           initial="hidden"
           whileInView="visible"
@@ -89,10 +89,6 @@ const FeaturesSection = () => {
             <span className="block font-manrope font-semibold">Un outillage environnemental</span>
             <span className="block font-editorial italic text-primary/90">plus créatif que standard.</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Chaque fonctionnalité a été repensée comme une expérience de lecture,
-            de décision et d'impact concret.
-          </p>
         </motion.div>
 
         <motion.div
@@ -103,7 +99,7 @@ const FeaturesSection = () => {
           transition={{ duration: 0.55 }}
         >
           <p className="text-lg sm:text-2xl lg:text-3xl text-foreground leading-snug font-editorial">
-            Nous ne montrons pas seulement des chiffres: nous donnons une forme sensible
+            Aerium ne montre pas seulement des chiffres: il donne une forme
             à la qualité de l'air pour accélérer les bonnes décisions.
           </p>
         </motion.div>

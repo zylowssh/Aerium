@@ -108,32 +108,33 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
             transition={{ delay: 0.2, duration: 0.7 }}
           >
             <motion.p
-              className="font-manrope uppercase tracking-[0.2em] text-white/75 text-xs sm:text-sm mb-5"
+              className="font-manrope uppercase tracking-[0.32em] text-white/80 text-xs sm:text-sm mb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
             >
-              Projet NSI · Surveillance de la qualité de l'air
+              Aerium
             </motion.p>
 
-            <h1 className="leading-tight tracking-tight">
+            <h1 className="leading-[0.96] tracking-[-0.03em]">
               <motion.span
-                className="block font-manrope font-semibold text-[clamp(1.8rem,6vw,5rem)] text-white [text-shadow:0_10px_30px_rgba(0,0,0,0.45)]"
+                className="block font-manrope font-extrabold text-[clamp(2.1rem,7vw,5.4rem)] text-transparent bg-clip-text bg-gradient-to-r from-white via-emerald-100 to-sky-200 animate-gradient drop-shadow-[0_12px_40px_rgba(0,0,0,0.55)]"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.45, duration: 0.8, ease: 'easeOut' }}
               >
-                Aerium
-              </motion.span>
-              <motion.span
-                className="mt-3 block font-manrope font-medium text-[clamp(1rem,2.3vw,1.6rem)] text-white/88"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.55, duration: 0.8, ease: 'easeOut' }}
-              >
-                Surveillance intelligente de la qualité de l'air
+                Respirez l'esprit tranquille.
               </motion.span>
             </h1>
+
+            <motion.p
+              className="mt-5 mx-auto max-w-2xl font-manrope font-medium text-[clamp(0.95rem,2.15vw,1.35rem)] leading-relaxed text-white/90"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.8, ease: 'easeOut' }}
+            >
+              Surveillez la qualité de l'air en temps réel grâce à des capteurs intelligents.
+            </motion.p>
           </motion.div>
 
           <motion.div
