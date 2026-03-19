@@ -1,16 +1,24 @@
-import { Player } from "@remotion/player";
+import { Player, type PlayerRef } from "@remotion/player";
 import { AeriumVideo, AERIUM_VIDEO_DURATION } from "@/remotion/AeriumVideo";
 import { useState, forwardRef, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Play, Pause, Sparkles, Volume2, VolumeX, Maximize2 } from "lucide-react";
+import { Play, Pause, Sparkles, Volume2, VolumeX, Maximize2, Minimize2 } from "lucide-react";
+
+const CONTROL_HIDE_DELAY_MS = 1800;
 
 const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
   const [isInView, setIsInView] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
   const scrollTargetRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const playerRef = useRef<{ play: () => void; pause: () => void; toggle: () => void } | null>(null);
+  const videoShellRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<PlayerRef | null>(null);
+  const hasAutoStartedRef = useRef(false);
+  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canAutoHideControlsRef = useRef(false);
 
   const isLowEndDevice = (() => {
     if (typeof navigator === "undefined") return false;
@@ -28,7 +36,8 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsInView(entry.isIntersecting);
-        if (entry.isIntersecting && !isPlaying) {
+        if (entry.isIntersecting && !hasAutoStartedRef.current) {
+          hasAutoStartedRef.current = true;
           setIsPlaying(true);
         }
       },
@@ -44,7 +53,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
         observer.unobserve(sectionRef.current);
       }
     };
-  }, [isPlaying]);
+  }, []);
 
   useEffect(() => {
     if (ref && typeof ref === 'object' && 'current' in ref) {
@@ -52,8 +61,184 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
     }
   }, [ref]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    canAutoHideControlsRef.current = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  }, []);
+
+  const clearHideControlsTimeout = () => {
+    if (!hideControlsTimeoutRef.current) {
+      return;
+    }
+
+    clearTimeout(hideControlsTimeoutRef.current);
+    hideControlsTimeoutRef.current = null;
+  };
+
+  const scheduleControlHide = () => {
+    clearHideControlsTimeout();
+
+    if (!canAutoHideControlsRef.current || !isPlaying || !isInView) {
+      return;
+    }
+
+    hideControlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, CONTROL_HIDE_DELAY_MS);
+  };
+
+  const handleControlsActivity = () => {
+    setShowControls(true);
+    scheduleControlHide();
+  };
+
+  const handleControlsMouseLeave = () => {
+    if (!canAutoHideControlsRef.current || !isPlaying) {
+      return;
+    }
+
+    clearHideControlsTimeout();
+    setShowControls(false);
+  };
+
+  useEffect(() => {
+    if (!isPlaying || !isInView) {
+      clearHideControlsTimeout();
+      setShowControls(true);
+      return;
+    }
+
+    scheduleControlHide();
+
+    return () => {
+      clearHideControlsTimeout();
+    };
+  }, [isPlaying, isInView]);
+
+  useEffect(() => {
+    return () => {
+      clearHideControlsTimeout();
+    };
+  }, []);
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      const doc = document as Document & { webkitFullscreenElement?: Element | null };
+      const fullscreenElement = doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+      setIsFullscreen(fullscreenElement === videoShellRef.current);
+    };
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isInView || !playerRef.current) {
+      return;
+    }
+
+    if (isPlaying) {
+      playerRef.current.play();
+    } else {
+      playerRef.current.pause();
+    }
+  }, [isPlaying, isInView]);
+
+  useEffect(() => {
+    if (!isInView || !playerRef.current) {
+      return;
+    }
+
+    if (isMuted) {
+      playerRef.current.mute();
+    } else {
+      playerRef.current.unmute();
+    }
+  }, [isMuted, isInView]);
+
   const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
+    setIsPlaying((currentlyPlaying) => {
+      const nextPlaying = !currentlyPlaying;
+
+      if (playerRef.current) {
+        if (nextPlaying) {
+          playerRef.current.play();
+        } else {
+          playerRef.current.pause();
+        }
+      }
+
+      return nextPlaying;
+    });
+  };
+
+  const toggleMute = () => {
+    setIsMuted((currentlyMuted) => {
+      const nextMuted = !currentlyMuted;
+
+      if (playerRef.current) {
+        if (nextMuted) {
+          playerRef.current.mute();
+        } else {
+          playerRef.current.unmute();
+        }
+      }
+
+      return nextMuted;
+    });
+  };
+
+  const toggleFullscreen = () => {
+    const target = videoShellRef.current;
+    if (!target) {
+      return;
+    }
+
+    const doc = document as Document & {
+      webkitExitFullscreen?: () => Promise<void>;
+      webkitFullscreenElement?: Element | null;
+    };
+    const fullscreenElement = doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+
+    if (fullscreenElement === target) {
+      if (doc.exitFullscreen) {
+        void doc.exitFullscreen();
+        return;
+      }
+
+      if (doc.webkitExitFullscreen) {
+        void doc.webkitExitFullscreen();
+      }
+
+      return;
+    }
+
+    const fullscreenTarget = target as HTMLDivElement & {
+      webkitRequestFullscreen?: () => Promise<void>;
+      webkitRequestFullScreen?: () => void;
+    };
+
+    if (fullscreenTarget.requestFullscreen) {
+      void fullscreenTarget.requestFullscreen();
+      return;
+    }
+
+    if (fullscreenTarget.webkitRequestFullscreen) {
+      void fullscreenTarget.webkitRequestFullscreen();
+      return;
+    }
+
+    if (fullscreenTarget.webkitRequestFullScreen) {
+      fullscreenTarget.webkitRequestFullScreen();
+    }
   };
 
   return (
@@ -127,9 +312,15 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
           <div className="absolute -inset-4 sm:-inset-6 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br from-emerald-400/20 via-transparent to-cyan-400/20 dark:from-emerald-400/10 dark:to-cyan-400/10 blur-2xl opacity-60 pointer-events-none" />
 
           {/* Main video container */}
-          <div className="relative rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden border border-white/50 dark:border-white/10 shadow-2xl shadow-black/20 dark:shadow-black/40 bg-white/30 dark:bg-slate-950/50 backdrop-blur-xl">
+          <div
+            ref={videoShellRef}
+            className="relative rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden border border-white/50 dark:border-white/10 shadow-2xl shadow-black/20 dark:shadow-black/40 bg-white/30 dark:bg-slate-950/50 backdrop-blur-xl"
+            onMouseMove={handleControlsActivity}
+            onMouseEnter={handleControlsActivity}
+            onMouseLeave={handleControlsMouseLeave}
+          >
             {/* Top bar with status indicators */}
-            <div className="absolute top-0 left-0 right-0 z-20 p-3 sm:p-4 flex items-center justify-between bg-gradient-to-b from-black/30 to-transparent">
+            <div className={`absolute top-0 left-0 right-0 z-20 p-3 sm:p-4 flex items-center justify-between bg-gradient-to-b from-black/30 to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <div className="flex items-center gap-2 sm:gap-3 text-white/80">
                 <span className="text-[10px] sm:text-xs font-medium font-manrope hidden sm:inline">
                   {Math.round(AERIUM_VIDEO_DURATION / 30)}s
@@ -151,6 +342,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
                   controls={false}
                   loop
                   autoPlay={isPlaying}
+                  initiallyMuted={isMuted}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -174,7 +366,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
                 aria-label={isPlaying ? "Pause" : "Play"}
               >
                 <motion.div
-                  className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full bg-white/20 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full bg-white/20 dark:bg-black/30 backdrop-blur-md border border-white/30 dark:border-white/10 flex items-center justify-center transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -188,7 +380,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
             </div>
 
             {/* Bottom control bar */}
-            <div className="absolute bottom-0 left-0 right-0 z-20 p-3 sm:p-4 flex items-center justify-between bg-gradient-to-t from-black/40 to-transparent">
+            <div className={`absolute bottom-0 left-0 right-0 z-20 p-3 sm:p-4 flex items-center justify-between bg-gradient-to-t from-black/40 to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={togglePlayPause}
@@ -203,7 +395,7 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
                 </button>
 
                 <button
-                  onClick={() => setIsMuted(!isMuted)}
+                  onClick={toggleMute}
                   className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm flex items-center justify-center transition-colors"
                   aria-label={isMuted ? "Unmute" : "Mute"}
                 >
@@ -217,10 +409,15 @@ const VideoSection = forwardRef<HTMLDivElement>((_props, ref) => {
 
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm flex items-center justify-center transition-colors hidden sm:flex"
-                  aria-label="Fullscreen"
+                  onClick={toggleFullscreen}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm items-center justify-center transition-colors ${isFullscreen ? 'flex' : 'hidden sm:flex'}`}
+                  aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
                 >
-                  <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  {isFullscreen ? (
+                    <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  ) : (
+                    <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  )}
                 </button>
               </div>
             </div>

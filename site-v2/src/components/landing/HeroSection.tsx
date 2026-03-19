@@ -12,7 +12,36 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
   return (
     <section className="relative min-h-screen pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-100 dark:opacity-0 scale-100 dark:scale-[1.03] blur-0 dark:blur-[4px] brightness-100 dark:brightness-75">
+        <div className="absolute inset-0 overflow-hidden lg:hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-emerald-200/20 via-sky-200/10 to-slate-950/90 dark:from-emerald-600/20 dark:via-sky-500/15 dark:to-slate-950" />
+          <div
+            className="absolute inset-0 transition-opacity duration-700 opacity-100 dark:opacity-0"
+            style={{
+              background:
+                'radial-gradient(circle at 20% 18%, rgba(110, 231, 183, 0.38), transparent 44%), radial-gradient(circle at 82% 76%, rgba(125, 211, 252, 0.28), transparent 40%)'
+            }}
+          />
+          <div
+            className="absolute inset-0 transition-opacity duration-700 opacity-0 dark:opacity-100"
+            style={{
+              background:
+                'radial-gradient(circle at 16% 22%, rgba(16, 185, 129, 0.32), transparent 46%), radial-gradient(circle at 86% 74%, rgba(56, 189, 248, 0.24), transparent 38%)'
+            }}
+          />
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '36px 36px' }} />
+          <motion.div
+            className="absolute -top-16 -left-16 h-56 w-56 rounded-full bg-emerald-300/35 dark:bg-primary/25 blur-3xl"
+            animate={{ x: [0, 18, 0], y: [0, 24, 0] }}
+            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute -bottom-24 right-[-2rem] h-72 w-72 rounded-full bg-sky-300/30 dark:bg-accent/20 blur-3xl"
+            animate={{ x: [0, -20, 0], y: [0, -18, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+          />
+        </div>
+
+        <div className="hidden lg:block absolute inset-0 transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-100 dark:opacity-0 scale-100 dark:scale-[1.03] blur-0 dark:blur-[4px] brightness-100 dark:brightness-75">
         <img
           src={heroLightImage}
           alt="Paysage naturel"
@@ -43,7 +72,7 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
         <div className="absolute inset-0 opacity-35" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '56px 56px' }} />
         </div>
 
-        <div className="absolute inset-0 overflow-hidden transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-0 dark:opacity-100 scale-[1.03] dark:scale-100 blur-[4px] dark:blur-0 brightness-125 dark:brightness-100">
+        <div className="hidden lg:block absolute inset-0 overflow-hidden transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-0 dark:opacity-100 scale-[1.03] dark:scale-100 blur-[4px] dark:blur-0 brightness-125 dark:brightness-100">
         <img
           src={heroDarkImage}
           alt="Paysage naturel de nuit"

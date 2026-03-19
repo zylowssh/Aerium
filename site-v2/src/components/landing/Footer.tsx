@@ -13,7 +13,6 @@ const footerColumns = [
       { label: 'Accueil', to: '/' },
       { label: 'Connexion', to: '/auth' },
       { label: 'Dashboard', to: '/dashboard' },
-      { label: 'Analytics', to: '/analytics' },
     ],
   },
   {
@@ -33,20 +32,6 @@ const footerColumns = [
       { label: 'Guide de démarrage', href: 'https://github.com/zylowssh/Aerium/blob/main/site-v2/docs/fr/QUICKSTART.md' },
     ],
   },
-  {
-    title: 'Juridique',
-    links: [
-      { label: 'Licence MIT', href: 'https://github.com/zylowssh/Aerium/blob/main/LICENSE' },
-      { label: 'Code source', href: 'https://github.com/zylowssh/Aerium' },
-      { label: 'Signaler un problème', href: 'https://github.com/zylowssh/Aerium/issues' },
-    ],
-  },
-];
-
-const socialLinks = [
-  { label: 'GitHub', href: 'https://github.com/zylowssh/Aerium', icon: Github },
-  { label: 'Documentation', href: 'https://github.com/zylowssh/Aerium/tree/main/site-v2/docs', icon: BookOpenText },
-  { label: 'Issues', href: 'https://github.com/zylowssh/Aerium/issues', icon: ShieldCheck },
 ];
 
 type FooterProps = {
@@ -76,7 +61,7 @@ const Footer = forwardRef<HTMLElement, FooterProps>(({ className = '' }, ref) =>
         />
 
         <div className="relative z-20 min-h-screen flex flex-col justify-start">
-          <div className="px-4 sm:px-8 lg:px-12 pt-32 pb-8 sm:pb-10 lg:pb-11">
+          <div className="px-4 sm:px-8 lg:px-12 pt-28 pb-8 sm:pb-10 lg:pb-11">
             <div className="grid gap-8 sm:gap-10 lg:grid-cols-[0.9fr_2.1fr] items-start">
               <div>
                 <div className="flex items-center gap-3">
