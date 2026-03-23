@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { forwardRef } from 'react';
 import { BookOpenText, Github, ShieldCheck } from 'lucide-react';
-import footerDarkImage from '@/assets/landing/footer-dark.jpg';
+import footerDarkImage from '@/assets/landing/footer-dark.png';
 import footerLightImage from '@/assets/landing/footer-light.png';
 import aeriumLogo from '@/assets/aerium-logo.png';
 
@@ -28,7 +28,7 @@ const footerColumns = [
     title: 'Ressources',
     links: [
       { label: 'Dépôt GitHub', href: 'https://github.com/zylowssh/Aerium' },
-      { label: 'Documentation site-v2', href: 'https://github.com/zylowssh/Aerium/tree/main/site-v2/docs' },
+      { label: 'Documentation', href: 'https://github.com/zylowssh/Aerium/tree/main/site-v2/docs' },
       { label: 'Guide de démarrage', href: 'https://github.com/zylowssh/Aerium/blob/main/site-v2/docs/fr/QUICKSTART.md' },
     ],
   },
@@ -50,18 +50,18 @@ const Footer = forwardRef<HTMLElement, FooterProps>(({ className = '' }, ref) =>
         <img
           src={footerLightImage}
           alt="Paysage naturel en pied de page"
-          className="absolute inset-0 h-full w-full object-cover object-center transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-100 dark:opacity-0 scale-100 dark:scale-[1.02] blur-0 dark:blur-[4px] brightness-100 dark:brightness-75"
+          className="absolute inset-0 h-full w-full object-cover object-[center_5%] transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-100 dark:opacity-0 scale-100 dark:scale-[1.02] blur-0 dark:blur-[4px] brightness-100 dark:brightness-75"
           loading="lazy"
         />
         <img
           src={footerDarkImage}
           alt="Paysage naturel en pied de page (mode sombre)"
-          className="absolute inset-0 h-full w-full object-cover object-center transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-0 dark:opacity-100 scale-[1.02] dark:scale-100 blur-[4px] dark:blur-0 brightness-125 dark:brightness-100"
+          className="absolute inset-0 h-full w-full object-cover object-[center_0%] transition-all duration-1000 ease-out will-change-[opacity,transform,filter] motion-reduce:transition-none opacity-0 dark:opacity-100 scale-[1.02] dark:scale-100 blur-[4px] dark:blur-0 brightness-125 dark:brightness-100"
           loading="lazy"
         />
 
         <div className="relative z-20 min-h-screen flex flex-col justify-start">
-          <div className="px-4 sm:px-8 lg:px-12 pt-28 pb-8 sm:pb-10 lg:pb-11">
+          <div className="px-4 sm:px-8 lg:px-12 pt-36 pb-8 sm:pb-10 lg:pb-11">
             <div className="grid gap-8 sm:gap-10 lg:grid-cols-[0.9fr_2.1fr] items-start">
               <div>
                 <div className="flex items-center gap-3">

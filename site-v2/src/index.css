@@ -116,8 +116,8 @@
 
   /* Landing-page-only palette: soft sky + nature greens */
   .landing-theme {
-    /*--background: 217 30% 8%;*/
-    --background: transparent;
+    --background: 217 30% 8%;
+    /*--background: transparent;*/
     --foreground: 196 55% 95%;
 
     --card: 199 34% 14%;
