@@ -495,7 +495,7 @@ export default function Landing2() {
             </motion.div>
           </motion.div>
 
-          {/* Enhanced Scroll Indicator */}
+          {/* Enhanced Scroll Indicator 
           <motion.div
             className="absolute left-1/2 -translate-x-1/2 bottom-20"
             initial={{ opacity: 0, y: -20 }}
@@ -524,7 +524,7 @@ export default function Landing2() {
                 <ChevronDown className="w-5 h-5 text-primary/60" />
               </motion.div>
             </motion.button>
-          </motion.div>
+          </motion.div>*/}
         </div>
       </section>
 
