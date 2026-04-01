@@ -278,6 +278,17 @@ class ApiClient {
     return response.data;
   }
 
+  // AI methods
+  async getAIRecommendations() {
+    const response = await this.client.post('/ai/recommendations');
+    return response.data;
+  }
+
+  async getAIPredictions() {
+    const response = await this.client.get('/ai/predictions');
+    return response.data;
+  }
+
   // Health check
   async healthCheck() {
     const response = await this.client.get('/health');

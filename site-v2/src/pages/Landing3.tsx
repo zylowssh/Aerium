@@ -91,6 +91,14 @@ const Landing3 = () => {
         return;
       }
 
+      panels.forEach((panel, index) => {
+        gsap.set(panel, {
+          zIndex: panels.length - index,
+          willChange: 'transform, opacity',
+          transformOrigin: '50% 50%',
+        });
+      });
+
       let panelStarts: number[] = [];
       let maxScroll = 0;
 
@@ -113,6 +121,49 @@ const Landing3 = () => {
           invalidateOnRefresh: true,
           fastScrollEnd: true,
         });
+      });
+
+      panels.forEach((panel, index) => {
+        const nextPanel = panels[index + 1];
+        if (!nextPanel) {
+          return;
+        }
+
+        gsap.fromTo(
+          panel,
+          { scale: 1, yPercent: 0, autoAlpha: 1 },
+          {
+            scale: 0.97,
+            yPercent: -7,
+            autoAlpha: 0.6,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: nextPanel,
+              start: 'top bottom',
+              end: 'top top',
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
+          }
+        );
+
+        gsap.fromTo(
+          nextPanel,
+          { yPercent: 14, autoAlpha: 0.6, scale: 1.03 },
+          {
+            yPercent: 0,
+            autoAlpha: 1,
+            scale: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: nextPanel,
+              start: 'top bottom',
+              end: 'top top',
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
+          }
+        );
       });
 
       ScrollTrigger.create({

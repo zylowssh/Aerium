@@ -4,6 +4,7 @@ import { TourProvider } from "@/contexts/TourContext";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AppOverlays from "@/components/AppOverlays";
+import AIChatWidget from "@/components/AIChatWidget";
 
 interface ProtectedAppShellProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ export default function ProtectedAppShell({ children }: ProtectedAppShellProps) 
         <TourProvider>
           <AppOverlays>
             <ProtectedRoute>{children}</ProtectedRoute>
+            <AIChatWidget />
           </AppOverlays>
         </TourProvider>
       </BackendProvider>

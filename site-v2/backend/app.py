@@ -21,6 +21,7 @@ from routes.alerts import alertes_bp
 from routes.reports import rapports_bp
 from routes.maintenance import maintenance_bp
 from routes.admin import admin_bp
+from routes.ai import ai_bp
 from scheduler import initialiser_planificateur
 from config import Config
 
@@ -237,6 +238,7 @@ def créer_app():
     app.register_blueprint(rapports_bp, url_prefix='/api/reports')
     app.register_blueprint(maintenance_bp, url_prefix='/api/maintenance')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(ai_bp, url_prefix='/api/ai')
     app.logger.info('[OK] Tous les blueprints API enregistrés')
     
     # Point de terminaison de vérification de santé

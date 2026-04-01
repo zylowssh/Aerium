@@ -1,13 +1,16 @@
 import { AppLayout } from '@/components/layout/AppLayout';
-import { motion } from 'framer-motion';
- import { BarChart3, TrendingUp, Calendar, Download, Info } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BarChart3, TrendingUp, TrendingDown, Minus, Calendar, Download, Bot, Sparkles, RefreshCw, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart, BarChart, Bar } from 'recharts';
-import { format, subDays } from 'date-fns';
-import { useState, useEffect, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart, BarChart, Bar, ReferenceLine } from 'recharts';
+import { format } from 'date-fns';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiClient } from '@/lib/apiClient';
 import { useSensors } from '@/hooks/useSensors';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
+import { cn } from '@/lib/utils';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 interface Reading {
   recorded_at: string;
@@ -21,6 +24,27 @@ const Analytics = () => {
   const [readings, setReadings] = useState<Reading[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('24h');
+
+  // Predictions state
+  const [predictions, setPredictions]     = useState<any>(null);
+  const [predLoading, setPredLoading]     = useState(false);
+  const [predError,   setPredError]       = useState<string | null>(null);
+  const [predOpen,    setPredOpen]        = useState(false);
+
+  const fetchPredictions = useCallback(async () => {
+    setPredLoading(true);
+    setPredError(null);
+    try {
+      const data = await apiClient.getAIPredictions();
+      setPredictions(data);
+      setPredOpen(true);
+    } catch (e: any) {
+      setPredError(e?.response?.data?.error || 'Impossible de générer les prédictions.');
+      setPredOpen(true);
+    } finally {
+      setPredLoading(false);
+    }
+  }, []);
   
   // Fetch real data based on time range
   useEffect(() => {
@@ -406,6 +430,248 @@ const Analytics = () => {
           ))}
         </div>
         )}
+
+        {/* ===== AI PREDICTIONS SECTION ===== */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="rounded-xl border border-border bg-card overflow-hidden"
+        >
+          {/* Collapsible header */}
+          <button
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors"
+            onClick={() => predOpen ? setPredOpen(false) : (predictions ? setPredOpen(true) : fetchPredictions())}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Prédictions IA — 24h
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {predictions
+                    ? `Basé sur ${predictions.data_hours}h de données · Généré à ${new Date(predictions.generated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+                    : 'Prévisions CO₂, température et humidité par Aéria'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {predictions && (
+                <Button
+                  variant="ghost" size="sm"
+                  className="text-xs gap-1 text-muted-foreground h-7"
+                  onClick={(e) => { e.stopPropagation(); fetchPredictions(); }}
+                >
+                  <RefreshCw className="w-3 h-3" /> Actualiser
+                </Button>
+              )}
+              {!predictions && !predLoading && (
+                <Badge variant="outline" className="text-xs">
+                  Cliquer pour générer
+                </Badge>
+              )}
+              {predLoading && <RefreshCw className="w-4 h-4 text-primary animate-spin" />}
+              {predOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </div>
+          </button>
+
+          {/* Collapsible body */}
+          <AnimatePresence initial={false}>
+            {predOpen && (
+              <motion.div
+                key="pred-body"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="px-6 pb-6 border-t border-border space-y-5 pt-5">
+                  {predLoading && (
+                    <div className="flex flex-col items-center gap-3 py-8">
+                      <div className="relative w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                        <Bot className="w-6 h-6 text-primary" />
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-primary animate-ping opacity-60" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Aéria calcule vos prévisions…</p>
+                    </div>
+                  )}
+
+                  {predError && !predLoading && (
+                    <div className="flex flex-col items-center gap-3 py-6 text-center">
+                      <AlertTriangle className="w-8 h-8 text-destructive/60" />
+                      <p className="text-sm text-muted-foreground">{predError}</p>
+                      <Button variant="outline" size="sm" onClick={fetchPredictions}>
+                        <RefreshCw className="w-4 h-4 mr-2" /> Réessayer
+                      </Button>
+                    </div>
+                  )}
+
+                  {predictions && !predLoading && (() => {
+                    const p = predictions;
+                    const trends = p.trends || {};
+                    const TrendIcon = trends.co2_direction === 'rising'
+                      ? TrendingUp
+                      : trends.co2_direction === 'falling'
+                      ? TrendingDown
+                      : Minus;
+                    const trendColor = trends.co2_direction === 'rising'
+                      ? 'text-destructive'
+                      : trends.co2_direction === 'falling'
+                      ? 'text-green-500'
+                      : 'text-muted-foreground';
+                    const riskColors: Record<string, string> = {
+                      low:      'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30',
+                      moderate: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30',
+                      high:     'bg-destructive/10 text-destructive border-destructive/30',
+                    };
+
+                    return (
+                      <>
+                        {/* Trend summary cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                            <p className="text-xs text-muted-foreground mb-1">Tendance CO₂</p>
+                            <div className="flex items-center gap-1">
+                              <TrendIcon className={cn('w-4 h-4', trendColor)} />
+                              <span className={cn('text-sm font-semibold', trendColor)}>
+                                {trends.co2_direction === 'rising'  ? 'En hausse'
+                                  : trends.co2_direction === 'falling' ? 'En baisse'
+                                  : 'Stable'}
+                              </span>
+                            </div>
+                            {trends.co2_change_pct !== undefined && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {trends.co2_change_pct > 0 ? '+' : ''}{Math.round(trends.co2_change_pct)}% sur 24h
+                              </p>
+                            )}
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                            <p className="text-xs text-muted-foreground mb-1">Pic prévu</p>
+                            <p className="text-sm font-semibold text-foreground">{trends.peak_co2 ?? '—'} ppm</p>
+                            {trends.peak_hour && (
+                              <p className="text-xs text-muted-foreground mt-0.5">vers {trends.peak_hour}</p>
+                            )}
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                            <p className="text-xs text-muted-foreground mb-1">Niveau de risque</p>
+                            <Badge
+                              variant="outline"
+                              className={cn('text-xs capitalize mt-0.5', riskColors[trends.risk_level] ?? '')}
+                            >
+                              {trends.risk_level === 'low'      ? 'Faible'
+                                : trends.risk_level === 'moderate' ? 'Modéré'
+                                : trends.risk_level === 'high'     ? 'Élevé'
+                                : '—'}
+                            </Badge>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                            <p className="text-xs text-muted-foreground mb-1">Données sources</p>
+                            <p className="text-sm font-semibold text-foreground">{p.data_hours}h</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{p.reading_count} lectures</p>
+                          </div>
+                        </div>
+
+                        {/* Forecast chart */}
+                        {p.forecast && p.forecast.length > 0 && (
+                          <div>
+                            <p className="text-sm font-medium text-foreground mb-3">Prévision CO₂ — prochaines 24h</p>
+                            <ResponsiveContainer width="100%" height={260}>
+                              <ComposedChart data={p.forecast} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+                                <defs>
+                                  <linearGradient id="forecastGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
+                                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                  </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                                <XAxis
+                                  dataKey="hour"
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                                  interval={2}
+                                />
+                                <YAxis
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                                  domain={['auto', 'auto']}
+                                />
+                                <Tooltip
+                                  contentStyle={{
+                                    background: 'hsl(var(--card))',
+                                    border: '1px solid hsl(var(--border))',
+                                    borderRadius: '8px',
+                                    fontSize: '12px',
+                                  }}
+                                  formatter={(v: any, name: string) => [
+                                    `${Math.round(v)} ppm`,
+                                    name === 'co2' ? 'CO₂ prévu'
+                                      : name === 'co2_upper' ? 'Borne haute'
+                                      : 'Borne basse',
+                                  ]}
+                                />
+                                {/* Confidence band */}
+                                <Area
+                                  type="monotone"
+                                  dataKey="co2_upper"
+                                  stroke="none"
+                                  fill="hsl(var(--primary))"
+                                  fillOpacity={0.08}
+                                  legendType="none"
+                                />
+                                <Area
+                                  type="monotone"
+                                  dataKey="co2_lower"
+                                  stroke="none"
+                                  fill="hsl(var(--background))"
+                                  fillOpacity={1}
+                                  legendType="none"
+                                />
+                                {/* Main forecast line */}
+                                <Line
+                                  type="monotone"
+                                  dataKey="co2"
+                                  stroke="hsl(var(--primary))"
+                                  strokeWidth={2}
+                                  dot={false}
+                                  strokeDasharray="5 3"
+                                />
+                                {/* Thresholds */}
+                                <ReferenceLine y={800}  stroke="hsl(var(--warning))"     strokeDasharray="4 3" strokeWidth={1} label={{ value: '800', fill: 'hsl(var(--warning))',     fontSize: 10, position: 'right' }} />
+                                <ReferenceLine y={1000} stroke="hsl(var(--destructive))" strokeDasharray="4 3" strokeWidth={1} label={{ value: '1000', fill: 'hsl(var(--destructive))', fontSize: 10, position: 'right' }} />
+                              </ComposedChart>
+                            </ResponsiveContainer>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Zone ombrée = intervalle de confiance · Lignes pointillées = seuils d'alerte
+                            </p>
+                          </div>
+                        )}
+
+                        {/* AI Narrative */}
+                        {p.narrative && (
+                          <div className="p-4 rounded-xl bg-primary/5 border border-primary/15">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Bot className="w-4 h-4 text-primary" />
+                              <span className="text-xs font-medium text-primary">Analyse Aéria</span>
+                            </div>
+                            <MarkdownRenderer content={p.narrative} />
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
       </div>
     </AppLayout>
   );
