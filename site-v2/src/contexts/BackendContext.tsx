@@ -1,19 +1,14 @@
- import React, { createContext, useContext, ReactNode } from 'react';
- import { useBackend, BackendStatus } from '@/hooks/useBackend';
- import { BackendConfig, backendConfig } from '@/lib/backendConfig';
- import { apiClient } from '@/lib/apiClient';
- import { supabase } from '@/integrations/supabase/client';
- 
- // Handle optional supabase (only available if env vars are set)
- const supabaseClient = supabase || undefined;
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useBackend, BackendStatus } from '@/hooks/useBackend';
+import { BackendConfig } from '@/lib/backendConfig';
+import { apiClient } from '@/lib/apiClient';
  
  interface BackendContextType {
    status: BackendStatus;
    checkFlask: () => Promise<void>;
-   checkSupabase: () => Promise<void>;
    getClient: (feature: keyof BackendConfig['features']) => {
-     type: 'flask' | 'supabase';
-     client: typeof apiClient | typeof supabase | undefined;
+   type: 'flask';
+   client: typeof apiClient;
    };
    isFlaskEnabled: boolean;
    config: BackendConfig;

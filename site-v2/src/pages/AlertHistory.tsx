@@ -30,6 +30,50 @@ interface Alert {
   resolvedAt?: string;
 }
 
+const normalizeHistoryStatus = (status: string): Alert['status'] => {
+  switch ((status || '').toLowerCase()) {
+    case 'acknowledged':
+    case 'reconnue':
+      return 'acknowledged';
+    case 'resolved':
+    case 'résolue':
+    case 'resolue':
+      return 'resolved';
+    default:
+      return 'triggered';
+  }
+};
+
+const normalizeHistoryType = (type: string): Alert['alertType'] => {
+  switch ((type || '').toLowerCase()) {
+    case 'critique':
+      return 'critique';
+    case 'info':
+      return 'info';
+    default:
+      return 'avertissement';
+  }
+};
+
+const normalizeHistoryAlert = (raw: any): Alert => ({
+  id: String(raw?.id ?? ''),
+  sensorId: String(raw?.sensorId ?? raw?.sensor_id ?? ''),
+  sensorName: raw?.sensorName || 'Capteur inconnu',
+  sensorLocation: raw?.sensorLocation || 'Inconnu',
+  alertType: normalizeHistoryType(raw?.alertType || raw?.alert_type),
+  metric: String(raw?.metric || ''),
+  metricValue: Number(raw?.metricValue ?? raw?.metric_value ?? 0),
+  thresholdValue:
+    raw?.thresholdValue === null || raw?.thresholdValue === undefined
+      ? undefined
+      : Number(raw?.thresholdValue),
+  message: raw?.message || 'Alerte sans message',
+  status: normalizeHistoryStatus(raw?.status),
+  createdAt: raw?.createdAt || raw?.created_at || new Date().toISOString(),
+  acknowledgedAt: raw?.acknowledgedAt || raw?.acknowledged_at,
+  resolvedAt: raw?.resolvedAt || raw?.resolved_at,
+});
+
 const AlertHistory = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,8 +94,9 @@ const AlertHistory = () => {
       const response = await apiClient.getAlertHistory(filterDays);
       
       if (response && response.alerts) {
+        const normalized = response.alerts.map(normalizeHistoryAlert);
         // Filter by status and type if needed
-        let filteredAlerts = response.alerts;
+        let filteredAlerts = normalized;
         
         if (filterStatus) {
           filteredAlerts = filteredAlerts.filter((a: any) => a.status === filterStatus);
@@ -255,12 +300,12 @@ const AlertHistory = () => {
                           </div>
                           <div>
                             <span className="text-muted-foreground">Valeur:</span>
-                            <p className="font-medium">{alert.metricValue.toFixed(1)}</p>
+                            <p className="font-medium">{Number(alert.metricValue ?? 0).toFixed(1)}</p>
                           </div>
-                          {alert.thresholdValue && (
+                          {alert.thresholdValue !== undefined && (
                             <div>
                               <span className="text-muted-foreground">Seuil:</span>
-                              <p className="font-medium">{alert.thresholdValue.toFixed(1)}</p>
+                              <p className="font-medium">{Number(alert.thresholdValue).toFixed(1)}</p>
                             </div>
                           )}
                         </div>

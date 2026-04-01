@@ -127,31 +127,6 @@
      placement: 'bottom',
      page: '/sensors'
    },
-   // Map page steps
-   {
-     id: 'map-page',
-     target: '[data-tour="map-page"]',
-     title: 'Carte des Capteurs 🗺️',
-     content: 'Visualisez l\'emplacement géographique de tous vos capteurs sur une carte interactive.',
-     placement: 'bottom',
-     page: '/sensor-map'
-   },
-   {
-     id: 'map-filters',
-     target: '[data-tour="map-filters"]',
-     title: 'Filtres et Recherche',
-     content: 'Filtrez vos capteurs par statut ou recherchez-les par nom et localisation.',
-     placement: 'bottom',
-     page: '/sensor-map'
-   },
-   {
-     id: 'map-grid',
-     target: '[data-tour="map-grid"]',
-     title: 'Affichage Grille/Liste',
-     content: 'Basculez entre l\'affichage en grille et en liste pour visualiser vos capteurs.',
-     placement: 'top',
-     page: '/sensor-map'
-   },
    {
      id: 'tour-button',
      target: '[data-tour="tour-button"]',

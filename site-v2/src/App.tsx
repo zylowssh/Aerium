@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { useTheme } from "./hooks/useTheme";
 
@@ -15,7 +15,6 @@ const Analytics = lazy(() => import("./pages/Analytics"));
 const Comparison = lazy(() => import("./pages/Comparison"));
 const Sensors = lazy(() => import("./pages/Sensors"));
 const SensorDetail = lazy(() => import("./pages/SensorDetail"));
-const SensorMap = lazy(() => import("./pages/SensorMap"));
 const Alerts = lazy(() => import("./pages/Alerts"));
 const AlertHistory = lazy(() => import("./pages/AlertHistory"));
 const Reports = lazy(() => import("./pages/Reports"));
@@ -53,7 +52,7 @@ const App = () => {
               <Route path="/comparison" element={<ProtectedAppShell><Comparison /></ProtectedAppShell>} />
               <Route path="/sensors" element={<ProtectedAppShell><Sensors /></ProtectedAppShell>} />
               <Route path="/sensors/:sensorId" element={<ProtectedAppShell><SensorDetail /></ProtectedAppShell>} />
-              <Route path="/sensor-map" element={<ProtectedAppShell><SensorMap /></ProtectedAppShell>} />
+              <Route path="/sensor-map" element={<Navigate to="/sensors" replace />} />
               <Route path="/alerts" element={<ProtectedAppShell><Alerts /></ProtectedAppShell>} />
               <Route path="/alert-history" element={<ProtectedAppShell><AlertHistory /></ProtectedAppShell>} />
               <Route path="/reports" element={<ProtectedAppShell><Reports /></ProtectedAppShell>} />

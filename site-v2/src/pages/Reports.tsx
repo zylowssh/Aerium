@@ -26,6 +26,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
 const Reports = () => {
   const [stats, setStats] = useState<AlertStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState(30);
 
   useEffect(() => {
@@ -35,10 +36,13 @@ const Reports = () => {
   const fetchStats = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await apiClient.getAlertStats(selectedDays);
       setStats(data);
     } catch (error) {
       console.error('Error fetching stats:', error);
+      setError('Impossible de charger les statistiques.');
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -94,18 +98,21 @@ const Reports = () => {
   if (!stats) {
     return (
       <AppLayout title="Rapports" subtitle="Analyses et rapports sur les alertes">
-        <p className="text-muted-foreground">Erreur lors du chargement des données</p>
+        <div className="space-y-3">
+          <p className="text-muted-foreground">{error || 'Erreur lors du chargement des données'}</p>
+          <Button variant="outline" onClick={fetchStats}>Réessayer</Button>
+        </div>
       </AppLayout>
     );
   }
 
   // Prepare data for charts
-  const typeData = Object.entries(stats.byType).map(([key, value]) => ({
+  const typeData = Object.entries(stats.byType || {}).map(([key, value]) => ({
     name: key,
     value: value
   }));
 
-  const metricData = Object.entries(stats.byMetric).map(([key, value]) => ({
+  const metricData = Object.entries(stats.byMetric || {}).map(([key, value]) => ({
     name: key,
     value: value
   }));

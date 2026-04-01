@@ -78,18 +78,14 @@ export function MaintenanceWidget() {
         });
       }
       
-      setItems(maintenanceItems.length > 0 ? maintenanceItems : getDefaultItems());
+      setItems(maintenanceItems);
     } catch (error) {
       console.error('Error fetching maintenance data:', error);
-      setItems(getDefaultItems());
+      setItems([]);
     } finally {
       setLoading(false);
     }
   };
-
-  const getDefaultItems = (): MaintenanceItem[] => [
-    { id: '1', sensorName: 'Aucun capteur', type: 'scheduled', date: 'N/A', description: 'Ajouter des capteurs' },
-  ];
 
   const getIcon = (type: MaintenanceItem['type']) => {
     switch (type) {

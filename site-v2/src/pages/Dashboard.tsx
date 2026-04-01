@@ -13,7 +13,6 @@ import { EnergyMonitorWidget } from '@/components/dashboard/EnergyMonitorWidget'
 import { OccupancyWidget } from '@/components/dashboard/OccupancyWidget';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { useSensors } from '@/hooks/useSensors';
-import { useWebSocket } from '@/contexts/WebSocketContext';
 import { apiClient } from '@/lib/apiClient';
 import AddSensorDialog from '@/components/sensors/AddSensorDialog';
 import { Button } from '@/components/ui/button';
@@ -26,8 +25,7 @@ import {
 } from '@/lib/sensorData';
 
 const Dashboard = () => {
-  const { sensors, isLoading, updateSensorData } = useSensors();
-  const { socket } = useWebSocket();
+  const { sensors, isLoading } = useSensors();
    const { 
      isOpen: isTourOpen, 
      currentStep, 
@@ -174,8 +172,12 @@ const Dashboard = () => {
   // Fetch aggregate trend data for overview chart - only when sensors count changes
   useEffect(() => {
     const fetchTrendData = async () => {
+      if (isLoading) {
+        return;
+      }
+
       if (isFetchingTrend.current || sensors.length === 0) {
-        if (sensors.length === 0) {
+        if (!isLoading && sensors.length === 0) {
           setTrendData([]);
           setIsTrendLoading(false);
         }
@@ -238,7 +240,7 @@ const Dashboard = () => {
 
     fetchTrendData();
     // Initial load only - WebSocket provides real-time sensor updates
-  }, [sensors.length]);
+  }, [isLoading, sensors.length]);
 
   // WebSocket listener for real-time aggregate updates - recalculate when sensors change
   useEffect(() => {

@@ -283,11 +283,46 @@ def obtenir_donnees_agregees():
         ).all()
         
         if not lectures:
+            # Fallback: utiliser un échantillon en temps réel pour les capteurs simulés
+            # afin que les widgets affichent des valeurs utiles même sans historique persisté.
+            fallback = []
+            for capteur in capteurs:
+                if capteur.sensor_type == 'simulation':
+                    sim = generate_current_simulated_reading(capteur.name)
+                    fallback.append({
+                        'co2': float(sim['co2']),
+                        'temperature': float(sim['temperature']),
+                        'humidity': float(sim['humidity'])
+                    })
+                    continue
+
+                derniere_lecture = SensorReading.query.filter_by(sensor_id=capteur.id).order_by(
+                    SensorReading.recorded_at.desc()
+                ).first()
+                if derniere_lecture:
+                    fallback.append({
+                        'co2': float(derniere_lecture.co2),
+                        'temperature': float(derniere_lecture.temperature),
+                        'humidity': float(derniere_lecture.humidity)
+                    })
+
+            if not fallback:
+                return jsonify({
+                    'avgCo2': 0,
+                    'avgTemperature': 0,
+                    'avgHumidity': 0,
+                    'totalReadings': 0
+                }), 200
+
+            moy_co2 = sum(r['co2'] for r in fallback) / len(fallback)
+            moy_temp = sum(r['temperature'] for r in fallback) / len(fallback)
+            moy_humidite = sum(r['humidity'] for r in fallback) / len(fallback)
+
             return jsonify({
-                'avgCo2': 0,
-                'avgTemperature': 0,
-                'avgHumidity': 0,
-                'totalReadings': 0
+                'avgCo2': round(moy_co2, 2),
+                'avgTemperature': round(moy_temp, 2),
+                'avgHumidity': round(moy_humidite, 2),
+                'totalReadings': len(fallback)
             }), 200
         
         # Calculer les moyennes

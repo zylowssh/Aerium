@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/apiClient';
-import { useAuth } from './useAuth';
 import { Sensor } from '@/lib/sensorData';
 import { useWebSocket } from '@/contexts/WebSocketContext';
 
 export const useSensors = () => {
-  const { user } = useAuth();
   const { socket } = useWebSocket();
   const [sensors, setSensors] = useState<Sensor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const hasAccessToken = () => !!localStorage.getItem('access_token');
+
   const fetchSensors = useCallback(async () => {
-    if (!user) {
+    if (!hasAccessToken()) {
       setSensors([]);
       setIsLoading(false);
       return;
@@ -22,7 +22,7 @@ export const useSensors = () => {
       const data = await apiClient.getSensors();
       
       const mappedSensors: Sensor[] = data.map((s: any) => ({
-        id: s.id,
+        id: String(s.id),
         name: s.name,
         location: s.location,
         status: s.status as 'en ligne' | 'hors ligne' | 'avertissement',
@@ -43,7 +43,7 @@ export const useSensors = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     fetchSensors();
@@ -51,11 +51,11 @@ export const useSensors = () => {
 
   // Setup WebSocket listener for sensor updates
   useEffect(() => {
-    if (!socket || !user) return;
+    if (!socket) return;
 
     const handleSensorUpdate = (data: any) => {
       const { sensor_id, reading } = data;
-      const normalizedSensorId = Number(sensor_id);
+      const normalizedSensorId = String(sensor_id);
 
       setSensors((prev) =>
         prev.map((sensor) =>
@@ -77,14 +77,14 @@ export const useSensors = () => {
     return () => {
       socket.off('sensor_update', handleSensorUpdate);
     };
-  }, [socket, user]);
+  }, [socket]);
 
   const createSensor = async (
     name: string,
     location: string,
     sensorType: 'real' | 'simulation'
   ) => {
-    if (!user) return null;
+    if (!hasAccessToken()) return null;
 
     try {
       const data = await apiClient.createSensor(name, location, sensorType);

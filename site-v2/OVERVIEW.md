@@ -963,8 +963,7 @@ def test_get_sensors(client, auth_tokens):
   "@hookform/resolvers": "^3.0",
   "zod": "^3.0",              // Validation
   
-  "@gsap/react": "^2.0",      // Advanced animations
-  "@supabase/supabase-js": "^2.0" // Optional: backend
+  "@gsap/react": "^2.0"       // Advanced animations
 }
 ```
 

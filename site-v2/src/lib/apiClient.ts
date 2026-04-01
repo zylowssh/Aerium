@@ -110,7 +110,7 @@ class ApiClient {
   // Sensor methods
   async getSensors() {
     const response = await this.client.get('/sensors');
-    return response.data.sensors;
+    return Array.isArray(response.data?.sensors) ? response.data.sensors : [];
   }
 
   async getSensor(sensorId: string) {
@@ -143,7 +143,7 @@ class ApiClient {
     const response = await this.client.get(`/readings/sensor/${sensorId}`, {
       params: { hours, limit }
     });
-    return response.data.readings;
+    return Array.isArray(response.data?.readings) ? response.data.readings : [];
   }
 
   async addReading(sensorId: string, reading: { co2: number; temperature: number; humidity: number }) {
@@ -153,7 +153,12 @@ class ApiClient {
 
   async getAggregateData() {
     const response = await this.client.get('/readings/aggregate');
-    return response.data;
+    return {
+      avgCo2: Number(response.data?.avgCo2 ?? 0),
+      avgTemperature: Number(response.data?.avgTemperature ?? 0),
+      avgHumidity: Number(response.data?.avgHumidity ?? 0),
+      totalReadings: Number(response.data?.totalReadings ?? 0),
+    };
   }
 
   // User methods
@@ -183,7 +188,7 @@ class ApiClient {
   // Alert methods
   async getPredictions() {
     const response = await this.client.get('/alerts/predictions');
-    return response.data.predictions;
+    return Array.isArray(response.data?.predictions) ? response.data.predictions : [];
   }
 
   async getAlertHistory(days?: number, limit?: number) {
@@ -211,7 +216,7 @@ class ApiClient {
     if (limit) params.append('limit', limit.toString());
     
     const response = await this.client.get(`/maintenance?${params.toString()}`);
-    return response.data.maintenance;
+    return Array.isArray(response.data?.maintenance) ? response.data.maintenance : [];
   }
 
   async getMaintenanceTask(maintenanceId: number) {
@@ -264,7 +269,7 @@ class ApiClient {
     const response = await this.client.get('/alerts', {
       params: { status, limit }
     });
-    return response.data.alerts;
+    return Array.isArray(response.data?.alerts) ? response.data.alerts : [];
   }
 
   async updateAlertStatus(alertId: string, status: 'nouvelle' | 'reconnue' | 'résolue') {

@@ -23,6 +23,46 @@ interface Prediction {
   trendPercentage: number;
 }
 
+const normalizeAlertStatus = (status: string): Alert['status'] => {
+  switch ((status || '').toLowerCase()) {
+    case 'triggered':
+    case 'new':
+    case 'nouvelle':
+      return 'nouvelle';
+    case 'acknowledged':
+    case 'reconnue':
+      return 'reconnue';
+    case 'resolved':
+    case 'résolue':
+    case 'resolue':
+      return 'résolue';
+    default:
+      return 'nouvelle';
+  }
+};
+
+const normalizeAlertType = (type: string): Alert['type'] => {
+  switch ((type || '').toLowerCase()) {
+    case 'critique':
+      return 'critique';
+    case 'info':
+      return 'info';
+    default:
+      return 'avertissement';
+  }
+};
+
+const normalizeAlert = (raw: any): Alert => ({
+  id: String(raw?.id ?? ''),
+  sensorId: String(raw?.sensorId ?? raw?.sensor_id ?? ''),
+  sensorName: raw?.sensorName || 'Capteur inconnu',
+  type: normalizeAlertType(raw?.type),
+  message: raw?.message || 'Alerte sans message',
+  value: Number(raw?.value ?? 0),
+  timestamp: new Date(raw?.timestamp || new Date().toISOString()),
+  status: normalizeAlertStatus(raw?.status),
+});
+
 const Alerts = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +82,7 @@ const Alerts = () => {
   const fetchAlerts = async () => {
     try {
       const alertsData = await apiClient.getAlerts(undefined, 100);
-      setAlerts(alertsData);
+      setAlerts((alertsData || []).map(normalizeAlert));
     } catch (error) {
       console.error('Error fetching alerts:', error);
       toast({
@@ -270,7 +310,7 @@ const Alerts = () => {
                       <div>
                         <h4 className="font-medium text-foreground">{alert.sensorName}</h4>
                         <p className="text-sm text-muted-foreground mt-0.5">
-                          {alert.message}: <span className="font-medium text-foreground">{alert.value}ppm</span>
+                          {alert.message}: <span className="font-medium text-foreground">{Number(alert.value ?? 0).toFixed(0)}ppm</span>
                         </p>
                       </div>
 

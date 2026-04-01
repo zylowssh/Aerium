@@ -39,7 +39,12 @@ def obtenir_maintenance():
             query = Maintenance.query.filter_by(user_id=id_utilisateur_courant)
         
         # Filtrer par état si fourni
-        if status:
+        if status == 'overdue':
+            query = query.filter(
+                Maintenance.status != 'completed',
+                Maintenance.scheduled_date < datetime.utcnow()
+            )
+        elif status:
             query = query.filter_by(status=status)
         
         # Filtrer par capteur si fourni

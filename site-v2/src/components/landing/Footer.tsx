@@ -19,7 +19,6 @@ const footerColumns = [
     title: 'Surveillance',
     links: [
       { label: 'Capteurs', to: '/sensors' },
-      { label: 'Carte des capteurs', to: '/sensor-map' },
       { label: 'Alertes', to: '/alerts' },
       { label: 'Rapports', to: '/reports' },
     ],

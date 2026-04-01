@@ -23,6 +23,7 @@ const Analytics = () => {
   const { sensors } = useSensors();
   const [readings, setReadings] = useState<Reading[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('24h');
 
   // Predictions state
@@ -180,6 +181,39 @@ const Analytics = () => {
     return null;
   };
 
+  const handleExportCSV = () => {
+    if (chartData.length === 0) {
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      const header = ['periode', 'co2_ppm', 'temperature_c', 'humidity_percent'];
+      const rows = chartData.map((row) => [
+        String(row.time),
+        String(row.co2),
+        String(row.temp),
+        String(row.humidity),
+      ]);
+
+      const csvContent = [header, ...rows]
+        .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `analytics-${timeRange}-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
      <AppLayout title="Analyses" subtitle="Analyse approfondie de vos données de qualité de l'air">
        <div className="space-y-6" data-tour="analytics-page">
@@ -199,9 +233,15 @@ const Analytics = () => {
             ))}
           </div>
           
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={handleExportCSV}
+            disabled={isExporting || chartData.length === 0}
+          >
             <Download className="w-4 h-4" />
-            Exporter
+            {isExporting ? 'Export...' : 'Exporter'}
           </Button>
         </div>
 

@@ -21,6 +21,11 @@ const Comparison = () => {
   const [comparisonData, setComparisonData] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
 
+  const sensorsMetaKey = sensors
+    .map((s) => `${s.id}:${s.name}`)
+    .sort()
+    .join('|');
+
   // Initialize with first sensor when sensors load
   useEffect(() => {
     if (sensors.length > 0 && selectedSensors.length === 0) {
@@ -73,7 +78,7 @@ const Comparison = () => {
     };
 
     fetchComparisonData();
-  }, [selectedSensors, metric, sensors]);
+  }, [selectedSensors, metric, sensorsMetaKey]);
 
   const addSensor = () => {
     const availableSensors = sensors.filter(s => !selectedSensors.includes(s.id));

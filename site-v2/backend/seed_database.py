@@ -118,7 +118,7 @@ def amorcer_base_donnees():
                 heure = heure_lecture.hour
                 
                 # Générer des variations réalistes
-                co2 = round(generer_motif_co2(heure, donnees_capteur['base_co2']))
+                co2 = round(generate_co2_pattern(heure, donnees_capteur['base_co2']))
                 temp = round((donnees_capteur['base_temp'] + (random.random() - 0.5) * 2) * 10) / 10
                 humidite = round(donnees_capteur['base_humidity'] + (random.random() - 0.5) * 10)
                 

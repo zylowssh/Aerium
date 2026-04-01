@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 import os
 import json
 import logging
+from sensor_simulator import generate_historical_simulated_readings
 
 ai_bp = Blueprint('ai', __name__)
 logger = logging.getLogger(__name__)
@@ -533,11 +534,9 @@ def predictions():
             SensorReading.recorded_at >= since,
         ).order_by(SensorReading.recorded_at.asc()).all()
 
-        if len(readings) < 6:
-            return jsonify({'error': 'Pas assez de données historiques (minimum 6 lectures).'}), 422
-
         df_dict = [
             {
+                'sensor_id':    r.sensor_id,
                 'recorded_at': r.recorded_at,
                 'co2':         r.co2,
                 'temperature': r.temperature,
@@ -545,6 +544,40 @@ def predictions():
             }
             for r in readings
         ]
+
+        # Fallback pour capteurs simulés sans historique persistant suffisant.
+        lectures_par_capteur: dict[int, int] = {}
+        for item in df_dict:
+            sid = int(item['sensor_id'])
+            lectures_par_capteur[sid] = lectures_par_capteur.get(sid, 0) + 1
+
+        for sensor in sensors:
+            if sensor.sensor_type != 'simulation':
+                continue
+
+            if lectures_par_capteur.get(sensor.id, 0) >= 6:
+                continue
+
+            sim_readings = generate_historical_simulated_readings(sensor.name, 24)
+            for r in sim_readings:
+                ts = r.get('recorded_at')
+                try:
+                    recorded_at = datetime.fromisoformat(str(ts)) if ts else datetime.utcnow()
+                except ValueError:
+                    recorded_at = datetime.utcnow()
+
+                df_dict.append({
+                    'sensor_id': sensor.id,
+                    'recorded_at': recorded_at,
+                    'co2': float(r.get('co2', 0)),
+                    'temperature': float(r.get('temperature', 0)),
+                    'humidity': float(r.get('humidity', 0)),
+                })
+
+        if len(df_dict) < 6:
+            return jsonify({'error': 'Pas assez de données historiques (minimum 6 lectures).'}), 422
+
+        df_dict.sort(key=lambda x: x['recorded_at'])
 
         forecast_data = _compute_forecast(df_dict)
 
@@ -589,7 +622,11 @@ Sois précis, utilise les données chiffrées, et reste actionnable."""
             )
 
         # Réponse finale
-        hours_covered = round((readings[-1].recorded_at - readings[0].recorded_at).total_seconds() / 3600)
+        timestamps = [item['recorded_at'] for item in df_dict if item.get('recorded_at')]
+        if len(timestamps) >= 2:
+            hours_covered = round((max(timestamps) - min(timestamps)).total_seconds() / 3600)
+        else:
+            hours_covered = 0
 
         return jsonify({
             'forecast':      forecast_data['forecast'],
@@ -603,7 +640,7 @@ Sois précis, utilise les données chiffrées, et reste actionnable."""
             },
             'narrative':     narrative,
             'data_hours':    hours_covered,
-            'reading_count': len(readings),
+            'reading_count': len(df_dict),
             'generated_at':  datetime.utcnow().isoformat(),
         })
 

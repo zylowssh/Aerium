@@ -9,7 +9,7 @@ import csv
 import io
 from functools import wraps
 
-rapports_bp = Blueprint('reports', __name__, url_prefix='/api/reports')
+rapports_bp = Blueprint('reports', __name__)
 
 
 def admin_ou_proprietaire(f):
@@ -47,8 +47,11 @@ def exporter_alertes_csv():
         date_fin = datetime.utcnow()
         date_debut = date_fin - timedelta(days=jours)
         
-        # Requête d'alertes pour les capteurs de l'utilisateur
-        capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
+        # Requête d'alertes pour les capteurs de l'utilisateur (ou tous les capteurs pour admin)
+        if user and user.role == 'admin':
+            capteurs = Sensor.query.all()
+        else:
+            capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
         ids_capteurs = [s.id for s in capteurs]
         
         if not ids_capteurs:
@@ -128,8 +131,11 @@ def exporter_alertes_pdf():
         date_fin = datetime.utcnow()
         date_debut = date_fin - timedelta(days=jours)
         
-        # Requête d'alertes pour les capteurs de l'utilisateur
-        capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
+        # Requête d'alertes pour les capteurs de l'utilisateur (ou tous les capteurs pour admin)
+        if user and user.role == 'admin':
+            capteurs = Sensor.query.all()
+        else:
+            capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
         ids_capteurs = [s.id for s in capteurs]
         
         if not ids_capteurs:
@@ -252,13 +258,20 @@ def obtenir_stats_rapport():
         # Gérer le user_id chaîne du JWT
         if isinstance(id_utilisateur_courant, str):
             id_utilisateur_courant = int(id_utilisateur_courant)
+
+        user = User.query.get(id_utilisateur_courant)
+        if not user:
+            return jsonify({'error': 'Utilisateur non trouvé'}), 404
         
         # Calculer l'intervalle de dates
         date_fin = datetime.utcnow()
         date_debut = date_fin - timedelta(days=jours)
         
-        # Requête d'alertes pour les capteurs de l'utilisateur
-        capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
+        # Requête d'alertes pour les capteurs de l'utilisateur (ou tous les capteurs pour admin)
+        if user.role == 'admin':
+            capteurs = Sensor.query.all()
+        else:
+            capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
         ids_capteurs = [s.id for s in capteurs]
         
         if not ids_capteurs:

@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import db, Alert, AlertHistory, Sensor, User, SensorReading
 from datetime import datetime, timedelta
 import pandas as pd
+from sensor_simulator import generate_historical_simulated_readings
 
 try:
     from prophet import Prophet
@@ -319,6 +320,10 @@ def obtenir_predictions():
                 .order_by(SensorReading.recorded_at.desc())\
                 .limit(200).all()
 
+            # Fallback pour les capteurs simulés qui n'ont pas encore d'historique persistant.
+            if len(lectures) < 20 and capteur.sensor_type == 'simulation':
+                lectures = generate_historical_simulated_readings(capteur.name, max(24, horizon_heures))
+
             if len(lectures) < 20:
                 continue
 
@@ -328,6 +333,8 @@ def obtenir_predictions():
                 prediction = construire_prediction_prevision(capteur, lectures, metrique, horizon_heures, utiliser_prophet)
                 if prediction:
                     predictions.append(prediction)
+
+        predictions = sorted(predictions, key=lambda p: p.get('likelihood', 0), reverse=True)
         
         return jsonify({'predictions': predictions}), 200
         
@@ -343,10 +350,24 @@ def construire_prediction_prevision(capteur, lectures, metrique, horizon_heures,
     valeur_courante = None
     pourcentage_tendance = 0.0
     try:
-        df = pd.DataFrame([
-            {'ds': r.recorded_at, 'y': float(getattr(r, metrique))}
-            for r in lectures
-        ])
+        lignes = []
+        for lecture in lectures:
+            if isinstance(lecture, dict):
+                valeur = lecture.get(metrique)
+                horodatage = lecture.get('recorded_at')
+            else:
+                valeur = getattr(lecture, metrique, None)
+                horodatage = getattr(lecture, 'recorded_at', None)
+
+            if valeur is None or horodatage is None:
+                continue
+
+            try:
+                lignes.append({'ds': horodatage, 'y': float(valeur)})
+            except (TypeError, ValueError):
+                continue
+
+        df = pd.DataFrame(lignes)
         if df.empty:
             return None
 
