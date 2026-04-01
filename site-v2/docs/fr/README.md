@@ -51,9 +51,12 @@ cd air-sense-dashboard
 
 2. **Configurer le backend**
 ```bash
+# Depuis site-v2/
+cp .env.example .env
+
 cd backend
 pip install -r requirements.txt
-cp ../.env.example .env
+cp .env.example .env
 python seed_database.py
 ```
 

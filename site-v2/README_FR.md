@@ -52,11 +52,14 @@ cd air-sense-dashboard
 
 2. **Configurer le backend**
 ```bash
+# Depuis site-v2/
+cp .env.example .env
+
 cd backend
 pip install -r requirements.txt
 
-# Créer un fichier .env
-cp ../.env.example .env
+# Créer la config backend
+cp .env.example .env
 
 # Seed la base de données avec des données de démonstration
 python seed_database.py
@@ -148,24 +151,35 @@ air-sense-dashboard/
 
 ### Variables d'Environnement
 
-Créez un fichier `.env` dans le répertoire `backend/` :
+Aerium utilise deux fichiers `.env` différents:
+- `site-v2/.env`: frontend (variables `VITE_*` uniquement)
+- `site-v2/backend/.env`: backend Flask (secrets, JWT, Mistral)
+
+Exemple backend (`site-v2/backend/.env`) :
 
 ```env
+SECRET_KEY=your-secret-key-change-in-production
+JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
+
+# Mistral AI (côté serveur)
+MISTRAL_API_KEY=your-mistral-api-key
+MISTRAL_MODEL=mistral-small-latest
+MISTRAL_MAX_TOKENS=700
+
+# Limitation de débit
+ENABLE_RATE_LIMITING=True
+RATELIMIT_DEFAULT=200 per day;50 per hour;10 per minute
+
 # Seuils d'alerte
 ALERT_CO2_THRESHOLD=1200
 ALERT_TEMP_MIN=15
 ALERT_TEMP_MAX=28
 ALERT_HUMIDITY_THRESHOLD=80
-
-# Rate Limiting
-ENABLE_RATE_LIMITING=True
-RATELIMIT_DEFAULT=200 per day;50 per hour;10 per minute
-
-FLASK_ENV=development
-FLASK_DEBUG=True
 ```
 
-Voir `.env.example` pour toutes les options disponibles.
+`MISTRAL_API_KEY` doit être dans `site-v2/backend/.env` (jamais dans `site-v2/.env`).
+
+Voir `docs/CONFIG.md` pour le détail complet.
 
 ## 📚 Documentation
 

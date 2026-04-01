@@ -4,8 +4,7 @@ import { MessageCircle, X, Send, Bot, User, Loader2, Wifi, WifiOff, RotateCcw } 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_BASE_URL } from '@/lib/apiBaseUrl';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,6 +33,19 @@ const WELCOME: Message = {
     'Bonjour ! Je suis **Aéria** 🌿, votre assistante qualité de l\'air.\n\nPosez-moi vos questions sur vos capteurs, alertes, ou comment améliorer votre environnement intérieur.',
   timestamp: new Date(),
 };
+
+const MAX_MESSAGES_IN_MEMORY = 80;
+const MAX_ASSISTANT_CHARS = 16000;
+
+function trimMessages(messages: Message[]): Message[] {
+  if (messages.length <= MAX_MESSAGES_IN_MEMORY) {
+    return messages;
+  }
+
+  // Keep welcome + latest conversation turns to avoid unbounded growth.
+  const latest = messages.filter((m) => m.id !== WELCOME.id).slice(-(MAX_MESSAGES_IN_MEMORY - 1));
+  return [WELCOME, ...latest];
+}
 
 // ---------------------------------------------------------------------------
 // Streaming helper
@@ -100,6 +112,7 @@ function TypingDots() {
 
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user';
+  const isAssistantStreaming = !isUser && !!msg.streaming;
 
   return (
     <motion.div
@@ -136,6 +149,8 @@ function MessageBubble({ msg }: { msg: Message }) {
         {msg.streaming && !msg.content ? (
           <TypingDots />
         ) : isUser ? (
+          <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
+        ) : isAssistantStreaming ? (
           <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
         ) : (
           <MarkdownRenderer content={msg.content} />
@@ -179,8 +194,8 @@ export default function AIChatWidget() {
 
   // Auto-scroll to latest message
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    bottomRef.current?.scrollIntoView({ behavior: isStreaming ? 'auto' : 'smooth' });
+  }, [messages, isStreaming]);
 
   // Focus input when panel opens
   useEffect(() => {
@@ -212,7 +227,7 @@ export default function AIChatWidget() {
       streaming: true,
     };
 
-    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+    setMessages((prev) => trimMessages([...prev, userMsg, assistantMsg]));
     setIsStreaming(true);
 
     // Build history (skip welcome, skip errors)
@@ -222,48 +237,84 @@ export default function AIChatWidget() {
 
     const controller = new AbortController();
     abortRef.current = controller;
+    const RENDER_INTERVAL_MS = 80;
+
+    let assistantText = '';
+    let lastRenderAt = 0;
+    let finished = false;
+
+    const renderAssistant = (options?: { final?: boolean; error?: string }) => {
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== assistantId) return m;
+
+          if (options?.error) {
+            return {
+              ...m,
+              content: assistantText || `⚠️ ${options.error}`,
+              streaming: false,
+              error: assistantText.length === 0,
+            };
+          }
+
+          return {
+            ...m,
+            content: assistantText,
+            streaming: options?.final ? false : true,
+          };
+        })
+      );
+    };
 
     try {
       for await (const chunk of streamChat(history, token, controller.signal)) {
         if (chunk.error) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: `⚠️ ${chunk.error}`, streaming: false, error: true }
-                : m
-            )
-          );
+          finished = true;
+          renderAssistant({ error: chunk.error });
           break;
         }
+
         if (chunk.done) {
-          setMessages((prev) =>
-            prev.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m))
-          );
+          finished = true;
+          renderAssistant({ final: true });
           break;
         }
+
         if (chunk.token) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, content: m.content + chunk.token } : m
-            )
-          );
+          assistantText += chunk.token;
+
+          if (assistantText.length >= MAX_ASSISTANT_CHARS) {
+            assistantText = `${assistantText.slice(0, MAX_ASSISTANT_CHARS)}\n\n[Réponse tronquée pour préserver les performances.]`;
+            finished = true;
+            controller.abort();
+            renderAssistant({ final: true });
+            break;
+          }
+
+          const now = Date.now();
+          if (now - lastRenderAt >= RENDER_INTERVAL_MS) {
+            lastRenderAt = now;
+            renderAssistant();
+          }
         }
+      }
+
+      if (!finished) {
+        finished = true;
+        renderAssistant({ final: true });
       }
     } catch (err: any) {
       const isAbort = err.name === 'AbortError';
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId
-            ? {
-                ...m,
-                content: isAbort ? m.content : '⚠️ Connexion interrompue. Réessayez.',
-                streaming: false,
-                error: !isAbort && !!m.content === false,
-              }
-            : m
-        )
-      );
+      if (isAbort) {
+        renderAssistant({ final: true });
+      } else {
+        finished = true;
+        renderAssistant({ error: 'Connexion interrompue. Réessayez.' });
+      }
     } finally {
+      if (!finished) {
+        renderAssistant({ final: true });
+      }
       setIsStreaming(false);
       abortRef.current = null;
     }

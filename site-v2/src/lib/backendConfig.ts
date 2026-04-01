@@ -10,6 +10,8 @@
   * - Lovable Cloud: User auth, profiles, real-time subscriptions, file storage
   */
  
+ import { API_BASE_URL } from '@/lib/apiBaseUrl';
+ 
  export type BackendType = 'flask' | 'supabase' | 'both';
  
  export interface BackendConfig {
@@ -40,7 +42,7 @@
  export const backendConfig: BackendConfig = {
    flask: {
      enabled: import.meta.env.VITE_FLASK_ENABLED === 'true',
-     baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+     baseUrl: API_BASE_URL,
      healthEndpoint: '/health',
    },
    supabase: {

@@ -113,8 +113,8 @@ Tu aides les utilisateurs à comprendre leurs données, interpréter les alertes
 
 def _call_mistral_json(messages: list, max_tokens: int = 800) -> str | None:
     """Appel Mistral synchrone, retourne le texte brut ou None en cas d'erreur."""
-    import requests as req
     try:
+        import requests as req
         resp = req.post(
             MISTRAL_URL,
             headers={
@@ -171,8 +171,8 @@ def chat():
         ]
 
         def generate():
-            import requests as req
             try:
+                import requests as req
                 resp = req.post(
                     MISTRAL_URL,
                     headers={

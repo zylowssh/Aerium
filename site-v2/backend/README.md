@@ -15,7 +15,16 @@ Create a `.env` file in the backend directory:
 ```
 SECRET_KEY=your-secret-key-here
 JWT_SECRET_KEY=your-jwt-secret-key-here
+MISTRAL_API_KEY=your-mistral-api-key
+MISTRAL_MODEL=mistral-small-latest
+MISTRAL_MAX_TOKENS=700
 ```
+
+Use `backend/.env.example` as template.
+
+Important:
+- Put secrets only in `backend/.env`.
+- Keep `site-v2/.env` for frontend `VITE_*` variables only.
 
 3. **Initialize the database:**
 The database will be automatically created when you first run the app.

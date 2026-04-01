@@ -15,6 +15,7 @@ import { apiClient } from '@/lib/apiClient';
 import { useSensors } from '@/hooks/useSensors';
 import { useToast } from '@/hooks/use-toast';
 import { thresholdSchema, validateData } from '@/lib/validation';
+import { API_BASE_URL } from '@/lib/apiBaseUrl';
 
 interface User {
   id: string;
@@ -114,7 +115,7 @@ const Settings = () => {
     setSimulationSpeed(newSpeed);
     setIsUpdatingSpeed(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/simulation/speed`, {
+      const response = await fetch(`${API_BASE_URL}/admin/simulation/speed`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

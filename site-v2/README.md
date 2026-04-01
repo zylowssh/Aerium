@@ -75,13 +75,23 @@ cd air-sense-dashboard
 
 ### 2. Backend (Flask)
 ```bash
+# Depuis site-v2/
+cp .env.example .env
+
 cd backend
 pip install -r requirements.txt
-cp ../.env.example .env
+cp .env.example .env
 python seed_database.py   # Charger données démo
 python app.py             # Démarrer serveur
 # http://localhost:5000
 ```
+
+Important:
+- Le fichier `site-v2/.env` est pour le frontend (variables `VITE_*` uniquement).
+- Le fichier `site-v2/backend/.env` est pour le backend Flask (secrets, JWT, Mistral).
+- La clé `MISTRAL_API_KEY` doit être dans `site-v2/backend/.env`.
+
+Voir aussi: `docs/CONFIG.md`.
 
 ### 3. Frontend (React)
 ```bash

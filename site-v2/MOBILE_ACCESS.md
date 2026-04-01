@@ -60,10 +60,10 @@ npm run dev
 **Copy the mobile config:**
 ```powershell
 cd site-v2
-Copy-Item .env.mobile .env.local
+Copy-Item .env.mobile .env
 ```
 
-**Or manually update `.env.local`:**
+**Or manually update `.env`:**
 ```env
 VITE_API_URL=http://172.20.10.4:5000/api
 ```
@@ -114,7 +114,7 @@ New-NetFirewallRule -DisplayName "Flask Backend" -Direction Inbound -LocalPort 5
 
 **Issue: Login doesn't work**
 - ✅ Check browser console (inspect on mobile or use Chrome DevTools)
-- ✅ Verify API URL in `.env.local` matches your computer's IP
+- ✅ Verify API URL in `.env` matches your computer's IP
 - ✅ Check backend terminal shows incoming requests
 
 ---

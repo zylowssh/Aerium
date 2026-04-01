@@ -11,6 +11,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 import urllib.request
+from pathlib import Path
 
 from database import db, init_db, vérifier_colonnes_seuil_capteur, User
 from routes.auth import auth_bp
@@ -25,7 +26,11 @@ from routes.ai import ai_bp
 from scheduler import initialiser_planificateur
 from config import Config
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+
+# Load backend secrets/config first, then optional project-level defaults.
+load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR.parent / '.env', override=False)
 
 # Configurer la journalisation
 def configurer_journalisation(app):
@@ -67,10 +72,13 @@ def créer_app():
     
     # Charger la configuration
     app.config.from_object(Config)
-    app.config['SECRET_KEY'] = 'aerium-school-project-secret'
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'aerium-dev-secret-key-change-in-production-please')
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aerium.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JWT_SECRET_KEY'] = 'aerium-jwt-secret'
+    app.config['JWT_SECRET_KEY'] = os.getenv(
+        'JWT_SECRET_KEY',
+        'aerium-dev-jwt-secret-key-change-in-production-at-least-32-bytes'
+    )
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
@@ -158,7 +166,14 @@ def créer_app():
     })
     app.logger.info('[OK] Caching initialized')
     
-    socketio = SocketIO(app, cors_allowed_origins=allowed_origins, async_mode='threading', logger=False, engineio_logger=False)
+    socketio = SocketIO(
+        app,
+        cors_allowed_origins=allowed_origins,
+        async_mode='threading',
+        logger=False,
+        engineio_logger=False,
+        allow_upgrades=False,
+    )
     app.logger.info('[OK] WebSocket (Socket.IO) initialized')
 
     @jwt.user_identity_loader
@@ -240,6 +255,15 @@ def créer_app():
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
     app.logger.info('[OK] Tous les blueprints API enregistrés')
+
+    @app.route('/')
+    def racine_api():
+        return jsonify({
+            'service': 'API Aerium',
+            'status': 'online',
+            'health': '/api/health',
+            'docs': '/api/docs'
+        }), 200
     
     # Point de terminaison de vérification de santé
     @app.route('/api/health')
@@ -251,6 +275,10 @@ def créer_app():
                 'rate_limiting': app.config.get('ENABLE_RATE_LIMITING', False)
             }
         }), 200
+
+    @app.route('/health')
+    def vérification_santé_simple():
+        return vérification_santé()
     
     # Point de terminaison de documentation API
     @app.route('/api/docs')

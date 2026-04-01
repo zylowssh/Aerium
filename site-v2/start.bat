@@ -60,23 +60,19 @@ if not exist "venv" (
 
 set "PYTHON=%cd%\venv\Scripts\python.exe"
 
-:: Check if pip packages are installed
-if not exist "venv\Lib\site-packages\flask" (
-    echo [INFO] Installation des paquets Python...
-    if defined VERBOSE (
-        "%PYTHON%" -m pip install -r requirements.txt
-    ) else (
-        "%PYTHON%" -m pip install -r requirements.txt >nul 2>&1
-    )
-    if errorlevel 1 (
-        echo [ERROR] Échec de l'installation des paquets Python
-        pause
-        exit /b 1
-    )
-    echo [OK] Dépendances Python installées
+:: Toujours synchroniser les dépendances pour éviter les modules manquants après une mise à jour requirements.txt
+echo [INFO] Synchronisation des paquets Python...
+if defined VERBOSE (
+    "%PYTHON%" -m pip install -r requirements.txt
 ) else (
-    echo [OK] Dépendances Python déjà installées
+    "%PYTHON%" -m pip install -r requirements.txt >nul 2>&1
 )
+if errorlevel 1 (
+    echo [ERROR] Échec de l'installation des paquets Python
+    pause
+    exit /b 1
+)
+echo [OK] Dépendances Python synchronisées
 
 :: Database creation - FIXED LOGIC
 if not exist "aerium.db" (

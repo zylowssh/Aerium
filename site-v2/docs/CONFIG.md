@@ -2,75 +2,64 @@
 
 Guide complet des options de configuration d'Aerium.
 
-## 🔧 Variables d'Environnement Backend
+## 🧭 Quel fichier .env utiliser ?
 
-Créez un fichier `.env` à la racine du backend:
+Aerium `site-v2` utilise plusieurs fichiers `.env` selon le rôle:
 
-```bash
-# Backend Flask Configuration
-FLASK_ENV=production
-FLASK_DEBUG=False
+| Fichier | Utilisation | Contient |
+|--------|-------------|----------|
+| `site-v2/.env` | Frontend Vite (navigateur) | Uniquement des variables `VITE_*` |
+| `site-v2/.env.mobile` | Frontend mobile/LAN (optionnel) | Variante de `VITE_API_URL` |
+| `site-v2/backend/.env` | Backend Flask (serveur) | Secrets, JWT, Mistral, seuils |
 
-# Database
-DATABASE_URL=sqlite:///instance/aerium.db
-
-# CORS
-CORS_ORIGINS=http://localhost:5173,http://localhost:8080
-
-# Logging
-LOG_LEVEL=INFO
-LOG_FILE=logs/aerium.log
-
-# Rate Limiting
-RATELIMIT_ENABLED=True
-RATELIMIT_DEFAULT=100 per hour
-
-# Alert Thresholds
-ALERT_CO2_THRESHOLD=1200
-ALERT_TEMP_MIN=15
-ALERT_TEMP_MAX=28
-```
-
-### Explication des Variables
-
-| Variable | Défaut | Description |
-|----------|--------|-------------|
-| `FLASK_ENV` | production | Mode développement/production |
-| `FLASK_DEBUG` | False | Activer débogage (JAMAIS en production) |
-| `DATABASE_URL` | sqlite:///instance/aerium.db | URI de la base de données |
-| `CORS_ORIGINS` | localhost:5173 | Domaines autorisés CORS |
-| `LOG_LEVEL` | INFO | Niveau de logs (DEBUG/INFO/WARNING/ERROR) |
-| `RATELIMIT_ENABLED` | True | Activer limitation de débit |
+Règle simple:
+- `MISTRAL_API_KEY` va dans `site-v2/backend/.env`.
+- Ne jamais mettre de secret dans `site-v2/.env` (visible côté client).
 
 ---
 
-## 🎨 Variables d'Environnement Frontend
+## 🔧 Variables Backend (site-v2/backend/.env)
 
-Créez un fichier `.env.local` à la racine du frontend:
+Base recommandée:
 
-```bash
-# API Configuration
-VITE_API_URL=http://localhost:5000
-VITE_API_TIMEOUT=30000
+```env
+SECRET_KEY=your-secret-key-change-in-production
+JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
 
-# Features
-VITE_ENABLE_WEBSOCKET=true
-VITE_ENABLE_ANALYTICS=false
-VITE_ENABLE_NOTIFICATIONS=true
+# AI
+MISTRAL_API_KEY=your-mistral-api-key
+MISTRAL_MODEL=mistral-small-latest
+MISTRAL_MAX_TOKENS=700
 
-# Build
-VITE_APP_TITLE=Aerium Air Quality Dashboard
+# API behavior
+ENABLE_RATE_LIMITING=True
+RATELIMIT_DEFAULT=200 per day;50 per hour;10 per minute
+
+# Alert thresholds
+ALERT_CO2_THRESHOLD=1200
+ALERT_TEMP_MIN=15
+ALERT_TEMP_MAX=28
+ALERT_HUMIDITY_THRESHOLD=80
+
+# Frontend origin
+FRONTEND_URL=http://localhost:5173
 ```
 
-### Explication des Variables
+Astuce:
+- Utilisez `site-v2/backend/.env.example` comme modèle.
 
-| Variable | Défaut | Description |
-|----------|--------|-------------|
-| `VITE_API_URL` | http://localhost:5000 | URL de l'API backend |
-| `VITE_API_TIMEOUT` | 30000 | Timeout des requêtes (ms) |
-| `VITE_ENABLE_WEBSOCKET` | true | Activer WebSocket pour live updates |
-| `VITE_ENABLE_ANALYTICS` | false | Activer l'analytique |
-| `VITE_ENABLE_NOTIFICATIONS` | true | Activer notifications |
+---
+
+## 🎨 Variables Frontend (site-v2/.env)
+
+Base recommandée:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_FLASK_ENABLED=true
+```
+
+Pour mobile, créez/éditez `site-v2/.env.mobile` avec votre IP locale.
 
 ---
 

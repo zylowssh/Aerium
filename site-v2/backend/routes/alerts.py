@@ -9,6 +9,9 @@ try:
 except Exception:  # pragma: no cover - handled at runtime
     Prophet = None
 
+PROPHET_RUNTIME_DISABLED = False
+PROPHET_DISABLE_REASON = None
+
 alertes_bp = Blueprint('alerts', __name__)
 
 @alertes_bp.route('', methods=['GET'])
@@ -305,7 +308,7 @@ def obtenir_predictions():
         else:
             capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
         
-        utiliser_prophet = Prophet is not None
+        utiliser_prophet = Prophet is not None and not PROPHET_RUNTIME_DISABLED
 
         predictions = []
         horizon_heures = 24
@@ -335,6 +338,7 @@ def obtenir_predictions():
 
 def construire_prediction_prevision(capteur, lectures, metrique, horizon_heures, utiliser_prophet):
     """Construire une prédiction basée sur Prophet pour une métrique de capteur, avec solution de repli."""
+    global PROPHET_RUNTIME_DISABLED, PROPHET_DISABLE_REASON
     df = None
     valeur_courante = None
     pourcentage_tendance = 0.0
@@ -360,7 +364,7 @@ def construire_prediction_prevision(capteur, lectures, metrique, horizon_heures,
         pourcentage_tendance = calculer_pourcentage_tendance(df['y'])
         seuils = obtenir_seuils_capteur(capteur)
 
-        if utiliser_prophet:
+        if utiliser_prophet and not PROPHET_RUNTIME_DISABLED:
             try:
                 modele = Prophet(
                     daily_seasonality=True,
@@ -378,8 +382,15 @@ def construire_prediction_prevision(capteur, lectures, metrique, horizon_heures,
                 if prediction:
                     return prediction
             except Exception as erreur_prophet:
-                # Prophet a échoué, revenir à la prédiction basée sur les tendances
-                print(f"Échec de la prévision Prophet pour {metrique} sur le capteur {capteur.id}: {erreur_prophet}. Utilisation de la solution de repli basée sur les tendances.")
+                # Désactiver Prophet pour la session après le premier échec.
+                if not PROPHET_RUNTIME_DISABLED:
+                    PROPHET_RUNTIME_DISABLED = True
+                    PROPHET_DISABLE_REASON = str(erreur_prophet)
+                    print(
+                        f"Prophet indisponible ({erreur_prophet}). "
+                        "Désactivation des prévisions Prophet pour cette session; "
+                        "utilisation de la solution de repli basée sur les tendances."
+                    )
 
         return construire_prediction_tendance(capteur, df, metrique, horizon_heures, seuils, valeur_courante, pourcentage_tendance)
     except Exception as exc:

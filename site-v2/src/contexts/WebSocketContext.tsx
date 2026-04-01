@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { Socket } from 'socket.io-client';
+import { SOCKET_BASE_URL } from '@/lib/apiBaseUrl';
 
 interface WebSocketContextType {
   socket: Socket | null;
@@ -17,7 +18,6 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     let activeSocket: Socket | null = null;
 
     const connectSocket = async () => {
-      const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
       const token = localStorage.getItem('access_token');
 
       if (!token) {
@@ -31,9 +31,9 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const newSocket = io(SOCKET_URL, {
+      const newSocket = io(SOCKET_BASE_URL, {
         auth: { token },
-        transports: ['websocket', 'polling'],
+        transports: ['polling'],
         reconnection: true,
         reconnectionDelay: 500,
         reconnectionDelayMax: 3000,

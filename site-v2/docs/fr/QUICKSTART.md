@@ -6,13 +6,20 @@ Guide de référence rapide du Tableau de Bord Aerium Qualité de l'Air.
 
 ### Backend
 ```bash
+# Depuis site-v2/
+cp .env.example .env
+
 cd backend
 pip install -r requirements.txt
-cp ../.env.example .env  # Créer le fichier de configuration
+cp .env.example .env  # Créer la config backend
 python seed_database.py   # Charger les données de démo
 python app.py             # Lancer le serveur
 # http://localhost:5000
 ```
+
+Note:
+- `site-v2/.env` = frontend (`VITE_*`)
+- `site-v2/backend/.env` = backend (secrets, Mistral)
 
 ### Frontend
 ```bash

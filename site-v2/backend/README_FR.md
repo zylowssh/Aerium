@@ -15,15 +15,29 @@ pip install -r requirements.txt
 
 ### Configuration
 
-Créez `.env`:
+Créez `backend/.env` (copiez `backend/.env.example`):
 ```env
+SECRET_KEY=your-secret-key-change-in-production
+JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
+
+# Mistral AI (serveur uniquement)
+MISTRAL_API_KEY=your-mistral-api-key
+MISTRAL_MODEL=mistral-small-latest
+MISTRAL_MAX_TOKENS=700
+
 ENABLE_RATE_LIMITING=True
+RATELIMIT_DEFAULT=200 per day;50 per hour;10 per minute
+
 ALERT_CO2_THRESHOLD=1200
 ALERT_TEMP_MIN=15
 ALERT_TEMP_MAX=28
-FLASK_ENV=development
-FLASK_DEBUG=True
+ALERT_HUMIDITY_THRESHOLD=80
+FRONTEND_URL=http://localhost:5173
 ```
+
+Important:
+- `MISTRAL_API_KEY` doit être dans `backend/.env`.
+- `site-v2/.env` est réservé aux variables frontend `VITE_*`.
 
 ### Lancer
 

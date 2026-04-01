@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Leaf, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import { API_BASE_URL } from '@/lib/apiBaseUrl';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Adresse email invalide" }),
@@ -68,7 +69,7 @@ const Auth = () => {
     setIsLoading(true);
     try {
       console.log('Attempting login with:', loginEmail);
-      console.log('API URL:', import.meta.env.VITE_API_URL);
+      console.log('Resolved API URL:', API_BASE_URL);
       
       await apiClient.login(loginEmail, loginPassword);
       
