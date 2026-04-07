@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,24 +9,16 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    // Check if user has access token
-    const token = localStorage.getItem('access_token');
-    
-    if (!token) {
-      // No token found, redirect to auth
+    if (!isLoading && !user) {
       navigate('/auth', { replace: true });
-      setIsAuthenticated(false);
-    } else {
-      // Token exists, user is authenticated
-      setIsAuthenticated(true);
     }
-  }, [navigate]);
+  }, [isLoading, navigate, user]);
 
   // Show loading state while checking authentication
-  if (isAuthenticated === null) {
+  if (isLoading) {
     return (
       <motion.div
         className="min-h-screen flex items-center justify-center bg-background"
@@ -46,7 +39,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   // User is authenticated, render children
-  if (isAuthenticated) {
+  if (user) {
     return <>{children}</>;
   }
 

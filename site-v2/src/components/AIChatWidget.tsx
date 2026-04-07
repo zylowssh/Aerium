@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Bot, User, Loader2, Wifi, WifiOff, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -59,7 +59,12 @@ async function* streamChat(
     return;
   }
 
-  const reader = resp.body!.getReader();
+  if (!resp.body) {
+    yield { error: 'Réponse de streaming invalide (body vide).' };
+    return;
+  }
+
+  const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
 
@@ -98,7 +103,7 @@ function TypingDots() {
   );
 }
 
-function MessageBubble({ msg }: { msg: Message }) {
+const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user';
 
   return (
@@ -135,7 +140,7 @@ function MessageBubble({ msg }: { msg: Message }) {
       >
         {msg.streaming && !msg.content ? (
           <TypingDots />
-        ) : isUser ? (
+        ) : isUser || msg.streaming ? (
           <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
         ) : (
           <MarkdownRenderer content={msg.content} />
@@ -147,7 +152,7 @@ function MessageBubble({ msg }: { msg: Message }) {
       </div>
     </motion.div>
   );
-}
+});
 
 // ---------------------------------------------------------------------------
 // Main widget
@@ -160,8 +165,24 @@ export default function AIChatWidget() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const messagesRef = useRef<Message[]>([WELCOME]);
+  const streamBufferRef = useRef('');
+  const flushTimerRef = useRef<number | null>(null);
+  const streamTimeoutRef = useRef<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const flushBufferedToken = useCallback((assistantId: string) => {
+    const pending = streamBufferRef.current;
+    if (!pending) return;
+
+    streamBufferRef.current = '';
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === assistantId ? { ...m, content: m.content + pending } : m
+      )
+    );
+  }, []);
 
   // Check AI key status on first open
   useEffect(() => {
@@ -180,6 +201,10 @@ export default function AIChatWidget() {
   // Auto-scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
   }, [messages]);
 
   // Focus input when panel opens
@@ -216,16 +241,28 @@ export default function AIChatWidget() {
     setIsStreaming(true);
 
     // Build history (skip welcome, skip errors)
-    const history = [...messages.slice(1), userMsg]
+    const history = [...messagesRef.current.slice(1), userMsg]
       .filter((m) => !m.error)
       .map((m) => ({ role: m.role, content: m.content }));
 
     const controller = new AbortController();
     abortRef.current = controller;
 
+    const resetStreamTimeout = () => {
+      if (streamTimeoutRef.current !== null) {
+        window.clearTimeout(streamTimeoutRef.current);
+      }
+      streamTimeoutRef.current = window.setTimeout(() => {
+        controller.abort();
+      }, 20000);
+    };
+
     try {
+      resetStreamTimeout();
       for await (const chunk of streamChat(history, token, controller.signal)) {
+        resetStreamTimeout();
         if (chunk.error) {
+          flushBufferedToken(assistantId);
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
@@ -236,20 +273,24 @@ export default function AIChatWidget() {
           break;
         }
         if (chunk.done) {
+          flushBufferedToken(assistantId);
           setMessages((prev) =>
             prev.map((m) => (m.id === assistantId ? { ...m, streaming: false } : m))
           );
           break;
         }
         if (chunk.token) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, content: m.content + chunk.token } : m
-            )
-          );
+          streamBufferRef.current += chunk.token;
+          if (flushTimerRef.current === null) {
+            flushTimerRef.current = window.setTimeout(() => {
+              flushBufferedToken(assistantId);
+              flushTimerRef.current = null;
+            }, 66);
+          }
         }
       }
     } catch (err: any) {
+      flushBufferedToken(assistantId);
       const isAbort = err.name === 'AbortError';
       setMessages((prev) =>
         prev.map((m) =>
@@ -258,16 +299,24 @@ export default function AIChatWidget() {
                 ...m,
                 content: isAbort ? m.content : '⚠️ Connexion interrompue. Réessayez.',
                 streaming: false,
-                error: !isAbort && !!m.content === false,
+                error: !isAbort,
               }
             : m
         )
       );
     } finally {
+      if (flushTimerRef.current !== null) {
+        window.clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      if (streamTimeoutRef.current !== null) {
+        window.clearTimeout(streamTimeoutRef.current);
+        streamTimeoutRef.current = null;
+      }
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [input, isStreaming, messages]);
+  }, [flushBufferedToken, input, isStreaming]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -278,11 +327,24 @@ export default function AIChatWidget() {
 
   const handleClose = () => {
     abortRef.current?.abort();
+    if (streamTimeoutRef.current !== null) {
+      window.clearTimeout(streamTimeoutRef.current);
+      streamTimeoutRef.current = null;
+    }
     setOpen(false);
   };
 
   const handleReset = () => {
     abortRef.current?.abort();
+    streamBufferRef.current = '';
+    if (flushTimerRef.current !== null) {
+      window.clearTimeout(flushTimerRef.current);
+      flushTimerRef.current = null;
+    }
+    if (streamTimeoutRef.current !== null) {
+      window.clearTimeout(streamTimeoutRef.current);
+      streamTimeoutRef.current = null;
+    }
     setIsStreaming(false);
     setMessages([WELCOME]);
     setInput('');

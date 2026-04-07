@@ -31,9 +31,13 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      const isDev = import.meta.env.DEV;
+
       const newSocket = io(SOCKET_URL, {
-        auth: { token },
-        transports: ['websocket', 'polling'],
+        auth: (cb) => {
+          cb({ token: localStorage.getItem('access_token') });
+        },
+        transports: isDev ? ['polling'] : ['websocket', 'polling'],
         reconnection: true,
         reconnectionDelay: 500,
         reconnectionDelayMax: 3000,
@@ -50,6 +54,10 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 
       newSocket.on('connect_error', (error) => {
         console.warn('WebSocket connection error:', error?.message || error);
+        const message = String(error?.message || '').toLowerCase();
+        if (message.includes('invalid token') || message.includes('expired') || message.includes('missing token')) {
+          newSocket.disconnect();
+        }
       });
 
       newSocket.on('disconnect', (reason) => {

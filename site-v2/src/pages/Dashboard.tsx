@@ -44,7 +44,7 @@ const Dashboard = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [sensorReadings, setSensorReadings] = useState<Record<string, number[]>>({});
-  const [isTrendLoading, setIsTrendLoading] = useState(true);
+  const [isTrendLoading, setIsTrendLoading] = useState(false);
   const [isAlertsLoading, setIsAlertsLoading] = useState(true);
   const isFetchingTrend = useRef(false);
   const isFetchingReadings = useRef(false);
@@ -138,7 +138,7 @@ const Dashboard = () => {
     // WebSocket provides real-time updates, no polling needed
   }, []); // Empty dependency array - only runs once on mount
 
-  // Fetch historical readings for mini charts - only when sensors count changes
+  // Fetch historical readings for mini charts in a lightweight way.
   useEffect(() => {
     const fetchSensorReadings = async () => {
       if (isFetchingReadings.current || sensors.length === 0) return;
@@ -150,11 +150,12 @@ const Dashboard = () => {
       
       isFetchingReadings.current = true;
       const readings: Record<string, number[]> = {};
+      const sensorsForMiniCharts = sensors.slice(0, 6);
       
       try {
-        await Promise.all(sensors.map(async (sensor) => {
+        await Promise.all(sensorsForMiniCharts.map(async (sensor) => {
           try {
-            const data = await apiClient.getSensorReadings(sensor.id.toString(), 1, 20);
+            const data = await apiClient.getSensorReadings(sensor.id.toString(), 2, 8);
             readings[sensor.id] = data.map((r: any) => r.co2).reverse();
           } catch (error) {
             console.error(`Error fetching readings for sensor ${sensor.id}:`, error);
@@ -171,7 +172,7 @@ const Dashboard = () => {
     fetchSensorReadings();
   }, [sensors.length]); // Only depend on sensors length, not the array itself
 
-  // Fetch aggregate trend data for overview chart - only when sensors count changes
+  // Fetch aggregate trend data for overview chart with lighter payloads.
   useEffect(() => {
     const fetchTrendData = async () => {
       if (isFetchingTrend.current || sensors.length === 0) {
@@ -192,10 +193,12 @@ const Dashboard = () => {
       setIsTrendLoading(true);
 
       try {
-        // Fetch readings for all sensors in parallel
+        const sensorsForTrend = sensors.slice(0, 8);
+
+        // Fetch readings for a representative sensor subset in parallel.
         const allSensorReadings = await Promise.all(
-          sensors.map(sensor => 
-            apiClient.getSensorReadings(sensor.id.toString(), 24, 48)
+          sensorsForTrend.map(sensor => 
+            apiClient.getSensorReadings(sensor.id.toString(), 6, 24)
               .catch(() => []) // Return empty array if error
           )
         );
@@ -216,7 +219,7 @@ const Dashboard = () => {
           });
         });
         
-        // Convert map to sorted array of averaged readings
+        // Convert map to sorted array of averaged readings.
         const trendReadings: Reading[] = Array.from(timeMap.entries())
           .sort((a, b) => a[0] - b[0])
           .map(([timestamp, co2Values]) => ({
@@ -303,12 +306,6 @@ const Dashboard = () => {
         )}
 
         {/* Main Content Grid */}
-        {isTrendLoading ? (
-          <div className="space-y-4">
-            <LoadingSkeleton variant="air-quality" />
-            <LoadingSkeleton variant="alerts" count={3} />
-          </div>
-        ) : (
         <div className="space-y-4">
            <div data-tour="air-quality">
              <AirQualityOverviewCard
@@ -320,6 +317,8 @@ const Dashboard = () => {
             totalSensors={totalSensors}
              />
            </div>
+
+          {isTrendLoading && <LoadingSkeleton variant="air-quality" />}
 
           {/* Alerts and Insights Below */}
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-tour="alerts">
@@ -371,7 +370,6 @@ const Dashboard = () => {
             />
           </div>
         </div>
-        )}
 
         {/* Secondary Widgets Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">

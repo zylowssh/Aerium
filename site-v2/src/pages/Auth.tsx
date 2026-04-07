@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Leaf, Mail, Lock, User, ArrowLeft } from 'lucide-react';
+import { Leaf, Mail, Lock, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -28,6 +28,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
@@ -219,12 +220,23 @@ const Auth = () => {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="login-password"
-                        type="password"
+                        type={showLoginPassword ? 'text' : 'password'}
                         placeholder="••••••••"
-                        className="pl-10"
+                        className="pl-10 pr-10"
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                       />
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.06 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowLoginPassword((prev) => !prev)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                        aria-label={showLoginPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                        title={showLoginPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      >
+                        {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </motion.button>
                     </div>
                     {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
                   </div>

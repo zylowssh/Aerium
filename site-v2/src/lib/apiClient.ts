@@ -8,6 +8,47 @@ interface ApiError {
 
 class ApiClient {
   private client: AxiosInstance;
+  private refreshPromise: Promise<string> | null = null;
+  private isRedirectingToAuth = false;
+
+  private async refreshAccessToken(): Promise<string> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) {
+      throw new Error('Missing refresh token');
+    }
+
+    this.refreshPromise = axios
+      .post(`${API_BASE_URL}/auth/refresh`, {}, {
+        headers: { Authorization: `Bearer ${refreshToken}` },
+      })
+      .then((response) => {
+        const accessToken = response.data?.access_token;
+        if (!accessToken) {
+          throw new Error('Refresh response missing access_token');
+        }
+        localStorage.setItem('access_token', accessToken);
+        return accessToken;
+      })
+      .finally(() => {
+        this.refreshPromise = null;
+      });
+
+    return this.refreshPromise;
+  }
+
+  private clearAuthAndRedirect() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+
+    if (!this.isRedirectingToAuth) {
+      this.isRedirectingToAuth = true;
+      window.location.href = '/auth';
+    }
+  }
 
   constructor() {
     console.log('ApiClient initialized with base URL:', API_BASE_URL);
@@ -51,28 +92,27 @@ class ApiClient {
           data: error.response?.data
         });
         
-        if (error.response?.status === 401) {
-          // Token expired, try to refresh
-          const refreshToken = localStorage.getItem('refresh_token');
-          if (refreshToken) {
-            try {
-              const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
-                headers: { Authorization: `Bearer ${refreshToken}` }
-              });
-              const { access_token } = response.data;
-              localStorage.setItem('access_token', access_token);
-              
-              // Retry original request
-              if (error.config) {
-                error.config.headers.Authorization = `Bearer ${access_token}`;
-                return axios.request(error.config);
-              }
-            } catch (refreshError) {
-              // Refresh failed, clear tokens and redirect to login
-              localStorage.removeItem('access_token');
-              localStorage.removeItem('refresh_token');
-              window.location.href = '/auth';
+        if (error.response?.status === 401 && error.config) {
+          const originalRequest = error.config as AxiosError<ApiError>['config'] & { _retry?: boolean };
+          const requestUrl = originalRequest?.url || '';
+          const isAuthRoute = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register') || requestUrl.includes('/auth/refresh');
+
+          if (isAuthRoute || originalRequest._retry) {
+            return Promise.reject(error);
+          }
+
+          originalRequest._retry = true;
+
+          try {
+            const newAccessToken = await this.refreshAccessToken();
+            if (!originalRequest.headers) {
+              originalRequest.headers = {};
             }
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return this.client.request(originalRequest);
+          } catch (refreshError) {
+            this.clearAuthAndRedirect();
+            return Promise.reject(refreshError);
           }
         }
         return Promise.reject(error);

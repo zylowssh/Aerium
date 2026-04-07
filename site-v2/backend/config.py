@@ -6,10 +6,10 @@ from datetime import timedelta
 
 class Config:
     """Configuration de base"""
-    SECRET_KEY = 'aerium-cle-secrete'
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///aerium.db'
+    SECRET_KEY = os.getenv('SECRET_KEY', 'aerium-secret-key-2026-change-in-production-32-plus')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///aerium.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    JWT_SECRET_KEY = 'aerium-jwt-secrete'
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'aerium-jwt-secret-key-2026-change-in-production-32-plus')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     JWT_TOKEN_LOCATION = ['headers']

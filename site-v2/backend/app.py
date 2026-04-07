@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, Response, stream_with_context
 from flask_cors import CORS
-from flask_socketio import SocketIO, join_room
+from flask_socketio import SocketIO, join_room, ConnectionRefusedError
 from flask_jwt_extended import JWTManager, decode_token
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -30,6 +30,11 @@ load_dotenv()
 # Configurer la journalisation
 def configurer_journalisation(app):
     """Configuration de la journalisation de l'application avec sortie CLI améliorée"""
+    class _SocketIoPollingFilter(logging.Filter):
+        def filter(self, record):
+            message = record.getMessage()
+            return '/socket.io/?EIO=4&transport=polling' not in message
+
     if not app.config.get('DEBUG'):
         if not os.path.exists('logs'):
             os.mkdir('logs')
@@ -53,6 +58,9 @@ def configurer_journalisation(app):
         app.logger.addHandler(gestionnaire_console)
         app.logger.setLevel(logging.INFO)
 
+    # Reduce request-log noise from long-polling transport while keeping useful logs.
+    logging.getLogger('werkzeug').addFilter(_SocketIoPollingFilter())
+
 
 def clé_limite_débit():
     """Fonction clé pour le limiteur de débit qui exclut les requêtes OPTIONS"""
@@ -67,10 +75,16 @@ def créer_app():
     
     # Charger la configuration
     app.config.from_object(Config)
-    app.config['SECRET_KEY'] = 'aerium-school-project-secret'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aerium.db'
+    app.config['SECRET_KEY'] = os.getenv(
+        'SECRET_KEY',
+        'aerium-school-project-secret-key-2026-please-change-in-production'
+    )
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///aerium.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JWT_SECRET_KEY'] = 'aerium-jwt-secret'
+    app.config['JWT_SECRET_KEY'] = os.getenv(
+        'JWT_SECRET_KEY',
+        'aerium-jwt-secret-key-2026-please-change-in-production-32-plus'
+    )
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
@@ -158,7 +172,14 @@ def créer_app():
     })
     app.logger.info('[OK] Caching initialized')
     
-    socketio = SocketIO(app, cors_allowed_origins=allowed_origins, async_mode='threading', logger=False, engineio_logger=False)
+    socketio = SocketIO(
+        app,
+        cors_allowed_origins=allowed_origins,
+        async_mode='threading',
+        logger=False,
+        engineio_logger=False,
+        allow_upgrades=False,
+    )
     app.logger.info('[OK] WebSocket (Socket.IO) initialized')
 
     @jwt.user_identity_loader
@@ -189,7 +210,7 @@ def créer_app():
         if not token:
             sid = getattr(request, 'sid', 'unknown')
             app.logger.warning('[WebSocket] Jeton manquant pour le client %s', sid)
-            return False
+            raise ConnectionRefusedError('missing token')
 
         try:
             décodé = decode_token(token)
@@ -198,7 +219,7 @@ def créer_app():
             if not utilisateur:
                 sid = getattr(request, 'sid', 'unknown')
                 app.logger.warning('[WebSocket] Utilisateur invalide pour le client %s', sid)
-                return False
+                raise ConnectionRefusedError('invalid user')
 
             # Rejoindre la salle spécifique à l'utilisateur
             join_room(f'user_{utilisateur.id}')
@@ -214,7 +235,7 @@ def créer_app():
         except Exception as exc:
             sid = getattr(request, 'sid', 'unknown')
             app.logger.warning('[WebSocket] Validation du jeton échouée pour le client %s: %s', sid, exc)
-            return False
+            raise ConnectionRefusedError('invalid token')
     
     @socketio.on('disconnect')
     def gérer_déconnexion():

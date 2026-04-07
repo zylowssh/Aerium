@@ -2,12 +2,15 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import db, Alert, AlertHistory, Sensor, User, SensorReading
 from datetime import datetime, timedelta
+import os
 import pandas as pd
 
 try:
     from prophet import Prophet
 except Exception:  # pragma: no cover - handled at runtime
     Prophet = None
+
+PROPHET_RUNTIME_AVAILABLE = Prophet is not None and os.getenv('ENABLE_PROPHET', 'False') == 'True'
 
 alertes_bp = Blueprint('alerts', __name__)
 
@@ -305,7 +308,7 @@ def obtenir_predictions():
         else:
             capteurs = Sensor.query.filter_by(user_id=id_utilisateur_courant).all()
         
-        utiliser_prophet = Prophet is not None
+        utiliser_prophet = PROPHET_RUNTIME_AVAILABLE
 
         predictions = []
         horizon_heures = 24
@@ -322,7 +325,7 @@ def obtenir_predictions():
             lectures.reverse()
 
             for metrique in ['co2', 'temperature', 'humidity']:
-                prediction = construire_prediction_prevision(capteur, lectures, metrique, horizon_heures, utiliser_prophet)
+                prediction = construire_prediction_prevision(capteur, lectures, metrique, horizon_heures, PROPHET_RUNTIME_AVAILABLE)
                 if prediction:
                     predictions.append(prediction)
         
@@ -378,7 +381,10 @@ def construire_prediction_prevision(capteur, lectures, metrique, horizon_heures,
                 if prediction:
                     return prediction
             except Exception as erreur_prophet:
-                # Prophet a échoué, revenir à la prédiction basée sur les tendances
+                # Prophet a échoué, revenir à la prédiction basée sur les tendances.
+                # Désactive Prophet pour le reste de la session pour éviter le bruit de logs.
+                global PROPHET_RUNTIME_AVAILABLE
+                PROPHET_RUNTIME_AVAILABLE = False
                 print(f"Échec de la prévision Prophet pour {metrique} sur le capteur {capteur.id}: {erreur_prophet}. Utilisation de la solution de repli basée sur les tendances.")
 
         return construire_prediction_tendance(capteur, df, metrique, horizon_heures, seuils, valeur_courante, pourcentage_tendance)

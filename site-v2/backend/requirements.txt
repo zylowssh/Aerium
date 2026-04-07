@@ -18,4 +18,5 @@ email-validator==2.1.0
 numpy==1.26.4
 pandas==2.2.1
 prophet==1.1.5
+plotly==5.24.1
 requests>=2.31.0
