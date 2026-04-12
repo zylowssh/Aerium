@@ -1,0 +1,406 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Aerium Design System - Air Quality Monitoring Platform */
+
+@layer base {
+  :root {
+    --background: 220 30% 6%;
+    --foreground: 220 30% 95%;
+
+    --card: 220 40% 10%;
+    --card-foreground: 220 30% 95%;
+
+    --popover: 220 40% 10%;
+    --popover-foreground: 220 30% 95%;
+
+    --primary: 174 80% 55%;
+    --primary-foreground: 220 40% 8%;
+
+    --secondary: 220 35% 15%;
+    --secondary-foreground: 220 30% 85%;
+
+    --muted: 220 30% 18%;
+    --muted-foreground: 220 20% 60%;
+
+    --accent: 174 80% 55%;
+    --accent-foreground: 220 40% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 45 93% 64%;
+    --warning-foreground: 220 40% 8%;
+
+    --success: 142 71% 58%;
+    --success-foreground: 220 40% 8%;
+
+    --border: 220 35% 20%;
+    --input: 220 35% 20%;
+    --ring: 174 80% 55%;
+
+    --radius: 0.75rem;
+
+    /* Custom Aerium tokens */
+    --aerium-bg-primary: 220 40% 7%;
+    --aerium-bg-secondary: 220 40% 11%;
+    --aerium-card: 220 45% 13%;
+    --aerium-card-secondary: 220 45% 11%;
+    --aerium-border: 220 40% 18%;
+    --aerium-glow: 174 80% 55%;
+
+    --sidebar-background: 220 40% 8%;
+    --sidebar-foreground: 220 20% 75%;
+    --sidebar-primary: 174 80% 55%;
+    --sidebar-primary-foreground: 220 40% 8%;
+    --sidebar-accent: 220 35% 15%;
+    --sidebar-accent-foreground: 220 30% 95%;
+    --sidebar-border: 220 35% 18%;
+    --sidebar-ring: 174 80% 55%;
+  }
+
+  .light {
+    --background: 220 25% 98%;
+    --foreground: 220 40% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 10%;
+
+    --primary: 174 70% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 25% 94%;
+    --secondary-foreground: 220 40% 20%;
+
+    --muted: 220 20% 93%;
+    --muted-foreground: 220 20% 40%;
+
+    --accent: 174 70% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 174 70% 40%;
+
+    --aerium-bg-primary: 220 25% 98%;
+    --aerium-bg-secondary: 220 20% 95%;
+    --aerium-card: 0 0% 100%;
+    --aerium-card-secondary: 220 20% 96%;
+    --aerium-border: 220 20% 90%;
+    --aerium-glow: 174 70% 40%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 15% 40%;
+    --sidebar-primary: 174 70% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 94%;
+    --sidebar-accent-foreground: 220 40% 10%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 174 70% 40%;
+  }
+
+  /* Landing-page-only palette: soft sky + nature greens */
+  .landing-theme {
+    --background: 217 30% 8%;
+    /*--background: transparent;*/
+    --foreground: 196 55% 95%;
+
+    --card: 199 34% 14%;
+    --card-foreground: 195 53% 95%;
+
+    --popover: 199 34% 14%;
+    --popover-foreground: 195 53% 95%;
+
+    --primary: 160 57% 48%;
+    --primary-foreground: 196 56% 10%;
+
+    --secondary: 199 24% 20%;
+    --secondary-foreground: 196 40% 89%;
+
+    --muted: 200 23% 19%;
+    --muted-foreground: 194 22% 72%;
+
+    --accent: 196 76% 57%;
+    --accent-foreground: 195 56% 11%;
+
+    --border: 196 26% 31%;
+    --input: 196 26% 31%;
+    --ring: 160 57% 48%;
+
+    --aerium-bg-primary: 200 37% 10%;
+    --aerium-bg-secondary: 200 31% 14%;
+    --aerium-card: 199 34% 14%;
+    --aerium-card-secondary: 199 31% 12%;
+    --aerium-border: 196 25% 30%;
+    --aerium-glow: 160 57% 48%;
+  }
+
+  .light .landing-theme {
+    --background: 200 10% 94%;
+    --foreground: 199 39% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 199 39% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 199 39% 17%;
+
+    --primary: 160 50% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 193 34% 89%;
+    --secondary-foreground: 199 30% 24%;
+
+    --muted: 194 28% 88%;
+    --muted-foreground: 199 17% 40%;
+
+    --accent: 198 68% 49%;
+    --accent-foreground: 0 0% 100%;
+
+    --border: 193 26% 79%;
+    --input: 193 26% 79%;
+    --ring: 160 50% 40%;
+
+    --aerium-bg-primary: 193 58% 95%;
+    --aerium-bg-secondary: 193 37% 90%;
+    --aerium-card: 0 0% 100%;
+    --aerium-card-secondary: 193 31% 92%;
+    --aerium-border: 193 26% 78%;
+    --aerium-glow: 160 50% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.5) hsl(var(--background));
+  }
+
+  /* Custom Scrollbar for Webkit browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.5);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.7);
+  }
+
+  /* Gradient animation for hero text */
+  @keyframes gradient {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+}
+
+@layer utilities {
+  .font-editorial {
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+  }
+
+  .font-manrope {
+    font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.1);
+  }
+
+  .glow-warning {
+    box-shadow: 0 0 20px hsl(var(--warning) / 0.3), 0 0 40px hsl(var(--warning) / 0.1);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 20px hsl(var(--success) / 0.3), 0 0 40px hsl(var(--success) / 0.1);
+  }
+
+  .glow-destructive {
+    box-shadow: 0 0 20px hsl(var(--destructive) / 0.3), 0 0 40px hsl(var(--destructive) / 0.1);
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(174 80% 45%));
+  }
+
+  .landing-theme .gradient-primary {
+    background: linear-gradient(135deg, hsl(160 53% 43%), hsl(197 72% 51%));
+  }
+
+  .gradient-card {
+    background: linear-gradient(180deg, hsl(var(--aerium-card)), hsl(var(--aerium-card-secondary)));
+  }
+
+  .light .gradient-card {
+    background: linear-gradient(135deg, hsl(220 20% 98%), hsl(220 15% 96%));
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  /* Smooth color interpolation when switching between light and dark theme. */
+  .theme-smooth,
+  .theme-smooth * {
+    transition-property: color, background-color, border-color, fill, stroke, box-shadow, opacity, transform, filter;
+    transition-duration: 420ms;
+    transition-timing-function: ease;
+  }
+ 
+   .animate-pulse-ring {
+     animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+   }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 10px hsl(var(--primary) / 0.2), 0 0 20px hsl(var(--primary) / 0.1);
+    }
+    to {
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.4), 0 0 40px hsl(var(--primary) / 0.2);
+    }
+  }
+ 
+   @keyframes pulse-ring {
+     0%, 100% {
+       box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+     }
+     50% {
+       box-shadow: 0 0 0 8px hsl(var(--primary) / 0);
+     }
+   }
+}
+
+/* Compact mode styles */
+.compact-mode {
+  --spacing-compact: 0.75;
+}
+
+.compact-mode .p-4 {
+  padding: 0.75rem;
+}
+
+.compact-mode .p-5 {
+  padding: 1rem;
+}
+
+.compact-mode .p-6 {
+  padding: 1.25rem;
+}
+
+.compact-mode .gap-4 {
+  gap: 0.75rem;
+}
+
+.compact-mode .gap-6 {
+  gap: 1rem;
+}
+
+.compact-mode .space-y-4 > * + * {
+  margin-top: 0.75rem;
+}
+
+.compact-mode .space-y-6 > * + * {
+  margin-top: 1rem;
+}
+
+/* Disable animations */
+.no-animations,
+.no-animations * {
+  animation-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0ms !important;
+  transition-delay: 0ms !important;
+}
+
+/* Override Remotion Player styling */
+.remotion-player {
+  border: none !important;
+  outline: none !important;
+  overflow: hidden !important;
+}
+
+.remotion-player * {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.remotion-container {
+  border: none !important;
+  outline: none !important;
+  overflow: hidden !important;
+}
+
+/* Hide any internal Remotion borders */
+[class*="remotion"] {
+  border: none !important;
+  outline: none !important;
+}
+
+[class*="remotion"] * {
+  border: none !important;
+  outline: none !important;
+}
+
+/* Canvas and SVG within Remotion */
+.remotion-player canvas,
+.remotion-player svg,
+.remotion-container canvas,
+.remotion-container svg {
+  border: none !important;
+  outline: none !important;
+}
+
+/* Target the wrapper more aggressively */
+[role="region"] {
+  border: none !important;
+  outline: none !important;
+}
+
+/* Mask any visible borders with overflow clipping */
+div[style*="position"] div[style*="absolute"] {
+  overflow: hidden !important;
+}

@@ -1,3 +1,0 @@
-[project]
-name = "aerium"
-requires-python = "==3.11.*"

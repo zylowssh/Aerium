@@ -37,7 +37,7 @@ Aerium est une application web complète de surveillance de la qualité de l'air
 - **Tableau de Bord Admin**: Surveillance de la santé du système, gestion des utilisateurs et journaux d'audit
 - **Optimisation des Performances**: Mise en cache, pagination et limitation de débit pour la scalabilité
 
-## 🚀 Quick Start (Démarrage rapide)
+## 🚀 Démarrage rapide
 
 ### Prérequis
 
@@ -148,20 +148,7 @@ pytest -q
 python test_api_endpoints.py
 ```
 
-## 🤝 Contribuer
-
-1. Forkez le dépôt
-2. Créez votre branche de fonctionnalité : `git checkout -b feature/fonctionnalite-incroyable`
-3. Committez vos changements : `git commit -m 'Ajout fonctionnalité incroyable'`
-4. Poussez vers la branche : `git push origin feature/fonctionnalite-incroyable`
-5. Ouvrez une Pull Request
-
-Consultez le [Guide Développeur](docs/GUIDE-DEVELOPPEUR.md) pour des directives de contribution détaillées.
-
-## 📄 Licence
-
-Ce projet est sous licence MIT.
-📊 Captures d'Écran
+## 📊 Captures d'Écran
 
 ### Tableau de Bord Principal
 *Interface de surveillance en temps réel avec graphiques et indicateurs de statut*
@@ -173,99 +160,3 @@ Ce projet est sous licence MIT.
 *Visualisation des tendances historiques et statistiques avancées*
 
 > 💡 **Note** : Ajoutez vos propres captures d'écran dans ce dossier : `docs/images/`
-
----
-
-## ❓ FAQ
-
-<details>
-<summary><b>Quels capteurs CO₂ sont compatibles ?</b></summary>
-
-Aerium supporte :
-- Capteurs USB série (MH-Z19, SCD30, etc.)
-- Capteurs réseau (HTTP/MQTT)
-- Intégration via API REST
-- Saisie manuelle pour tests
-
-Consultez la [documentation des capteurs](docs/GUIDE-UTILISATEUR.md#gestion-des-capteurs) pour plus de détails.
-</details>
-
-<details>
-<summary><b>Puis-je utiliser Aerium sur un Raspberry Pi ?</b></summary>
-
-Oui ! Aerium fonctionne parfaitement sur Raspberry Pi 3/4 avec Python 3.8+. Recommandé pour :
-- Installations permanentes
-- Déploiement multi-sites
-- Intégration IoT
-</details>
-
-<details>
-<summary><b>Comment sécuriser l'installation en production ?</b></summary>
-
-Pour la production :
-1. Utilisez HTTPS avec un certificat SSL
-2. Configurez un SECRET_KEY fort
-3. Mettez en place un proxy inverse (Nginx)
-4. Activez les sauvegardes automatiques
-5. Consultez le [Guide de Déploiement](docs/GUIDE-DEVELOPPEUR.md#déploiement)
-</details>
-
-<details>
-<summary><b>Les données sont-elles stockées localement ?</b></summary>
-
-Oui, toutes les données sont stockées dans une base SQLite locale. Aucune donnée n'est envoyée vers des serveurs externes sauf si vous configurez des intégrations cloud optionnelles.
-</details>
-
----
-
-## 🆘 Support & Communauté
-
-### Obtenir de l'Aide
-
-- 📖 **Documentation** : [docs/INDEX.md](docs/INDEX.md)
-- 🐛 **Bugs** : [Ouvrir un ticket](https://github.com/votre-repo/issues)
-- 💬 **Discussions** : [Forum communautaire](https://github.com/votre-repo/discussions)
-- 🔧 **Dépannage** : [Guide de Dépannage](docs/DEPANNAGE.md)
-
-### Ressources Utiles
-
-- [Référence API complète](docs/REFERENCE-API.md)
-- [Exemples de code](docs/GUIDE-DEVELOPPEUR.md#exemples)
-- [Changelog](CHANGELOG.md)
-
----
-
-## 🏆 Contributeurs
-
-Merci à tous ceux qui ont contribué au projet !
-
-<!-- Ajoutez vos contributeurs ici -->
-
----
-
-## 📜 Licence
-
-Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
-
----
-
-## 🙏 Remerciements
-
-- Flask et la communauté Python
-- Chart.js pour les visualisations
-- Socket.IO pour le temps réel
-- Tous les contributeurs et utilisateurs
-
----
-
-<div align="center">
-
-**Version** : 2.0  
-**Dernière Mise à Jour** : Janvier 2026
-
-Made with ❤️ pour un air plus sain
-
-[⬆ Retour en haut](#aerium---système-de-surveillance-de-la-qualité-de-lair-co₂)
-
-</div>
-**Dernière Mise à Jour** : Janvier 2026
