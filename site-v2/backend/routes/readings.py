@@ -314,6 +314,18 @@ def ajouter_lecture_externe(sensor_api_key):
     La sensor_api_key est l'ID du capteur pour l'instant (peut être améliorée avec des clés API plus tard)
     """
     try:
+        configured_iot_key = current_app.config.get('IOT_INGEST_API_KEY')
+        if not configured_iot_key:
+            return jsonify({'error': 'Ingestion IoT non configurée côté serveur'}), 503
+
+        provided_key = request.headers.get('X-API-Key')
+        auth_header = request.headers.get('Authorization', '')
+        if not provided_key and auth_header.lower().startswith('bearer '):
+            provided_key = auth_header.split(' ', 1)[1].strip()
+
+        if not provided_key or provided_key != configured_iot_key:
+            return jsonify({'error': 'Authentification IoT invalide'}), 401
+
         data = request.get_json()
         
         co2 = data.get('co2')

@@ -5,17 +5,23 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requireAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAdmin } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !user) {
       navigate('/auth', { replace: true });
+      return;
     }
-  }, [isLoading, navigate, user]);
+
+    if (!isLoading && user && requireAdmin && !isAdmin) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isLoading, isAdmin, navigate, requireAdmin, user]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -40,6 +46,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // User is authenticated, render children
   if (user) {
+    if (requireAdmin && !isAdmin) {
+      return null;
+    }
     return <>{children}</>;
   }
 

@@ -40,6 +40,9 @@ class Config:
     # URL du frontend
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
+    # Clé partagée pour l'ingestion IoT externe (header X-API-Key ou Bearer)
+    IOT_INGEST_API_KEY = os.getenv('IOT_INGEST_API_KEY')
+
 
 class DevelopmentConfig(Config):
     """Configuration de développement"""

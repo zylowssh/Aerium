@@ -60,7 +60,7 @@ const App = () => {
               <Route path="/recommendations" element={<ProtectedAppShell><Recommendations /></ProtectedAppShell>} />
               <Route path="/maintenance" element={<ProtectedAppShell><Maintenance /></ProtectedAppShell>} />
               <Route path="/settings" element={<ProtectedAppShell><Settings /></ProtectedAppShell>} />
-              <Route path="/admin" element={<ProtectedAppShell><Admin /></ProtectedAppShell>} />
+              <Route path="/admin" element={<ProtectedAppShell requireAdmin><Admin /></ProtectedAppShell>} />
               <Route path="/video" element={<ProtectedAppShell><Video /></ProtectedAppShell>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

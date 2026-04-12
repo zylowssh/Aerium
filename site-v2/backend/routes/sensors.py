@@ -41,12 +41,15 @@ def obtenir_capteurs():
         
         # Appliquer le filtre de recherche
         if search:
+            search_filters = [
+                Sensor.name.ilike(f'%{search}%'),
+                Sensor.location.ilike(f'%{search}%')
+            ]
+            if hasattr(Sensor, 'external_id'):
+                search_filters.append(Sensor.external_id.ilike(f'%{search}%'))
+
             query = query.filter(
-                db.or_(
-                    Sensor.name.ilike(f'%{search}%'),
-                    Sensor.location.ilike(f'%{search}%'),
-                    Sensor.external_id.ilike(f'%{search}%')
-                )
+                db.or_(*search_filters)
             )
         
         # Appliquer le filtre d'état
@@ -60,7 +63,10 @@ def obtenir_capteurs():
         # Appliquer le filtre d'état actif
         if is_active is not None:
             is_active_bool = is_active.lower() == 'true'
-            query = query.filter_by(is_active=is_active_bool)
+            if hasattr(Sensor, 'is_active'):
+                query = query.filter_by(is_active=is_active_bool)
+            else:
+                query = query.filter_by(is_live=is_active_bool)
         
         # Appliquer le tri
         if sort_by == 'updated_at':

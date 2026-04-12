@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const IS_DEV = import.meta.env.DEV;
 
 interface ApiError {
   error: string;
@@ -51,7 +52,7 @@ class ApiClient {
   }
 
   constructor() {
-    console.log('ApiClient initialized with base URL:', API_BASE_URL);
+    if (IS_DEV) console.log('ApiClient initialized with base URL:', API_BASE_URL);
     
     this.client = axios.create({
       baseURL: API_BASE_URL,
@@ -65,7 +66,7 @@ class ApiClient {
     // Request interceptor to add auth token
     this.client.interceptors.request.use(
       (config) => {
-        console.log('API Request:', config.method?.toUpperCase(), config.url);
+        if (IS_DEV) console.log('API Request:', config.method?.toUpperCase(), config.url);
         const token = localStorage.getItem('access_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -81,7 +82,7 @@ class ApiClient {
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => {
-        console.log('API Response:', response.status, response.config.url);
+        if (IS_DEV) console.log('API Response:', response.status, response.config.url);
         return response;
       },
       async (error: AxiosError<ApiError>) => {

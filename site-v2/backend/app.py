@@ -136,13 +136,13 @@ def créer_app():
 
     CORS(
         app,
-        origins=['*'],  # Allow all origins for development/mobile testing
+        origins=allowed_origins,
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["Content-Type", "Authorization", "Accept"],
         expose_headers=["Content-Type", "Authorization"],
         supports_credentials=False,  # Changed to False - using localStorage, not cookies
         max_age=3600,
-        resources={r"/api/*": {"origins": "*"}}
+        resources={r"/api/*": {"origins": allowed_origins}}
     )
     
     # Initialize rate limiter only if enabled
