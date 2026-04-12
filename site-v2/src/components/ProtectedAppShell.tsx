@@ -8,15 +8,16 @@ import AIChatWidget from "@/components/AIChatWidget";
 
 interface ProtectedAppShellProps {
   children: ReactNode;
+  requireAdmin?: boolean;
 }
 
-export default function ProtectedAppShell({ children }: ProtectedAppShellProps) {
+export default function ProtectedAppShell({ children, requireAdmin = false }: ProtectedAppShellProps) {
   return (
     <WebSocketProvider>
       <BackendProvider>
         <TourProvider>
           <AppOverlays>
-            <ProtectedRoute>{children}</ProtectedRoute>
+            <ProtectedRoute requireAdmin={requireAdmin}>{children}</ProtectedRoute>
             <AIChatWidget />
           </AppOverlays>
         </TourProvider>

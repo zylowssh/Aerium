@@ -1,31 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requireAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { user, isLoading, isAdmin } = useAuth();
 
   useEffect(() => {
-    // Check if user has access token
-    const token = localStorage.getItem('access_token');
-    
-    if (!token) {
-      // No token found, redirect to auth
+    if (!isLoading && !user) {
       navigate('/auth', { replace: true });
-      setIsAuthenticated(false);
-    } else {
-      // Token exists, user is authenticated
-      setIsAuthenticated(true);
+      return;
     }
-  }, [navigate]);
+
+    if (!isLoading && user && requireAdmin && !isAdmin) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isLoading, isAdmin, navigate, requireAdmin, user]);
 
   // Show loading state while checking authentication
-  if (isAuthenticated === null) {
+  if (isLoading) {
     return (
       <motion.div
         className="min-h-screen flex items-center justify-center bg-background"
@@ -46,7 +45,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   // User is authenticated, render children
-  if (isAuthenticated) {
+  if (user) {
+    if (requireAdmin && !isAdmin) {
+      return null;
+    }
     return <>{children}</>;
   }
 

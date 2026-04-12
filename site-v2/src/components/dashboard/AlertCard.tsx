@@ -1,7 +1,7 @@
 import { AlertTriangle, Clock, CheckCircle, Check, XCircle } from 'lucide-react';
 import { Alert } from '@/lib/sensorData';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import { motion } from 'framer-motion';
 import { memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,17 @@ export interface AlertCardProps {
 export const AlertCard = memo(function AlertCard({ alert, onStatusChange }: AlertCardProps) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const parsedTimestamp = (() => {
+    if (alert.timestamp instanceof Date) {
+      return isValid(alert.timestamp) ? alert.timestamp : null;
+    }
+    if (typeof alert.timestamp === 'string') {
+      const d = parseISO(alert.timestamp);
+      return isValid(d) ? d : null;
+    }
+    return null;
+  })();
   
   const handleAcknowledge = async () => {
     setIsUpdating(true);
@@ -127,7 +138,11 @@ export const AlertCard = memo(function AlertCard({ alert, onStatusChange }: Aler
           
           <div className="flex items-center gap-1.5 mt-2.5 text-xs text-muted-foreground">
             <Clock className="w-3 h-3" />
-            <span>{formatDistanceToNow(alert.timestamp, { addSuffix: true })}</span>
+            <span>
+              {parsedTimestamp
+                ? formatDistanceToNow(parsedTimestamp, { addSuffix: true })
+                : 'Horodatage invalide'}
+            </span>
           </div>
           
           {alert.status === 'nouvelle' && (
