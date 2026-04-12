@@ -1,6 +1,6 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { motion } from 'framer-motion';
-import { Plus, Radio, MapPin, Battery, Edit, Trash2, MoreHorizontal, Grid, List, Filter } from 'lucide-react';
+import { Plus, Radio, MoreHorizontal, Grid, List, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { useSensors } from '@/hooks/useSensors';
@@ -59,14 +59,14 @@ const Sensors = () => {
   };
 
   return (
-     <AppLayout title="Capteurs" subtitle="Gérer vos appareils de surveillance">
+     <AppLayout title="Capteurs" subtitle="Gérer vos capteurs de qualité de l'air">
        <div className="space-y-6" data-tour="sensors-page">
         {/* Controls */}
          <div className="flex items-center justify-between" data-tour="sensors-filters">
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" className="gap-2">
               <Filter className="w-4 h-4" />
-              Tous les Capteurs
+              Tous les capteurs
             </Button>
             <Button variant="outline" size="sm">Salle</Button>
             <Button variant="outline" size="sm">Statut</Button>
@@ -121,13 +121,13 @@ const Sensors = () => {
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground">Statistiques de l'Appareil</TableHead>
-                <TableHead className="text-muted-foreground">Salle</TableHead>
-                <TableHead className="text-muted-foreground">Emplacement</TableHead>
+                <TableHead className="text-muted-foreground">Capteur</TableHead>
+                <TableHead className="text-muted-foreground">Statut</TableHead>
+                <TableHead className="text-muted-foreground">Dernière mesure</TableHead>
                 <TableHead className="text-muted-foreground text-right">CO₂</TableHead>
                 <TableHead className="text-muted-foreground text-right">Température</TableHead>
                 <TableHead className="text-muted-foreground text-right">Humidité</TableHead>
-                <TableHead className="text-muted-foreground text-center">Capteur</TableHead>
+                <TableHead className="text-muted-foreground text-center">Détails</TableHead>
                 <TableHead className="text-muted-foreground text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -174,8 +174,15 @@ const Sensors = () => {
                     <StatusBadge status={sensor.status} />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    Building A, Floor 1<br />
-                    <span className="text-xs">Supermini</span>
+                    <span className="text-sm">
+                      {sensor.lastReading.toLocaleDateString('fr-FR')}<br />
+                      <span className="text-xs">
+                        {sensor.lastReading.toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <span className={cn(
@@ -198,12 +205,12 @@ const Sensors = () => {
                   <TableCell className="text-center">
                     <Button variant="outline" size="sm" className="gap-1.5">
                       <Radio className="w-3.5 h-3.5" />
-                      Capteurs
+                      Ouvrir
                     </Button>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="sm">Edit</Button>
+                      <Button variant="ghost" size="sm">Modifier</Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -211,7 +218,7 @@ const Sensors = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/sensors/${sensor.id}`); }}>Voir les Détails</DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/sensors/${sensor.id}`); }}>Voir les détails</DropdownMenuItem>
                           <DropdownMenuItem>Étalonner</DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive">Supprimer</DropdownMenuItem>
                         </DropdownMenuContent>

@@ -98,7 +98,6 @@ export function generateMockSensors(): Sensor[] {
       temperature: 23.9,
       humidity: 44,
       lastReading: new Date(),
-      battery: 85,
       isLive: true
     },
     {
@@ -110,7 +109,6 @@ export function generateMockSensors(): Sensor[] {
       temperature: 24.9,
       humidity: 59,
       lastReading: new Date(),
-      battery: 72,
       isLive: true
     },
     {
@@ -122,7 +120,6 @@ export function generateMockSensors(): Sensor[] {
       temperature: 26.1,
       humidity: 69,
       lastReading: new Date(),
-      battery: 45,
       isLive: true
     }
   ];

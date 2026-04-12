@@ -21,7 +21,79 @@ interface AlertStats {
   };
 }
 
+interface ActiveAlertPayload {
+  status?: string;
+  type?: string;
+  alertType?: string;
+  alert_type?: string;
+  metric?: string;
+  message?: string;
+}
+
 const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
+
+const normalizeReportStatus = (status: string): 'triggered' | 'acknowledged' | 'resolved' => {
+  switch ((status || '').toLowerCase()) {
+    case 'acknowledged':
+    case 'reconnue':
+      return 'acknowledged';
+    case 'resolved':
+    case 'résolue':
+    case 'resolue':
+      return 'resolved';
+    default:
+      return 'triggered';
+  }
+};
+
+const normalizeReportType = (type: string): string => {
+  switch ((type || '').toLowerCase()) {
+    case 'critique':
+      return 'critique';
+    case 'info':
+      return 'info';
+    default:
+      return 'avertissement';
+  }
+};
+
+const inferReportMetric = (raw: ActiveAlertPayload): string => {
+  const explicitMetric = String(raw?.metric || '').toLowerCase();
+  if (explicitMetric.includes('temp')) return 'temperature';
+  if (explicitMetric.includes('humid')) return 'humidity';
+  if (explicitMetric.includes('co2')) return 'co2';
+
+  const message = String(raw?.message || '').toLowerCase();
+  if (message.includes('temp')) return 'temperature';
+  if (message.includes('humid')) return 'humidity';
+  if (message.includes('co2')) return 'co2';
+
+  return 'co2';
+};
+
+const buildStatsFromActiveAlerts = (alerts: ActiveAlertPayload[]): AlertStats => {
+  const initial: AlertStats = {
+    totalAlerts: 0,
+    triggered: 0,
+    acknowledged: 0,
+    resolved: 0,
+    byType: {},
+    byMetric: {},
+  };
+
+  return (alerts || []).reduce((acc, rawAlert: ActiveAlertPayload) => {
+    const status = normalizeReportStatus(rawAlert?.status);
+    const type = normalizeReportType(rawAlert?.type || rawAlert?.alertType || rawAlert?.alert_type);
+    const metric = inferReportMetric(rawAlert);
+
+    acc.totalAlerts += 1;
+    acc[status] += 1;
+    acc.byType[type] = (acc.byType[type] || 0) + 1;
+    acc.byMetric[metric] = (acc.byMetric[metric] || 0) + 1;
+
+    return acc;
+  }, initial);
+};
 
 const Reports = () => {
   const [stats, setStats] = useState<AlertStats | null>(null);
@@ -37,8 +109,34 @@ const Reports = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiClient.getAlertStats(selectedDays);
-      setStats(data);
+
+      let historyStats: AlertStats | null = null;
+
+      try {
+        const data = await apiClient.getAlertStats(selectedDays);
+        const totalByType = Object.values(data?.byType || {}).reduce((sum, value) => sum + Number(value || 0), 0);
+        const totalByMetric = Object.values(data?.byMetric || {}).reduce((sum, value) => sum + Number(value || 0), 0);
+        const hasHistoryData =
+          Number(data?.totalAlerts ?? 0) > 0 ||
+          Number(data?.triggered ?? 0) > 0 ||
+          Number(data?.acknowledged ?? 0) > 0 ||
+          Number(data?.resolved ?? 0) > 0 ||
+          totalByType > 0 ||
+          totalByMetric > 0;
+
+        if (hasHistoryData) {
+          historyStats = data;
+        }
+      } catch (historyStatsError) {
+        console.warn('Stats endpoint unavailable, using active alerts fallback:', historyStatsError);
+      }
+
+      if (historyStats) {
+        setStats(historyStats);
+      } else {
+        const activeAlerts = await apiClient.getAlerts(undefined, 500);
+        setStats(buildStatsFromActiveAlerts(activeAlerts || []));
+      }
     } catch (error) {
       console.error('Error fetching stats:', error);
       setError('Impossible de charger les statistiques.');

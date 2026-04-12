@@ -11,12 +11,15 @@ interface EnergyMetric {
   unit: string;
 }
 
+interface EnergySensorSnapshot {
+  status?: string;
+  co2?: number;
+}
+
 export function EnergyMonitorWidget() {
-  const [ecoScore, setEcoScore] = useState(78);
-  const [metrics, setMetrics] = useState<EnergyMetric[]>([
-    { label: 'HVAC aujourd\'hui', value: '12.4', change: -8, unit: 'kWh' },
-    { label: 'Économies mois', value: '156', change: 12, unit: '€' },
-  ]);
+  const [ecoScore, setEcoScore] = useState(0);
+  const [metrics, setMetrics] = useState<EnergyMetric[]>([]);
+  const [objectiveProgress, setObjectiveProgress] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,33 +29,48 @@ export function EnergyMonitorWidget() {
   const fetchEnergyData = async () => {
     try {
       setLoading(true);
-      const readings = await apiClient.getAggregateData();
+      const [readings, sensors] = await Promise.all([
+        apiClient.getAggregateData(),
+        apiClient.getSensors(),
+      ]);
       
       // Calculate eco-score based on average CO2 and conditions
       // Lower CO2 = better efficiency = higher score
       const baseCo2 = readings.avgCo2 || 800;
       const calculatedScore = Math.max(0, Math.min(100, 100 - (baseCo2 - 400) / 6));
-      
-      setEcoScore(Math.round(calculatedScore));
+
+      const roundedScore = Math.round(calculatedScore);
+      setEcoScore(roundedScore);
+
+      const sensorSnapshots = sensors as EnergySensorSnapshot[];
+      const totalSensors = sensors.length;
+      const onlineSensors = sensorSnapshots.filter((sensor) => sensor.status === 'en ligne').length;
+      const efficientSensors = sensorSnapshots.filter((sensor) => sensor.status === 'en ligne' && Number(sensor.co2 || 0) < 900).length;
+      const efficiencyPercent = onlineSensors > 0 ? Math.round((efficientSensors / onlineSensors) * 100) : 0;
+      const co2Delta = Math.round(((800 - baseCo2) / 800) * 100);
+      const objective = Math.max(0, Math.min(100, Math.round(roundedScore * 0.6 + efficiencyPercent * 0.4)));
+
+      setObjectiveProgress(objective);
       
       // Update metrics with real data
       setMetrics([
         { 
           label: 'CO2 moyen', 
           value: Math.round(readings.avgCo2 || 800).toString(), 
-          change: -5, 
+          change: co2Delta, 
           unit: 'ppm' 
         },
         { 
-          label: 'Efficacité', 
-          value: '92', 
-          change: 8, 
+          label: 'Capteurs efficaces', 
+          value: `${efficientSensors}/${Math.max(onlineSensors, totalSensors, 1)}`,
+          change: efficiencyPercent - 70,
           unit: '%' 
         },
       ]);
     } catch (error) {
       console.error('Error fetching energy data:', error);
-      // Keep default values
+      setMetrics([]);
+      setObjectiveProgress(0);
     } finally {
       setLoading(false);
     }
@@ -115,6 +133,8 @@ export function EnergyMonitorWidget() {
         <div className="flex-1 space-y-2">
           {loading ? (
             <div className="text-xs text-muted-foreground">Chargement...</div>
+          ) : metrics.length === 0 ? (
+            <div className="text-xs text-muted-foreground">Aucune donnée énergétique</div>
           ) : (
             metrics.map((metric, index) => (
               <motion.div
@@ -151,9 +171,9 @@ export function EnergyMonitorWidget() {
         <span className="text-muted-foreground">Objectif mensuel</span>
         <div className="flex items-center gap-1.5">
           <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-            <div className="h-full w-[65%] bg-emerald-500 rounded-full" />
+            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${objectiveProgress}%` }} />
           </div>
-          <span className="text-emerald-500 font-medium">65%</span>
+          <span className="text-emerald-500 font-medium">{objectiveProgress}%</span>
         </div>
       </div>
     </motion.div>

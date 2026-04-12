@@ -1,6 +1,6 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { motion } from 'framer-motion';
- import { Building, Bell, Users, Plug, Palette, Moon, Sun, Server, Gauge } from 'lucide-react';
+import { Building, Bell, Users, Plug, Palette, Moon, Sun, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '@/hooks/useTheme';
 import { useSettings } from '@/contexts/SettingsContext';
 import { cn } from '@/lib/utils';
- import { BackendStatusWidget } from '@/components/widgets/BackendStatusWidget';
+import { BackendStatusWidget } from '@/components/widgets/BackendStatusWidget';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/apiClient';
 import { useSensors } from '@/hooks/useSensors';
@@ -182,17 +182,17 @@ const Settings = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="orgName">Nom de l'Organisation</Label>
-                      <Input id="orgName" defaultValue="Acme Corporation" />
+                      <Input id="orgName" defaultValue="Aerium France" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="timezone">Fuseau Horaire</Label>
-                      <Input id="timezone" defaultValue="Europe/London" />
+                      <Input id="timezone" defaultValue="Europe/Paris" />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="address">Adresse</Label>
-                    <Input id="address" defaultValue="123 Business Street, London" />
+                    <Input id="address" defaultValue="12 avenue de l'Innovation, Paris" />
                   </div>
                 </div>
               </div>
@@ -319,9 +319,7 @@ const Settings = () => {
                 <div className="space-y-4">
                   {[
                     { name: 'Notifications par Email', description: 'Recevoir les alertes par email' },
-                    { name: 'Notifications In-App', description: 'Afficher les alertes dans le tableau de bord' },
-                    { name: 'Intégration Slack', description: 'Publier les alertes sur un canal Slack' },
-                    { name: 'Webhook', description: 'Envoyer les alertes vers un point de terminaison personnalisé' }
+                    { name: 'Notifications dans l\'application', description: 'Afficher les alertes dans le tableau de bord' }
                   ].map((channel, index) => (
                     <div key={index} className="flex items-center justify-between py-2">
                       <div>
@@ -511,28 +509,20 @@ const Settings = () => {
 
              {/* Backend Status Widget */}
              <BackendStatusWidget />
- 
-              {[
-                { name: 'Slack', description: 'Envoyer les alertes sur des canaux Slack', connected: true },
-                { name: 'Google Home', description: 'Commandes vocales et intégration domotique', connected: false },
-                { name: 'Webhooks', description: 'Points de terminaison HTTP personnalisés pour les alertes', connected: true },
-                { name: 'IFTTT', description: 'Se connecter à des milliers d\'applications', connected: false }
-              ].map((integration, index) => (
-                <div key={index} className="flex items-center justify-between p-5 rounded-xl bg-card border border-border">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                      <Plug className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{integration.name}</p>
-                      <p className="text-sm text-muted-foreground">{integration.description}</p>
-                    </div>
+
+              <div className="p-5 rounded-xl bg-card border border-border">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Plug className="w-6 h-6 text-muted-foreground" />
                   </div>
-                  <Button variant={integration.connected ? 'outline' : 'default'} size="sm">
-                    {integration.connected ? 'Configurer' : 'Connecter'}
-                  </Button>
+                  <div>
+                    <p className="font-medium text-foreground">Intégrations tierces</p>
+                    <p className="text-sm text-muted-foreground">
+                      Aucune intégration externe n'est activée pour le moment.
+                    </p>
+                  </div>
                 </div>
-              ))}
+              </div>
             </motion.div>
           </TabsContent>
         </Tabs>

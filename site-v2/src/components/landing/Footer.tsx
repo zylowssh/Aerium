@@ -12,7 +12,7 @@ const footerColumns = [
     links: [
       { label: 'Accueil', to: '/' },
       { label: 'Connexion', to: '/auth' },
-      { label: 'Dashboard', to: '/dashboard' },
+      { label: 'Tableau de bord', to: '/dashboard' },
     ],
   },
   {

@@ -19,7 +19,7 @@ interface TopBarProps {
   subtitle?: string;
 }
 
-export function TopBar({ title = "Dashboard", subtitle }: TopBarProps) {
+export function TopBar({ title = "Tableau de bord", subtitle }: TopBarProps) {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const [exportOpen, setExportOpen] = useState(false);
@@ -68,19 +68,22 @@ export function TopBar({ title = "Dashboard", subtitle }: TopBarProps) {
     return 'U';
   };
 
+  const normalizedTitle = title.toLowerCase();
+  const isDashboardTitle = normalizedTitle === 'dashboard' || normalizedTitle === 'tableau de bord';
+
   return (
     <>
-      <header className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border bg-background/50 backdrop-blur-sm">
+      <header className="app-topbar flex items-center justify-between px-4 md:px-6 py-4 border-b border-border bg-background/50 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <MobileNav />
           <div>
             <h1 className="text-xl md:text-2xl font-semibold text-foreground">
-              {title === "Dashboard" ? `${getGreeting()}, ${getUserFirstName()}` : title}
+              {isDashboardTitle ? `${getGreeting()}, ${getUserFirstName()}` : title}
             </h1>
             {subtitle && (
               <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
             )}
-            {title === "Dashboard" && (
+            {isDashboardTitle && (
               <p className="text-sm text-muted-foreground mt-0.5 hidden sm:block">Voici votre aperçu de la qualité de l'air</p>
             )}
           </div>
@@ -136,7 +139,7 @@ export function TopBar({ title = "Dashboard", subtitle }: TopBarProps) {
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg hover:bg-muted transition-colors"
-              aria-label="Toggle theme"
+              aria-label="Basculer le thème"
                data-tour="theme"
             >
               {theme === 'dark' ? (

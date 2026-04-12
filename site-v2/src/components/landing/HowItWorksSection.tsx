@@ -11,14 +11,14 @@ const steps = [
   },
   { 
     number: '2', 
-    title: 'Backend Python', 
+    title: 'Serveur Python', 
     description: 'Les données sont traitées et stockées en temps réel', 
     icon: Terminal, 
     details: 'WebSockets, base de données, alertes' 
   },
   { 
     number: '3', 
-    title: 'Dashboard React', 
+    title: 'Tableau de bord React', 
     description: 'Visualisation interactive et alertes intelligentes', 
     icon: BarChart3, 
     details: 'Graphiques en direct, historique, rapports' 

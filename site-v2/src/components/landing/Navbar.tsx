@@ -95,7 +95,7 @@ const Navbar = ({ onScrollToSection }: NavbarProps) => {
               to="/dashboard"
               className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors rounded-full px-4 py-2 font-manrope hover:bg-white/40 dark:hover:bg-white/10"
             >
-              Dashboard
+              Tableau de bord
             </Link>
           </motion.div>
 
@@ -112,7 +112,7 @@ const Navbar = ({ onScrollToSection }: NavbarProps) => {
               className="p-2.5 rounded-full border border-white/40 dark:border-white/20 bg-white/30 dark:bg-black/35 hover:bg-white/55 dark:hover:bg-black/55 transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              aria-label="Toggle theme"
+              aria-label="Basculer le thème"
             >
               {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-foreground" />

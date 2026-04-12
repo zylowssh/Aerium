@@ -24,6 +24,11 @@ import {
   Reading
 } from '@/lib/sensorData';
 
+interface SensorReadingPayload {
+  co2: number;
+  recorded_at: string;
+}
+
 const Dashboard = () => {
   const { sensors, isLoading } = useSensors();
    const { 
@@ -51,7 +56,8 @@ const Dashboard = () => {
   const [aggregateData, setAggregateData] = useState({
     avgCo2: 0,
     avgTemp: 0,
-    avgHumidity: 0
+    avgHumidity: 0,
+    totalReadings: 0
   });
 
   // Initialize prevSensorsLength on first render
@@ -70,7 +76,8 @@ const Dashboard = () => {
         setAggregateData({
           avgCo2: Math.round(data.avgCo2),
           avgTemp: data.avgTemperature,
-          avgHumidity: Math.round(data.avgHumidity)
+          avgHumidity: Math.round(data.avgHumidity),
+          totalReadings: Math.round(data.totalReadings || 0)
         });
       } catch (error) {
         console.error('Error fetching aggregate data:', error);
@@ -154,7 +161,7 @@ const Dashboard = () => {
         await Promise.all(sensorsForMiniCharts.map(async (sensor) => {
           try {
             const data = await apiClient.getSensorReadings(sensor.id.toString(), 2, 8);
-            readings[sensor.id] = data.map((r: any) => r.co2).reverse();
+            readings[sensor.id] = (data as SensorReadingPayload[]).map((r) => r.co2).reverse();
           } catch (error) {
             console.error(`Error fetching readings for sensor ${sensor.id}:`, error);
             readings[sensor.id] = [];
@@ -209,7 +216,7 @@ const Dashboard = () => {
         const timeMap = new Map<number, number[]>();
         
         allSensorReadings.forEach(readings => {
-          readings.forEach((reading: any) => {
+          (readings as SensorReadingPayload[]).forEach((reading) => {
             const timestamp = new Date(reading.recorded_at).getTime();
             // Round to nearest 30 seconds for grouping (30000 ms)
             const roundedTime = Math.floor(timestamp / 30000) * 30000;
@@ -248,11 +255,12 @@ const Dashboard = () => {
   // WebSocket listener for real-time aggregate updates - recalculate when sensors change
   useEffect(() => {
     if (sensors.length > 0) {
-      setAggregateData({
+      setAggregateData((prev) => ({
+        ...prev,
         avgCo2: Math.round(sensors.reduce((acc, s) => acc + s.co2, 0) / sensors.length),
         avgTemp: parseFloat((sensors.reduce((acc, s) => acc + s.temperature, 0) / sensors.length).toFixed(1)),
         avgHumidity: Math.round(sensors.reduce((acc, s) => acc + s.humidity, 0) / sensors.length)
-      });
+      }));
     }
   }, [sensors]); // Recalculate whenever sensors array changes (includes WebSocket updates)
 
@@ -261,6 +269,27 @@ const Dashboard = () => {
   const avgTemp = aggregateData.avgTemp || (sensors.length > 0 ? (sensors.reduce((acc, s) => acc + s.temperature, 0) / sensors.length).toFixed(1) : '0');
   const avgHumidity = aggregateData.avgHumidity || (sensors.length > 0 ? Math.round(sensors.reduce((acc, s) => acc + s.humidity, 0) / sensors.length) : 0);
   const healthScore = getHealthScore(avgCo2, parseFloat(String(avgTemp)), avgHumidity);
+  const readingsToday = aggregateData.totalReadings || trendData.length;
+
+  const firstCo2 = trendData.length > 0 ? trendData[0].co2 : null;
+  const latestCo2 = trendData.length > 0 ? trendData[trendData.length - 1].co2 : null;
+  const co2Trend =
+    firstCo2 !== null && latestCo2 !== null && firstCo2 !== 0
+      ? Math.round(((latestCo2 - firstCo2) / firstCo2) * 100)
+      : undefined;
+
+  const previousHealthScore =
+    firstCo2 !== null ? getHealthScore(firstCo2, parseFloat(String(avgTemp)), avgHumidity) : healthScore;
+  const healthTrend = Math.round(healthScore - previousHealthScore);
+
+  const bestAirReading =
+    trendData.length > 0
+      ? trendData.reduce((best, current) => (current.co2 < best.co2 ? current : best), trendData[0])
+      : null;
+  const bestAirTime = bestAirReading
+    ? bestAirReading.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : 'N/A';
+
   const sensorsOnline = sensors.filter(s => s.status === 'en ligne').length;
   const totalSensors = sensors.length;
 
@@ -277,8 +306,8 @@ const Dashboard = () => {
             value={avgCo2} 
             unit="ppm" 
             icon={Activity}
-            trend={-5}
-            trendLabel="par rapport à hier"
+            trend={co2Trend}
+            trendLabel="sur la période"
             status={avgCo2 < 800 ? 'success' : avgCo2 < 1000 ? 'warning' : 'danger'}
           />
           <KPICard 
@@ -300,8 +329,8 @@ const Dashboard = () => {
             value={healthScore} 
             unit="/100" 
             icon={Heart}
-            trend={5}
-            trendLabel="amélioration"
+            trend={healthTrend}
+            trendLabel="sur la période"
             status={healthScore >= 80 ? 'success' : healthScore >= 60 ? 'warning' : 'danger'}
           />
         </div>
@@ -345,7 +374,7 @@ const Dashboard = () => {
                   disabled={isExporting}
                 >
                   <Download className="w-3 h-3" />
-                  {isExporting ? 'Export...' : 'CSV'}
+                  {isExporting ? 'Exportation...' : 'CSV'}
                 </Button>
               </div>
               <div className="space-y-1">
@@ -366,9 +395,9 @@ const Dashboard = () => {
             <QuickInsights
               sensorsOnline={sensorsOnline}
               totalSensors={totalSensors}
-              readingsToday={156}
+              readingsToday={readingsToday}
               peakCO2={trendData.length > 0 ? Math.max(...trendData.map(d => d.co2)) : 0}
-              bestAirTime="6:00 AM"
+              bestAirTime={bestAirTime}
             />
           </div>
         </div>

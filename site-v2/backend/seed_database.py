@@ -97,7 +97,7 @@ def amorcer_base_donnees():
                 location=donnees_capteur['location'],
                 status='en ligne',
                 sensor_type='simulation',
-                battery=random.randint(75, 100),
+                battery=None,
                 is_live=True
             )
             db.session.add(capteur)
@@ -156,7 +156,7 @@ def amorcer_base_donnees():
             location='Datacenter',
             status='en ligne',
             sensor_type='simulation',
-            battery=95,
+            battery=None,
             is_live=True
         )
         db.session.add(capteur_admin)
