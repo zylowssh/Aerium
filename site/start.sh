@@ -2,6 +2,7 @@
 
 BACKEND_PORT=5000
 FRONTEND_PORT=5173
+BACKEND_DB="instance/aerium.db"
 
 clear
 echo ""
@@ -55,7 +56,7 @@ pip install -r requirements.txt > /dev/null 2>&1
 echo "[OK] Dependencies installed"
 
 # Check if database needs seeding
-if [ ! -f "aerium.db" ]; then
+if [ ! -f "$BACKEND_DB" ]; then
     echo "[INFO] Seeding database with demo data..."
     python seed_database.py > /dev/null 2>&1
     echo "[OK] Database seeded successfully"

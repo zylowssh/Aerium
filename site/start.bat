@@ -7,6 +7,7 @@ set "BACKEND_PORT=5000"
 set "FRONTEND_PORT=5173"
 set "BACKEND_TIMEOUT=30"
 set "FRONTEND_TIMEOUT=30"
+set "BACKEND_DB=instance\aerium.db"
 set "VERBOSE="
 
 :: Parse arguments
@@ -75,7 +76,7 @@ if errorlevel 1 (
 echo [OK] Dépendances Python synchronisées
 
 :: Database creation - FIXED LOGIC
-if not exist "aerium.db" (
+if not exist "%BACKEND_DB%" (
     echo [INFO] Création de la base de données...
     if defined VERBOSE (
         "%PYTHON%" seed_database.py
@@ -84,7 +85,7 @@ if not exist "aerium.db" (
     )
     :: Check if DB was created (seed_database.py starts server, so check file after)
     timeout /t 3 >nul
-    if exist "aerium.db" (
+    if exist "%BACKEND_DB%" (
         echo [OK] Base de données créée avec succès
     ) else (
         echo [WARN] La base de données n'a pas été créée - vérifiez seed_database.py
