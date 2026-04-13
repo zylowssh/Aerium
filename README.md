@@ -9,7 +9,7 @@
 
 **Une application web de surveillance de la qualité de l'air en temps réel pour suivre et analyser les niveaux de CO₂**
 
-[Démarrage Rapide](#-démarrage-rapide) • [Documentation](docs/INDEX.md) • [Démo](#-captures-décran) • [Contribuer](#-contribuer)
+[Démarrage Rapide](#-démarrage-rapide) • [Documentation](docs/INDEX.md) • [Démo](#-captures-décran)
 
 </div>
 
