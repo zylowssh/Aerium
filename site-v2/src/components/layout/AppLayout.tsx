@@ -14,7 +14,7 @@ export function AppLayout({ children, title, subtitle }: AppLayoutProps) {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar title={title} subtitle={subtitle} />
-        <main className="flex-1 overflow-auto p-6">
+        <main className="app-main flex-1 overflow-auto p-6">
           {children}
         </main>
       </div>

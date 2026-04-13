@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Radio, Wifi, WifiOff, ThermometerSun, Droplets, Wind, Search, Filter, List, Grid3X3 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -10,6 +10,18 @@ import { Sensor } from '@/lib/sensorData';
 import { cn } from '@/lib/utils';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { useSensors } from '@/hooks/useSensors';
+
+const getSensorMapPosition = (sensor: Sensor, index: number) => {
+  const seedSource = `${sensor.id}-${sensor.location}-${sensor.name}`;
+  let hash = 0;
+  for (let i = 0; i < seedSource.length; i += 1) {
+    hash = (hash * 31 + seedSource.charCodeAt(i)) >>> 0;
+  }
+
+  const top = 12 + ((hash + index * 17) % 70);
+  const left = 8 + (((hash >> 3) + index * 29) % 84);
+  return { top: `${top}%`, left: `${left}%` };
+};
 
 const SensorMap = () => {
   const { sensors, isLoading } = useSensors();
@@ -89,21 +101,37 @@ const SensorMap = () => {
           </div>
         </div>
 
-        {/* Map Placeholder */}
+        {/* Live Sensor Layout */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative h-80 rounded-xl bg-card border border-border overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="w-12 h-12 text-primary mx-auto mb-3" />
-                <p className="text-lg font-medium text-foreground">Carte Interactive</p>
-                <p className="text-sm text-muted-foreground">La carte sera disponible prochainement</p>
+            <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">Disposition des capteurs</p>
+                <p className="text-xs text-muted-foreground">
+                  {filteredSensors.length} capteur{filteredSensors.length > 1 ? 's' : ''} affiché{filteredSensors.length > 1 ? 's' : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="w-2.5 h-2.5 rounded-full bg-success" /> En ligne
+                </span>
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="w-2.5 h-2.5 rounded-full bg-warning" /> Avertissement
+                </span>
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="w-2.5 h-2.5 rounded-full bg-destructive" /> Hors ligne
+                </span>
               </div>
             </div>
-            {/* Mock sensor pins */}
+
+            <div className="absolute inset-0 opacity-20">
+              <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--muted-foreground) / 0.35) 1px, transparent 0)', backgroundSize: '28px 28px' }} />
+            </div>
+
             {filteredSensors.slice(0, 5).map((sensor, index) => (
               <div
                 key={sensor.id}
@@ -113,14 +141,24 @@ const SensorMap = () => {
                   sensor.status === 'avertissement' ? 'bg-warning' : 'bg-destructive'
                 )}
                 style={{
-                  top: `${20 + (index * 15)}%`,
-                  left: `${15 + (index * 18)}%`,
+                  ...getSensorMapPosition(sensor, index),
                 }}
                 onClick={() => setSelectedSensor(sensor)}
+                title={`${sensor.name} - ${sensor.location}`}
               >
                 <Radio className="w-4 h-4 text-white" />
               </div>
             ))}
+
+            {filteredSensors.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-lg font-medium text-foreground">Aucun capteur à afficher</p>
+                  <p className="text-sm text-muted-foreground">Ajustez les filtres pour voir les capteurs sur le plan.</p>
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
 

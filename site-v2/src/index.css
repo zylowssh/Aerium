@@ -330,12 +330,35 @@
   padding: 1.25rem;
 }
 
+.compact-mode .p-8 {
+  padding: 1.5rem;
+}
+
+.compact-mode .px-6 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.compact-mode .py-6 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.compact-mode .py-4 {
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+}
+
 .compact-mode .gap-4 {
   gap: 0.75rem;
 }
 
 .compact-mode .gap-6 {
   gap: 1rem;
+}
+
+.compact-mode .gap-8 {
+  gap: 1.25rem;
 }
 
 .compact-mode .space-y-4 > * + * {
@@ -346,13 +369,52 @@
   margin-top: 1rem;
 }
 
+.compact-mode .space-y-8 > * + * {
+  margin-top: 1.25rem;
+}
+
+.compact-mode .app-topbar {
+  min-height: 56px;
+}
+
+.compact-mode .app-main {
+  padding: 1rem;
+}
+
+.compact-mode .app-sidebar nav a {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+.compact-mode table th,
+.compact-mode table td {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+.compact-mode .text-3xl {
+  font-size: 1.625rem;
+  line-height: 2rem;
+}
+
+.compact-mode .h-12 {
+  height: 2.5rem;
+}
+
+.compact-mode .h-10 {
+  height: 2.25rem;
+}
+
 /* Disable animations */
 .no-animations,
 .no-animations * {
+  animation: none !important;
   animation-duration: 0ms !important;
   animation-delay: 0ms !important;
+  transition: none !important;
   transition-duration: 0ms !important;
   transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
 }
 
 /* Override Remotion Player styling */

@@ -34,7 +34,7 @@ const CTASection = () => {
                 transition={{ delay: 0.1 }}
               >
                 <Sparkles className="w-4 h-4" />
-                Et si votre dashboard inspirait vraiment ?
+                Et si votre tableau de bord inspirait vraiment ?
               </motion.span>
 
               <h2 className="text-4xl sm:text-5xl lg:text-6xl text-foreground mb-6 leading-tight">
@@ -50,7 +50,7 @@ const CTASection = () => {
                 <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.95 }}>
                   <Link to="/dashboard">
                     <Button size="lg" className="h-12 sm:h-14 px-6 sm:px-9 rounded-full bg-foreground text-background hover:opacity-90 text-sm sm:text-base font-manrope font-semibold">
-                      Ouvrir le Dashboard
+                      Ouvrir le tableau de bord
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
                   </Link>

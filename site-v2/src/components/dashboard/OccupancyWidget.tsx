@@ -11,6 +11,11 @@ interface ZoneOccupancy {
   trend: 'up' | 'down' | 'stable';
 }
 
+interface OccupancySensorSnapshot {
+  location?: string;
+  status?: string;
+}
+
 export function OccupancyWidget() {
   const [zones, setZones] = useState<ZoneOccupancy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,22 +29,34 @@ export function OccupancyWidget() {
       setLoading(true);
       const sensors = await apiClient.getSensors();
       
-      // Generate occupancy data from sensor locations
+      // Derive zone activity from real sensor statuses by location.
       const zoneMap: Record<string, ZoneOccupancy> = {};
       
-      sensors.forEach((sensor: any) => {
+      (sensors as OccupancySensorSnapshot[]).forEach((sensor) => {
         const location = sensor.location || 'Défaut';
         if (!zoneMap[location]) {
           zoneMap[location] = {
             zone: location,
-            current: Math.floor(Math.random() * 20) + 1,
-            max: Math.floor(Math.random() * 10) + 20,
-            trend: ['up', 'down', 'stable'][Math.floor(Math.random() * 3)] as 'up' | 'down' | 'stable'
+            current: 0,
+            max: 0,
+            trend: 'stable'
           };
+        }
+
+        zoneMap[location].max += 1;
+        if (sensor.status === 'en ligne') {
+          zoneMap[location].current += 1;
         }
       });
       
-      const zonesArray = Object.values(zoneMap);
+      const zonesArray = Object.values(zoneMap).map((zone) => {
+        const ratio = zone.max > 0 ? zone.current / zone.max : 0;
+        return {
+          ...zone,
+          trend: ratio >= 0.8 ? 'up' : ratio <= 0.3 ? 'down' : 'stable'
+        };
+      });
+
       setZones(zonesArray.length > 0 ? zonesArray : getDefaultZones());
     } catch (error) {
       console.error('Error fetching occupancy data:', error);
@@ -77,7 +94,7 @@ export function OccupancyWidget() {
       {/* Overall bar */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs text-muted-foreground">Taux global</span>
+          <span className="text-xs text-muted-foreground">Capteurs actifs</span>
           <span className={cn(
             'text-xs font-medium',
             overallPercent > 80 ? 'text-amber-500' : 'text-primary'

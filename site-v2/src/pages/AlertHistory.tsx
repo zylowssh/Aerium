@@ -28,6 +28,33 @@ interface Alert {
   createdAt: string;
   acknowledgedAt?: string;
   resolvedAt?: string;
+  source: 'history' | 'active';
+}
+
+interface AlertPayload {
+  id?: string | number;
+  sensorId?: string | number;
+  sensor_id?: string | number;
+  sensorName?: string;
+  sensorLocation?: string;
+  alertType?: string;
+  alert_type?: string;
+  type?: string;
+  metric?: string;
+  metricValue?: string | number;
+  metric_value?: string | number;
+  thresholdValue?: string | number | null;
+  threshold_value?: string | number | null;
+  value?: string | number;
+  message?: string;
+  status?: string;
+  createdAt?: string;
+  created_at?: string;
+  timestamp?: string;
+  acknowledgedAt?: string;
+  acknowledged_at?: string;
+  resolvedAt?: string;
+  resolved_at?: string;
 }
 
 const normalizeHistoryStatus = (status: string): Alert['status'] => {
@@ -55,7 +82,7 @@ const normalizeHistoryType = (type: string): Alert['alertType'] => {
   }
 };
 
-const normalizeHistoryAlert = (raw: any): Alert => ({
+const normalizeHistoryAlert = (raw: AlertPayload): Alert => ({
   id: String(raw?.id ?? ''),
   sensorId: String(raw?.sensorId ?? raw?.sensor_id ?? ''),
   sensorName: raw?.sensorName || 'Capteur inconnu',
@@ -72,6 +99,29 @@ const normalizeHistoryAlert = (raw: any): Alert => ({
   createdAt: raw?.createdAt || raw?.created_at || new Date().toISOString(),
   acknowledgedAt: raw?.acknowledgedAt || raw?.acknowledged_at,
   resolvedAt: raw?.resolvedAt || raw?.resolved_at,
+  source: 'history',
+});
+
+const normalizeActiveAlert = (raw: AlertPayload): Alert => ({
+  id: String(raw?.id ?? ''),
+  sensorId: String(raw?.sensorId ?? raw?.sensor_id ?? ''),
+  sensorName: raw?.sensorName || 'Capteur inconnu',
+  sensorLocation: raw?.sensorLocation || 'Inconnu',
+  alertType: normalizeHistoryType(raw?.alertType || raw?.alert_type || raw?.type),
+  metric: String(raw?.metric || 'co2'),
+  metricValue: Number(raw?.metricValue ?? raw?.metric_value ?? raw?.value ?? 0),
+  thresholdValue:
+    raw?.thresholdValue === null || raw?.thresholdValue === undefined
+      ? raw?.threshold_value === null || raw?.threshold_value === undefined
+        ? undefined
+        : Number(raw?.threshold_value)
+      : Number(raw?.thresholdValue),
+  message: raw?.message || 'Alerte sans message',
+  status: normalizeHistoryStatus(raw?.status),
+  createdAt: raw?.createdAt || raw?.created_at || raw?.timestamp || new Date().toISOString(),
+  acknowledgedAt: raw?.acknowledgedAt || raw?.acknowledged_at,
+  resolvedAt: raw?.resolvedAt || raw?.resolved_at,
+  source: 'active',
 });
 
 const AlertHistory = () => {
@@ -90,28 +140,39 @@ const AlertHistory = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await apiClient.getAlertHistory(filterDays);
-      
-      if (response && response.alerts) {
-        const normalized = response.alerts.map(normalizeHistoryAlert);
-        // Filter by status and type if needed
-        let filteredAlerts = normalized;
-        
-        if (filterStatus) {
-          filteredAlerts = filteredAlerts.filter((a: any) => a.status === filterStatus);
+
+      let normalized: Alert[] = [];
+
+      try {
+        const response = await apiClient.getAlertHistory(filterDays);
+        if (Array.isArray(response?.alerts)) {
+          normalized = response.alerts.map(normalizeHistoryAlert);
         }
-        if (filterType) {
-          filteredAlerts = filteredAlerts.filter((a: any) => a.alertType === filterType);
-        }
-        
-        setAlerts(filteredAlerts);
-      } else {
-        setError('Invalid response format from server');
+      } catch (historyError) {
+        console.warn('History endpoint unavailable, using active alerts fallback:', historyError);
       }
-    } catch (error: any) {
+
+      if (normalized.length === 0) {
+        const activeAlerts = await apiClient.getAlerts(undefined, 200);
+        normalized = (activeAlerts || []).map(normalizeActiveAlert);
+      }
+
+      let filteredAlerts = normalized;
+      if (filterStatus) {
+        filteredAlerts = filteredAlerts.filter((a: Alert) => a.status === filterStatus);
+      }
+      if (filterType) {
+        filteredAlerts = filteredAlerts.filter((a: Alert) => a.alertType === filterType);
+      }
+
+      setAlerts(filteredAlerts);
+    } catch (error: unknown) {
       console.error('Error fetching alerts:', error);
-      setError(error.response?.data?.error || error.message || 'Failed to load alerts');
+      const apiError = error as {
+        response?: { data?: { error?: string } };
+        message?: string;
+      };
+      setError(apiError.response?.data?.error || apiError.message || 'Impossible de charger les alertes');
     } finally {
       setLoading(false);
     }
@@ -119,7 +180,12 @@ const AlertHistory = () => {
 
   const handleAcknowledge = async (alertId: string) => {
     try {
-      await apiClient.put(`/alerts/history/acknowledge/${alertId}`);
+      const targetAlert = alerts.find((alert) => alert.id === alertId);
+      if (targetAlert?.source === 'active') {
+        await apiClient.updateAlertStatus(alertId, 'reconnue');
+      } else {
+        await apiClient.put(`/alerts/history/acknowledge/${alertId}`);
+      }
       fetchAlerts();
     } catch (error) {
       console.error('Error acknowledging alert:', error);
@@ -128,7 +194,12 @@ const AlertHistory = () => {
 
   const handleResolve = async (alertId: string) => {
     try {
-      await apiClient.put(`/alerts/history/resolve/${alertId}`);
+      const targetAlert = alerts.find((alert) => alert.id === alertId);
+      if (targetAlert?.source === 'active') {
+        await apiClient.updateAlertStatus(alertId, 'résolue');
+      } else {
+        await apiClient.put(`/alerts/history/resolve/${alertId}`);
+      }
       fetchAlerts();
     } catch (error) {
       console.error('Error resolving alert:', error);

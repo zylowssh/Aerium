@@ -84,7 +84,7 @@ export function KPICard({
             )}
             {Math.abs(trend)}%
           </div>
-          <span className="text-xs text-muted-foreground">{trendLabel || 'vs yesterday'}</span>
+            <span className="text-xs text-muted-foreground">{trendLabel || 'vs hier'}</span>
         </div>
       )}
     </motion.div>

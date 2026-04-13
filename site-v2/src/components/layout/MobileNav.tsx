@@ -22,7 +22,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Accueil' },
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de Bord' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
   { to: '/analytics', icon: BarChart3, label: 'Analyses' },
   { to: '/comparison', icon: GitCompare, label: 'Comparaison' },
   { to: '/sensors', icon: Radio, label: 'Capteurs' },

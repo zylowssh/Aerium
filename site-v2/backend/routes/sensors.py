@@ -179,7 +179,7 @@ def creer_capteur():
             location=lieu,
             sensor_type=type_capteur,
             status='en ligne',
-            battery=100,
+            battery=None if type_capteur == 'simulation' else 100,
             is_live=True
         )
         
@@ -234,9 +234,11 @@ def mettre_a_jour_capteur(sensor_id):
             capteur.location = data['location']
         if 'sensor_type' in data:
             capteur.sensor_type = data['sensor_type']
+            if capteur.sensor_type == 'simulation':
+                capteur.battery = None
         if 'status' in data:
             capteur.status = data['status']
-        if 'battery' in data:
+        if 'battery' in data and capteur.sensor_type != 'simulation':
             capteur.battery = data['battery']
         if 'is_live' in data:
             capteur.is_live = data['is_live']

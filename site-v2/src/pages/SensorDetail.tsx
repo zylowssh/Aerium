@@ -303,6 +303,22 @@ const SensorDetail = () => {
     );
   }
 
+  const sensorMetrics = [
+    { label: 'CO₂', value: sensor.co2 || 0, unit: 'ppm', icon: Activity, color: 'text-primary' },
+    { label: 'Température', value: (sensor.temperature || 0).toFixed(1), unit: '°C', icon: Thermometer, color: 'text-warning' },
+    { label: 'Humidité', value: sensor.humidity || 0, unit: '%', icon: Droplets, color: 'text-blue-400' },
+  ];
+
+  if (sensor.sensor_type === 'real') {
+    sensorMetrics.push({
+      label: 'Batterie',
+      value: sensor.battery ?? 100,
+      unit: '%',
+      icon: Battery,
+      color: 'text-success'
+    });
+  }
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -397,12 +413,7 @@ const SensorDetail = () => {
 
         {/* Live Readings */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: 'CO₂', value: sensor.co2 || 0, unit: 'ppm', icon: Activity, color: 'text-primary' },
-            { label: 'Température', value: (sensor.temperature || 0).toFixed(1), unit: '°C', icon: Thermometer, color: 'text-warning' },
-            { label: 'Humidité', value: sensor.humidity || 0, unit: '%', icon: Droplets, color: 'text-blue-400' },
-            { label: 'Batterie', value: sensor.battery ?? 100, unit: '%', icon: Battery, color: 'text-success' },
-          ].map((metric, index) => (
+          {sensorMetrics.map((metric, index) => (
             <motion.div
               key={metric.label}
               initial={{ opacity: 0, y: 20 }}

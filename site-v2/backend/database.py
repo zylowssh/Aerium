@@ -61,7 +61,7 @@ class Sensor(db.Model):
             'location': self.location,
             'status': self.status,
             'sensor_type': self.sensor_type,
-            'battery': self.battery,
+            'battery': self.battery if self.sensor_type != 'simulation' else None,
             'is_live': self.is_live,
             'thresholds': {
                 'co2': self.threshold_co2,

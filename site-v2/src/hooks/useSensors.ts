@@ -30,7 +30,7 @@ export const useSensors = () => {
         temperature: s.temperature || 0,
         humidity: s.humidity || 0,
         lastReading: s.lastReading ? new Date(s.lastReading) : new Date(s.updated_at),
-        battery: s.battery ?? undefined,
+        battery: s.sensor_type === 'simulation' ? undefined : (s.battery ?? undefined),
         isLive: s.is_live ?? true,
         thresholds: s.thresholds ?? undefined,
       }));
@@ -92,7 +92,7 @@ export const useSensors = () => {
       return data;
     } catch (err: any) {
       console.error('Error creating sensor:', err);
-      throw new Error(err.response?.data?.error || 'Failed to create sensor');
+      throw new Error(err.response?.data?.error || 'Impossible de créer le capteur');
     }
   };
 
@@ -105,7 +105,7 @@ export const useSensors = () => {
       await fetchSensors();
     } catch (err: any) {
       console.error('Error updating sensor:', err);
-      throw new Error(err.response?.data?.error || 'Failed to update sensor');
+      throw new Error(err.response?.data?.error || 'Impossible de mettre à jour le capteur');
     }
   };
 
@@ -115,7 +115,7 @@ export const useSensors = () => {
       setSensors((prev) => prev.filter((s) => s.id !== sensorId));
     } catch (err: any) {
       console.error('Error deleting sensor:', err);
-      throw new Error(err.response?.data?.error || 'Failed to delete sensor');
+      throw new Error(err.response?.data?.error || 'Impossible de supprimer le capteur');
     }
   };
 
@@ -128,7 +128,7 @@ export const useSensors = () => {
       await fetchSensors();
     } catch (err: any) {
       console.error('Error adding reading:', err);
-      throw new Error(err.response?.data?.error || 'Failed to add reading');
+      throw new Error(err.response?.data?.error || 'Impossible d\'ajouter la mesure');
     }
   };
 

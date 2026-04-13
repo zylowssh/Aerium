@@ -37,6 +37,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { apiClient } from '@/lib/apiClient';
@@ -45,6 +52,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface MaintenanceTask {
   id: string;
+  sensorId: string;
   sensorName: string;
   type: string;
   status: string;
@@ -52,6 +60,7 @@ interface MaintenanceTask {
   priority: string;
   description?: string;
   notes?: string;
+  source: 'stored' | 'suggested';
 }
 
 interface Stats {
@@ -73,6 +82,38 @@ interface MaintenanceFormData {
   priority: 'low' | 'normal' | 'high';
   description: string;
   notes: string;
+}
+
+interface MaintenanceTaskPayload {
+  id?: string | number;
+  sensorId?: string | number;
+  sensor_id?: string | number;
+  sensorName?: string;
+  type?: string;
+  status?: string;
+  scheduledDate?: string;
+  scheduled_date?: string;
+  priority?: string;
+  description?: string;
+  notes?: string;
+}
+
+interface SensorPayload {
+  id?: string | number;
+  name?: string;
+}
+
+interface ActiveAlertPayload {
+  sensorId?: string | number;
+  sensor_id?: string | number;
+  sensorName?: string;
+  type?: string;
+  alertType?: string;
+  alert_type?: string;
+  message?: string;
+  timestamp?: string;
+  createdAt?: string;
+  created_at?: string;
 }
 
 const normalizeMaintenanceStatus = (status: string): string => {
@@ -111,8 +152,9 @@ const normalizeMaintenancePriority = (priority: string): string => {
   }
 };
 
-const normalizeMaintenanceTask = (task: any): MaintenanceTask => ({
+const normalizeMaintenanceTask = (task: MaintenanceTaskPayload): MaintenanceTask => ({
   id: String(task?.id ?? ''),
+  sensorId: String(task?.sensorId ?? task?.sensor_id ?? ''),
   sensorName: task?.sensorName || 'Capteur inconnu',
   type: String(task?.type || 'Maintenance'),
   status: normalizeMaintenanceStatus(task?.status),
@@ -120,7 +162,86 @@ const normalizeMaintenanceTask = (task: any): MaintenanceTask => ({
   priority: normalizeMaintenancePriority(task?.priority),
   description: task?.description || '',
   notes: task?.notes || '',
+  source: 'stored',
 });
+
+const buildSuggestedMaintenanceTasks = (
+  sensors: SensorOption[],
+  alerts: ActiveAlertPayload[]
+): MaintenanceTask[] => {
+  const sensorById = new Map(sensors.map((sensor) => [sensor.id, sensor.name]));
+  const groupedBySensor = new Map<
+    string,
+    {
+      sensorId: string;
+      sensorName: string;
+      isCritical: boolean;
+      latestAt: number;
+      messages: string[];
+    }
+  >();
+
+  (alerts || []).forEach((alert) => {
+    const sensorId = String(alert?.sensorId ?? alert?.sensor_id ?? '');
+    if (!sensorId) {
+      return;
+    }
+
+    const sensorName = alert?.sensorName || sensorById.get(sensorId) || `Capteur ${sensorId}`;
+    const alertType = String(alert?.type || alert?.alertType || alert?.alert_type || '').toLowerCase();
+    const message = String(alert?.message || '').trim();
+    const ts = Date.parse(String(alert?.timestamp || alert?.createdAt || alert?.created_at || new Date().toISOString()));
+
+    const existing = groupedBySensor.get(sensorId);
+    const nextMessages = existing ? existing.messages : [];
+    if (message && !nextMessages.includes(message)) {
+      nextMessages.push(message);
+    }
+
+    groupedBySensor.set(sensorId, {
+      sensorId,
+      sensorName,
+      isCritical: (existing?.isCritical || false) || alertType === 'critique',
+      latestAt: Math.max(existing?.latestAt || 0, Number.isNaN(ts) ? 0 : ts),
+      messages: nextMessages,
+    });
+  });
+
+  const alertSuggestions = Array.from(groupedBySensor.values())
+    .sort((a, b) => b.latestAt - a.latestAt)
+    .map((group, index) => {
+      const baseDelayDays = group.isCritical ? 1 : 3;
+      return {
+        id: `suggested-alert-${group.sensorId}`,
+        sensorId: group.sensorId,
+        sensorName: group.sensorName,
+        type: group.isCritical ? 'Inspection corrective urgente' : 'Inspection corrective',
+        status: 'scheduled',
+        scheduledDate: new Date(Date.now() + (baseDelayDays + index) * 24 * 60 * 60 * 1000).toISOString(),
+        priority: group.isCritical ? 'high' : 'normal',
+        description: 'Suggestion automatique générée à partir des alertes actives.',
+        notes: group.messages.slice(0, 2).join(' | '),
+        source: 'suggested' as const,
+      };
+    });
+
+  if (alertSuggestions.length > 0) {
+    return alertSuggestions;
+  }
+
+  return sensors.slice(0, 8).map((sensor, index) => ({
+    id: `suggested-sensor-${sensor.id}`,
+    sensorId: sensor.id,
+    sensorName: sensor.name,
+    type: 'Inspection préventive',
+    status: 'scheduled',
+    scheduledDate: new Date(Date.now() + (7 + index) * 24 * 60 * 60 * 1000).toISOString(),
+    priority: 'normal',
+    description: 'Suggestion automatique car aucune tâche de maintenance enregistrée.',
+    notes: '',
+    source: 'suggested',
+  }));
+};
 
 const toLocalDateTimeInput = (isoDate?: string): string => {
   const base = isoDate ? new Date(isoDate) : new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -155,19 +276,20 @@ const Maintenance = () => {
     try {
       setLoading(true);
       
-      const [allTasks, sensorsData] = await Promise.all([
+      const [allTasks, sensorsData, alertsData] = await Promise.all([
         apiClient.getMaintenance(undefined, undefined, 100),
         apiClient.getSensors(),
+        apiClient.getAlerts(undefined, 250).catch(() => []),
       ]);
 
-      const sensorOptions: SensorOption[] = (sensorsData || []).map((s: any) => ({
+      const sensorOptions: SensorOption[] = (sensorsData || []).map((s: SensorPayload) => ({
         id: String(s.id),
         name: s.name || `Capteur ${s.id}`,
       }));
       setSensors(sensorOptions);
 
       const nowMs = Date.now();
-      const normalizedTasks = (allTasks || [])
+      let normalizedTasks = (allTasks || [])
         .map(normalizeMaintenanceTask)
         .map((task: MaintenanceTask) => {
           const dueMs = new Date(task.scheduledDate).getTime();
@@ -175,7 +297,16 @@ const Maintenance = () => {
             return { ...task, status: 'overdue' };
           }
           return task;
-        })
+        });
+
+      if (normalizedTasks.length === 0 && sensorOptions.length > 0) {
+        normalizedTasks = buildSuggestedMaintenanceTasks(
+          sensorOptions,
+          Array.isArray(alertsData) ? (alertsData as ActiveAlertPayload[]) : []
+        );
+      }
+
+      normalizedTasks = normalizedTasks
         .sort((a: MaintenanceTask, b: MaintenanceTask) =>
           new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
         );
@@ -357,6 +488,40 @@ const Maintenance = () => {
         description: 'Impossible de supprimer la tâche.',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleCreateFromSuggestion = async (task: MaintenanceTask) => {
+    if (task.source !== 'suggested' || !task.sensorId) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await apiClient.createMaintenance({
+        sensorId: Number(task.sensorId),
+        type: task.type,
+        scheduledDate: task.scheduledDate,
+        status: 'scheduled',
+        priority: (task.priority === 'high' || task.priority === 'low' ? task.priority : 'normal') as 'high' | 'normal' | 'low',
+        description: task.description || undefined,
+        notes: task.notes || undefined,
+      });
+
+      toast({
+        title: 'Tâche créée',
+        description: 'La suggestion a été convertie en tâche de maintenance.',
+      });
+      await fetchMaintenanceData();
+    } catch (error) {
+      console.error('Error creating maintenance from suggestion:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer la tâche depuis la suggestion.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -548,14 +713,23 @@ const Maintenance = () => {
                             <TableHead>Statut</TableHead>
                             <TableHead>Priorité</TableHead>
                             <TableHead>Date</TableHead>
-                            <TableHead className="w-12"></TableHead>
+                            <TableHead className="w-24"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {filteredTasks.map((task) => (
                             <TableRow key={task.id} className="hover:bg-muted/30">
                               <TableCell className="font-medium text-foreground">{task.sensorName}</TableCell>
-                              <TableCell className="text-muted-foreground">{task.type}</TableCell>
+                              <TableCell className="text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                  <span>{task.type}</span>
+                                  {task.source === 'suggested' && (
+                                    <Badge variant="outline" className="text-primary border-primary/30 bg-primary/10">
+                                      Suggestion
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TableCell>
                               <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", getStatusBadge(task.status))}>
                                   {getStatusLabel(task.status)}
@@ -570,30 +744,41 @@ const Maintenance = () => {
                                 {new Date(task.scheduledDate).toLocaleDateString('fr-FR')}
                               </TableCell>
                               <TableCell>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                      <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleViewDetails(task.id)}>Voir Détails</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => openEditDialog(task.id)}>Modifier</DropdownMenuItem>
-                                    {task.status !== 'in_progress' && task.status !== 'completed' && (
-                                      <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'in_progress')}>
-                                        Marquer En cours
+                                {task.source === 'stored' ? (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <MoreHorizontal className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => handleViewDetails(task.id)}>Voir Détails</DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => openEditDialog(task.id)}>Modifier</DropdownMenuItem>
+                                      {task.status !== 'in_progress' && task.status !== 'completed' && (
+                                        <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'in_progress')}>
+                                          Marquer En cours
+                                        </DropdownMenuItem>
+                                      )}
+                                      {task.status !== 'completed' && (
+                                        <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'completed')}>
+                                          Marquer Terminé
+                                        </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteTask(task.id)}>
+                                        Supprimer
                                       </DropdownMenuItem>
-                                    )}
-                                    {task.status !== 'completed' && (
-                                      <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'completed')}>
-                                        Marquer Terminé
-                                      </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteTask(task.id)}>
-                                      Supprimer
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={saving || !task.sensorId}
+                                    onClick={() => handleCreateFromSuggestion(task)}
+                                  >
+                                    Créer
+                                  </Button>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))}

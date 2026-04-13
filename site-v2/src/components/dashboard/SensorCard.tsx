@@ -6,6 +6,10 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/apiClient';
 
+interface MiniChartReadingPayload {
+  co2: number;
+}
+
 export interface SensorCardProps {
   sensor: Sensor;
   miniChartData?: number[];
@@ -33,15 +37,22 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
       if (readings && readings.length > 0) {
         const co2Data = readings
           .reverse()
-          .map((r: any, idx: number) => ({ value: r.co2, index: idx }));
+          .map((r: MiniChartReadingPayload, idx: number) => ({ value: r.co2, index: idx }));
         setChartData(co2Data);
+      } else {
+        setChartData(
+          Array.from({ length: 10 }, (_, i) => ({
+            value: sensor.co2,
+            index: i
+          }))
+        );
       }
     } catch (error) {
       console.error('Error fetching mini chart data:', error);
-      // Generate fallback data
+      // Use a deterministic fallback from current sensor value instead of random numbers.
       setChartData(
         Array.from({ length: 10 }, (_, i) => ({
-          value: 700 + Math.random() * 200,
+          value: sensor.co2,
           index: i
         }))
       );
@@ -132,7 +143,7 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
                     <Activity className="w-3.5 h-3.5 text-primary opacity-75" />
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-primary uppercase tracking-wider">Live</span>
+                <span className="text-xs font-semibold text-primary uppercase tracking-wider">Direct</span>
               </div>
             )}
           </div>

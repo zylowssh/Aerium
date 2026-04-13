@@ -23,7 +23,7 @@ export function LiveIndicator({ isRefreshing, lastUpdate }: LiveIndicatorProps) 
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
           </span>
         )}
-        <span className="text-xs font-medium text-primary">LIVE</span>
+        <span className="text-xs font-medium text-primary">DIRECT</span>
         <RefreshCw className={cn(
           "w-3.5 h-3.5 text-primary/70 cursor-pointer hover:text-primary transition-colors",
           isRefreshing && "animate-spin"
