@@ -74,7 +74,7 @@ class DBData:
         return {"avg": avg, "min": min_, "max": max_}
         
     #* Sueil
-    def get_user_thresholds(self, user_id=None):
+    def get_thresholds(self, user_id=None):
         #* Récupère les seuils d'alerte de l'utilisateur
         if user_id is None:
             self.cursor.execute("SELECT * FROM user_thresholds")
@@ -165,3 +165,13 @@ class DBData:
             FROM co2_readings GROUP BY hour ORDER BY hour
         """).fetchall()
         return [{"hour": int(r[0]), "count": r[1]} for r in rows]
+    
+    def get_co2_badge(self, ppm, user_id=None):
+        thresholds = self.get_thresholds(user_id)
+        level = thresholds[0]
+        if ppm < level["good_level"]:
+            return "Bon",     (0.400, 0.898, 0.647, 1)  # vert
+        elif level["good_level"] <= ppm < level["warning_level"]:
+            return "Moyen",   (0.980, 0.702, 0.529, 1)  # orange
+        elif ppm >= level["warning_level"]:
+            return "Mauvais", (0.953, 0.545, 0.659, 1)  # rouge
