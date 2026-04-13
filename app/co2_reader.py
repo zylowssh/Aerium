@@ -1,57 +1,64 @@
 import random
 from datetime import datetime
+from dbdata import DBData  # adapte l'import selon ton arborescence
 
-#* cette classe simule des valeur de lecture de Co2, a remplacer par la lecture réelle du capteur. 
+
 class Co2Reader:
-    def __init__(self):
-        self.all_data = [] 
-
-    def fake_read_co2(self):
-        """
-        Simule une valeur de CO₂ entre 400 et 2000 ppm.
-        """
-        co2 = random.randint(400, 2000)
-        return co2
+    def __init__(self, user_id=1):
+        self.user_id = user_id
+        self.db = DBData()
 
 
-    def get_air_quality(self,ppm):
-        """
-        Retourne une classification de la qualité de l'air en fonction du ppm.
-        """
-        if ppm < 800:
-            return "Bon"
-        elif ppm < 1200:
-            return "Moyen"
-        else:
-            return "Mauvais"
+    def fake_read_co2(self) -> int:
+        return random.randint(400, 2000)
 
-    def get_temp(self):
-        """
-        Simule une lecture de température entre 15 et 30 °C.
-        """
-        temp = round(random.uniform(15, 30), 1)
-        return temp
-    
-    def get_humidity(self):
-        """
-        Simule une lecture d'humidité entre 30 et 70 %.
-        """
-        humidity = round(random.uniform(30, 70), 1)
-        return humidity
-    
-    
-    def get_timestamp(self):
-        """
-        Retourne l'heure actuelle au format HH:MM:SS.
-        """
-        date = datetime.now().strftime("%H:%M:%S")
-        return date
-    
-    
-    def alert_needed(self, ppm, threshold=1200):
-        """
-        Retourne True si le ppm dépasse le seuil d'alerte défini.
-        Par défaut : 1200 ppm.
-        """
-        return ppm > threshold
+    def get_temp(self) -> float:
+        return round(random.uniform(15, 30), 1)
 
+    def get_humidity(self) -> float:
+        return round(random.uniform(30, 70), 1)
+
+
+    def get_air_quality(self, ppm: int) -> str:
+        badge = self.db.get_co2_badge(ppm,self.user_id)[0]
+        if badge:
+            return badge[0]
+        # si pas de seuil en base
+        if ppm < 800:   return "Bon"
+        if ppm < 1200:  return "Moyen"
+        return "Mauvais"
+
+    def save_reading(self, ppm: int, temperature: float, humidity: float) -> dict:
+        """
+        Insère une lecture dans co2_readings.
+        Retourne le dict complet de la mesure.
+        """
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        self.db.cursor.execute(
+            """
+            INSERT INTO co2_readings (timestamp, ppm, temperature, humidity, user_id)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (timestamp, ppm, temperature, humidity, self.user_id),
+        )
+
+        self.db.conn.commit()
+
+        return {
+            "timestamp":   timestamp,
+            "ppm":         ppm,
+            "temperature": temperature,
+            "humidity":    humidity,
+            "user_id":     self.user_id,
+            "quality":     self.get_air_quality(ppm),
+        }
+
+    def read_and_save(self) -> dict:
+        ppm         = self.fake_read_co2()
+        temperature = self.get_temp()
+        humidity    = self.get_humidity()
+        return self.save_reading(ppm, temperature, humidity)
+
+    def close(self):
+        self.db.close()
