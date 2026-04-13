@@ -15,9 +15,10 @@ from co2_reader import Co2Reader
 
 class CO2Screen(MDScreen):
 
-    def __init__(self, db, **kwargs):
+    def __init__(self, db,user_id, **kwargs):
         super().__init__(**kwargs)
         self.db = db
+        self.user_id = user_id
         self.reader = Co2Reader()
         self.mode = "flux"
         self._record_event = None
@@ -45,8 +46,6 @@ class CO2Screen(MDScreen):
 
         self.refresh(0)
         Clock.schedule_interval(self.refresh, 5)
-
-    # ── Constructeurs UI ──────────────────────────────────
 
     def _build_top_bar(self):
         top_bar = BoxLayout(
@@ -106,8 +105,6 @@ class CO2Screen(MDScreen):
             {"text": "30 derniers jours", "leading_icon": "calendar-month", "on_release": lambda: self.set_mode("jours")},
         ]
         self.menu = MDDropdownMenu(caller=self.mode_btn, items=menu_items)
-
-    # ── Logique ───────────────────────────────────────────
 
     def open_menu(self, btn):
         for child in self.mode_btn.children:

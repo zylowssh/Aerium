@@ -135,36 +135,6 @@ class DBData:
             }
             for row in rows
         ]
-        
-    def get_comparison_data(self):
-        # semaine actuelle vs semaine dernière
-        cur = self.conn.execute("""
-            SELECT AVG(ppm) avg, MIN(ppm) min, MAX(ppm) max FROM co2_readings
-            WHERE timestamp >= date('now', '-7 days')
-        """).fetchone()
-        prev = self.conn.execute("""
-            SELECT AVG(ppm) avg, MIN(ppm) min, MAX(ppm) max FROM co2_readings
-            WHERE timestamp BETWEEN date('now', '-14 days') AND date('now', '-7 days')
-        """).fetchone()
-        return {
-            "current":  {"avg": cur[0] or 0,  "min": cur[1] or 0,  "max": cur[2] or 0},
-            "previous": {"avg": prev[0] or 0, "min": prev[1] or 0, "max": prev[2] or 0},
-        }
-
-    def get_hourly_heatmap(self):
-        rows = self.conn.execute("""
-            SELECT strftime('%H', timestamp) as hour, AVG(ppm) as avg_co2
-            FROM co2_readings WHERE timestamp >= date('now', '-7 days')
-            GROUP BY hour ORDER BY hour
-        """).fetchall()
-        return [{"hour": int(r[0]), "avg_co2": r[1] or 0} for r in rows]
-
-    def get_hourly_distribution(self):
-        rows = self.conn.execute("""
-            SELECT strftime('%H', timestamp) as hour, COUNT(*) as count
-            FROM co2_readings GROUP BY hour ORDER BY hour
-        """).fetchall()
-        return [{"hour": int(r[0]), "count": r[1]} for r in rows]
     
     def get_co2_badge(self, ppm, user_id=None):
         thresholds = self.get_thresholds(user_id)
@@ -175,3 +145,22 @@ class DBData:
             return "Moyen",   (0.980, 0.702, 0.529, 1)  # orange
         elif ppm >= level["warning_level"]:
             return "Mauvais", (0.953, 0.545, 0.659, 1)  # rouge
+        
+    def get_user(self, username):
+        self.cursor.execute(
+            "SELECT * FROM users WHERE username = ?", (username,)
+        )
+        row = self.cursor.fetchone()
+        if row is None:
+            return None
+        return self.dico_value("users", row)
+
+    def create_user(self, username, password_hash, email) -> int:  # ← email en paramètre
+        self.cursor.execute(
+            "INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)",
+            (username, password_hash, email)
+        )
+        self.conn.commit()
+        return self.cursor.lastrowid
+db= DBData()
+print(db.get_column_info("users"))
