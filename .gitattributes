@@ -1,0 +1,2 @@
+# Keep GitHub Linguist stats focused on the Python codebase.
+site/src/** linguist-vendored
