@@ -10,7 +10,7 @@ __pycache__/*
 *$py.class
 
 
-/site/
+/site2/
 
 # VS Code workspace storage (keep shared settings, but ignore local state)
 .vscode/*.code-workspace
