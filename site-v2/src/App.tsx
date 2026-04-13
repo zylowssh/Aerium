@@ -17,8 +17,8 @@ const Analytics = lazy(() => import("./pages/Analytics"));
 const Comparison = lazy(() => import("./pages/Comparison"));
 const Sensors = lazy(() => import("./pages/Sensors"));
 const SensorDetail = lazy(() => import("./pages/SensorDetail"));
-const Alerts = lazy(() => import("./pages/Alerts"));
-const AlertHistory = lazy(() => import("./pages/AlertHistory"));
+const Predictions = lazy(() => import("./pages/Predictions"));
+const AlertsCenter = lazy(() => import("./pages/AlertsCenter"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -69,8 +69,9 @@ const App = () => {
                 <Route path="/sensors" element={<ProtectedAppShell><Sensors /></ProtectedAppShell>} />
                 <Route path="/sensors/:sensorId" element={<ProtectedAppShell><SensorDetail /></ProtectedAppShell>} />
                 <Route path="/sensor-map" element={<Navigate to="/sensors" replace />} />
-                <Route path="/alerts" element={<ProtectedAppShell><Alerts /></ProtectedAppShell>} />
-                <Route path="/alert-history" element={<ProtectedAppShell><AlertHistory /></ProtectedAppShell>} />
+                <Route path="/predictions" element={<ProtectedAppShell><Predictions /></ProtectedAppShell>} />
+                <Route path="/alerts" element={<ProtectedAppShell><AlertsCenter /></ProtectedAppShell>} />
+                <Route path="/alert-history" element={<Navigate to="/alerts" replace />} />
                 <Route path="/reports" element={<ProtectedAppShell><Reports /></ProtectedAppShell>} />
                 <Route path="/recommendations" element={<ProtectedAppShell><Recommendations /></ProtectedAppShell>} />
                 <Route path="/maintenance" element={<ProtectedAppShell><Maintenance /></ProtectedAppShell>} />

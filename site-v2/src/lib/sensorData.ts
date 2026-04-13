@@ -58,20 +58,28 @@ export function getAirQualityColor(level: AirQualityLevel): string {
 }
 
 export function getHealthScore(co2: number, temp: number, humidity: number): number {
-  let score = 100;
-  
-  // CO2 impact (biggest factor)
-  if (co2 > 400) score -= Math.min(40, (co2 - 400) / 30);
-  
-  // Temperature impact (optimal 20-24°C)
-  if (temp < 18 || temp > 26) score -= 15;
-  else if (temp < 20 || temp > 24) score -= 5;
-  
-  // Humidity impact (optimal 40-60%)
-  if (humidity < 30 || humidity > 70) score -= 15;
-  else if (humidity < 40 || humidity > 60) score -= 5;
-  
-  return Math.max(0, Math.round(score));
+  const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+  // CO2 score with piecewise linear degradation based on IAQ thresholds.
+  const co2Score = (() => {
+    if (co2 <= 600) return 100;
+    if (co2 <= 800) return 100 - ((co2 - 600) / 200) * 20;
+    if (co2 <= 1000) return 80 - ((co2 - 800) / 200) * 20;
+    if (co2 <= 1500) return 60 - ((co2 - 1000) / 500) * 30;
+    if (co2 <= 2500) return 30 - ((co2 - 1500) / 1000) * 30;
+    return 0;
+  })();
+
+  // Optimal around 22C; no penalty within +/-2C, then linear degradation.
+  const tempDeviation = Math.max(0, Math.abs(temp - 22) - 2);
+  const tempScore = 100 - tempDeviation * 8;
+
+  // Optimal around 50%; no penalty within 40-60, then linear degradation.
+  const humidityDeviation = Math.max(0, Math.abs(humidity - 50) - 10);
+  const humidityScore = 100 - humidityDeviation * 2.5;
+
+  const weighted = co2Score * 0.5 + tempScore * 0.25 + humidityScore * 0.25;
+  return Math.round(clamp(weighted, 0, 100));
 }
 
 // Generate realistic CO2 patterns (higher during work hours)

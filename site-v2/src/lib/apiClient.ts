@@ -5,8 +5,174 @@ interface ApiError {
   error: string;
 }
 
+interface PredictiveAlertCard {
+  id: string;
+  sensorName: string;
+  metric: string;
+  title: string;
+  description: string;
+  likelihood: number;
+  timeframe: string;
+  impact: 'low' | 'medium' | 'high';
+  currentValue: number;
+  trendPercentage: number;
+}
+
+interface AIForecastPoint {
+  hour: string;
+  co2: number;
+  co2_lower?: number;
+  co2_upper?: number;
+  temperature?: number;
+  humidity?: number;
+}
+
+interface PredictiveAlertsData {
+  cards: PredictiveAlertCard[];
+  forecast: AIForecastPoint[];
+  trends: Record<string, any>;
+}
+
 class ApiClient {
   private client: AxiosInstance;
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  private toFiniteNumber(value: unknown, fallback = 0): number {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  private toImpact(level: string): 'low' | 'medium' | 'high' {
+    if (level === 'high') return 'high';
+    if (level === 'moderate' || level === 'medium') return 'medium';
+    return 'low';
+  }
+
+  private mapCo2RiskToLikelihood(riskLevel: string, peakCo2: number): number {
+    if (riskLevel === 'high') {
+      return this.clamp(Math.round(80 + Math.max(0, peakCo2 - 1000) / 20), 80, 96);
+    }
+    if (riskLevel === 'moderate') {
+      return this.clamp(Math.round(60 + Math.max(0, peakCo2 - 800) / 20), 60, 82);
+    }
+    return this.clamp(Math.round(28 + Math.max(0, peakCo2 - 600) / 30), 20, 60);
+  }
+
+  private mapAIPredictionsToAlertCards(data: any): PredictiveAlertCard[] {
+    const forecast = Array.isArray(data?.forecast) ? data.forecast : [];
+    if (forecast.length === 0) {
+      return [];
+    }
+
+    const trends = data?.trends ?? {};
+    const token = String(data?.generated_at ?? Date.now());
+
+    const avg = (values: number[]) =>
+      values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+
+    const co2Series = forecast
+      .map((point: any) => this.toFiniteNumber(point?.co2, NaN))
+      .filter((value: number): value is number => Number.isFinite(value));
+    const tempSeries = forecast
+      .map((point: any) => this.toFiniteNumber(point?.temperature, NaN))
+      .filter((value: number): value is number => Number.isFinite(value));
+    const humiditySeries = forecast
+      .map((point: any) => this.toFiniteNumber(point?.humidity, NaN))
+      .filter((value: number): value is number => Number.isFinite(value));
+
+    if (co2Series.length === 0) {
+      return [];
+    }
+
+    const cards: PredictiveAlertCard[] = [];
+
+    const co2Current = this.toFiniteNumber(trends.current_avg_co2, co2Series[0] ?? avg(co2Series));
+    const co2Peak = this.toFiniteNumber(trends.peak_co2, Math.max(...co2Series));
+    const co2Change = this.toFiniteNumber(
+      trends.co2_change_pct,
+      ((co2Series[co2Series.length - 1] - co2Series[0]) / Math.max(co2Series[0], 1)) * 100
+    );
+    const riskLevel = String(trends.risk_level ?? '').toLowerCase();
+    const co2Impact = this.toImpact(riskLevel);
+
+    cards.push({
+      id: `ai-co2-${token}`,
+      sensorName: 'Systeme (agrege)',
+      metric: 'co2',
+      title: `Risque CO2 ${co2Impact === 'high' ? 'eleve' : co2Impact === 'medium' ? 'modere' : 'faible'}`,
+      description: `Pic prevu ${Math.round(co2Peak)} ppm${trends.peak_hour ? ` vers ${trends.peak_hour}` : ''}.`,
+      likelihood: this.mapCo2RiskToLikelihood(riskLevel, co2Peak),
+      timeframe: 'Prochaines 24h',
+      impact: co2Impact,
+      currentValue: Math.round(co2Current),
+      trendPercentage: Math.round(co2Change * 10) / 10,
+    });
+
+    if (tempSeries.length > 0) {
+      const tempCurrent = avg(tempSeries);
+      const tempMax = Math.max(...tempSeries);
+      const tempMin = Math.min(...tempSeries);
+      const tempDeviation = Math.max(tempMax - 24, 20 - tempMin, 0);
+      const tempImpact: 'low' | 'medium' | 'high' =
+        tempDeviation >= 4 ? 'high' : tempDeviation >= 2 ? 'medium' : 'low';
+      const tempTrend =
+        ((tempSeries[tempSeries.length - 1] - tempSeries[0]) / Math.max(Math.abs(tempSeries[0]), 1)) * 100;
+
+      cards.push({
+        id: `ai-temperature-${token}`,
+        sensorName: 'Systeme (agrege)',
+        metric: 'temperature',
+        title: tempImpact === 'high' ? 'Confort thermique degrade' : 'Stabilite thermique',
+        description: `Plage prevue ${tempMin.toFixed(1)}-${tempMax.toFixed(1)}C (cible 20-24C).`,
+        likelihood: this.clamp(Math.round(25 + tempDeviation * 18), 25, 92),
+        timeframe: 'Prochaines 24h',
+        impact: tempImpact,
+        currentValue: Math.round(tempCurrent * 10) / 10,
+        trendPercentage: Math.round(tempTrend * 10) / 10,
+      });
+    }
+
+    if (humiditySeries.length > 0) {
+      const humidityCurrent = avg(humiditySeries);
+      const humidityMax = Math.max(...humiditySeries);
+      const humidityMin = Math.min(...humiditySeries);
+      const humidityDeviation = Math.max(humidityMax - 60, 40 - humidityMin, 0);
+      const humidityImpact: 'low' | 'medium' | 'high' =
+        humidityDeviation >= 15 ? 'high' : humidityDeviation >= 7 ? 'medium' : 'low';
+      const humidityTrend =
+        ((humiditySeries[humiditySeries.length - 1] - humiditySeries[0]) /
+          Math.max(Math.abs(humiditySeries[0]), 1)) *
+        100;
+
+      cards.push({
+        id: `ai-humidity-${token}`,
+        sensorName: 'Systeme (agrege)',
+        metric: 'humidity',
+        title: humidityImpact === 'high' ? 'Humidite hors plage' : 'Humidite sous controle',
+        description: `Plage prevue ${Math.round(humidityMin)}-${Math.round(humidityMax)}% (cible 40-60%).`,
+        likelihood: this.clamp(Math.round(20 + humidityDeviation * 4), 20, 92),
+        timeframe: 'Prochaines 24h',
+        impact: humidityImpact,
+        currentValue: Math.round(humidityCurrent),
+        trendPercentage: Math.round(humidityTrend * 10) / 10,
+      });
+    }
+
+    return cards.sort((a, b) => b.likelihood - a.likelihood);
+  }
+
+  async getPredictiveAlertsData(): Promise<PredictiveAlertsData> {
+    const response = await this.client.get('/ai/predictions');
+    const payload = response.data ?? {};
+    return {
+      cards: this.mapAIPredictionsToAlertCards(payload),
+      forecast: Array.isArray(payload.forecast) ? payload.forecast : [],
+      trends: payload.trends && typeof payload.trends === 'object' ? payload.trends : {},
+    };
+  }
 
   constructor() {
     console.log('ApiClient initialized with base URL:', API_BASE_URL);
@@ -187,8 +353,8 @@ class ApiClient {
 
   // Alert methods
   async getPredictions() {
-    const response = await this.client.get('/alerts/predictions');
-    return Array.isArray(response.data?.predictions) ? response.data.predictions : [];
+    const data = await this.getPredictiveAlertsData();
+    return data.cards;
   }
 
   async getAlertHistory(days?: number, limit?: number) {

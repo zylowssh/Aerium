@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
 import { Leaf, Zap, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
-import { apiClient } from '@/lib/apiClient';
+import { getHealthScore } from '@/lib/sensorData';
 
 interface EnergyMetric {
   label: string;
@@ -11,70 +10,42 @@ interface EnergyMetric {
   unit: string;
 }
 
-interface EnergySensorSnapshot {
-  status?: string;
-  co2?: number;
+interface EnergyMonitorWidgetProps {
+  avgCo2: number;
+  avgTemp: number;
+  avgHumidity: number;
+  onlineSensors: number;
+  totalSensors: number;
+  efficientSensors: number;
 }
 
-export function EnergyMonitorWidget() {
-  const [ecoScore, setEcoScore] = useState(0);
-  const [metrics, setMetrics] = useState<EnergyMetric[]>([]);
-  const [objectiveProgress, setObjectiveProgress] = useState(0);
-  const [loading, setLoading] = useState(true);
+export function EnergyMonitorWidget({
+  avgCo2,
+  avgTemp,
+  avgHumidity,
+  onlineSensors,
+  totalSensors,
+  efficientSensors,
+}: EnergyMonitorWidgetProps) {
+  const ecoScore = getHealthScore(avgCo2, avgTemp, avgHumidity);
+  const efficiencyPercent = onlineSensors > 0 ? Math.round((efficientSensors / onlineSensors) * 100) : 0;
+  const co2Delta = Math.round(((800 - avgCo2) / 800) * 100);
+  const objectiveProgress = Math.max(0, Math.min(100, Math.round(ecoScore * 0.6 + efficiencyPercent * 0.4)));
 
-  useEffect(() => {
-    fetchEnergyData();
-  }, []);
-
-  const fetchEnergyData = async () => {
-    try {
-      setLoading(true);
-      const [readings, sensors] = await Promise.all([
-        apiClient.getAggregateData(),
-        apiClient.getSensors(),
-      ]);
-      
-      // Calculate eco-score based on average CO2 and conditions
-      // Lower CO2 = better efficiency = higher score
-      const baseCo2 = readings.avgCo2 || 800;
-      const calculatedScore = Math.max(0, Math.min(100, 100 - (baseCo2 - 400) / 6));
-
-      const roundedScore = Math.round(calculatedScore);
-      setEcoScore(roundedScore);
-
-      const sensorSnapshots = sensors as EnergySensorSnapshot[];
-      const totalSensors = sensors.length;
-      const onlineSensors = sensorSnapshots.filter((sensor) => sensor.status === 'en ligne').length;
-      const efficientSensors = sensorSnapshots.filter((sensor) => sensor.status === 'en ligne' && Number(sensor.co2 || 0) < 900).length;
-      const efficiencyPercent = onlineSensors > 0 ? Math.round((efficientSensors / onlineSensors) * 100) : 0;
-      const co2Delta = Math.round(((800 - baseCo2) / 800) * 100);
-      const objective = Math.max(0, Math.min(100, Math.round(roundedScore * 0.6 + efficiencyPercent * 0.4)));
-
-      setObjectiveProgress(objective);
-      
-      // Update metrics with real data
-      setMetrics([
-        { 
-          label: 'CO2 moyen', 
-          value: Math.round(readings.avgCo2 || 800).toString(), 
-          change: co2Delta, 
-          unit: 'ppm' 
-        },
-        { 
-          label: 'Capteurs efficaces', 
-          value: `${efficientSensors}/${Math.max(onlineSensors, totalSensors, 1)}`,
-          change: efficiencyPercent - 70,
-          unit: '%' 
-        },
-      ]);
-    } catch (error) {
-      console.error('Error fetching energy data:', error);
-      setMetrics([]);
-      setObjectiveProgress(0);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const metrics: EnergyMetric[] = [
+    {
+      label: 'CO2 moyen',
+      value: Math.round(avgCo2 || 0).toString(),
+      change: co2Delta,
+      unit: 'ppm',
+    },
+    {
+      label: 'Capteurs efficaces',
+      value: `${efficientSensors}/${Math.max(onlineSensors, totalSensors, 1)}`,
+      change: efficiencyPercent - 70,
+      unit: '%',
+    },
+  ];
 
   const circumference = 2 * Math.PI * 40;
   const progress = (ecoScore / 100) * circumference;
@@ -131,9 +102,7 @@ export function EnergyMonitorWidget() {
 
         {/* Metrics */}
         <div className="flex-1 space-y-2">
-          {loading ? (
-            <div className="text-xs text-muted-foreground">Chargement...</div>
-          ) : metrics.length === 0 ? (
+          {metrics.length === 0 ? (
             <div className="text-xs text-muted-foreground">Aucune donnée énergétique</div>
           ) : (
             metrics.map((metric, index) => (

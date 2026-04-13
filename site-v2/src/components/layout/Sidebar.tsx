@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BarChart3, Radio, Bell, FileText, Settings, ChevronLeft, ChevronRight, ShieldCheck, Lightbulb, Wrench, GitCompare, Home } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Radio, Bell, Brain, FileText, Settings, ChevronLeft, ChevronRight, ShieldCheck, Lightbulb, Wrench, GitCompare, Home } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,8 +10,8 @@ const navItems = [
   { to: '/analytics', icon: BarChart3, label: 'Analyses' },
   { to: '/comparison', icon: GitCompare, label: 'Comparaison' },
   { to: '/sensors', icon: Radio, label: 'Capteurs' },
-  { to: '/alerts', icon: Bell, label: 'Alertes Actuelles' },
-  { to: '/alert-history', icon: Bell, label: 'Historique des Alertes' },
+  { to: '/predictions', icon: Brain, label: 'Prévisions IA' },
+  { to: '/alerts', icon: Bell, label: 'Centre des Alertes' },
   { to: '/reports', icon: FileText, label: 'Rapports' },
   { to: '/recommendations', icon: Lightbulb, label: 'Recommandations' },
   { to: '/maintenance', icon: Wrench, label: 'Maintenance' },

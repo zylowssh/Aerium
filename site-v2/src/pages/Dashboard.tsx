@@ -292,6 +292,9 @@ const Dashboard = () => {
 
   const sensorsOnline = sensors.filter(s => s.status === 'en ligne').length;
   const totalSensors = sensors.length;
+  const efficientSensors = sensors.filter(
+    (sensor) => sensor.status === 'en ligne' && Number(sensor.co2 || 0) < 900
+  ).length;
 
   return (
     <AppLayout>
@@ -406,7 +409,14 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <MaintenanceWidget />
           <PredictiveAlertsWidget />
-          <EnergyMonitorWidget />
+          <EnergyMonitorWidget
+            avgCo2={avgCo2}
+            avgTemp={parseFloat(String(avgTemp))}
+            avgHumidity={avgHumidity}
+            onlineSensors={sensorsOnline}
+            totalSensors={totalSensors}
+            efficientSensors={efficientSensors}
+          />
           <OccupancyWidget />
         </div>
 

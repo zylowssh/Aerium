@@ -17,13 +17,62 @@ interface Prediction {
   trendPercentage: number;
 }
 
+interface PredictionsCacheEntry {
+  fetchedAt: number;
+  predictions: Prediction[];
+}
+
+const PREDICTIONS_CACHE_KEY = 'aerium_predictive_alerts_cache_v1';
+const REFRESH_INTERVAL_MS = 60 * 60 * 1000;
+
+const compactText = (value: string, maxLen: number) => {
+  const normalized = (value ?? '').replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxLen) return normalized;
+  if (maxLen <= 3) return normalized.slice(0, maxLen);
+  return `${normalized.slice(0, maxLen - 3).trim()}...`;
+};
+
 export function PredictiveAlertsWidget() {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const readCache = (): PredictionsCacheEntry | null => {
+    try {
+      const raw = localStorage.getItem(PREDICTIONS_CACHE_KEY);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw) as PredictionsCacheEntry;
+      if (!parsed || !Array.isArray(parsed.predictions) || typeof parsed.fetchedAt !== 'number') {
+        return null;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+
+  const writeCache = (nextPredictions: Prediction[]) => {
+    const payload: PredictionsCacheEntry = {
+      fetchedAt: Date.now(),
+      predictions: nextPredictions,
+    };
+    localStorage.setItem(PREDICTIONS_CACHE_KEY, JSON.stringify(payload));
+  };
+
   useEffect(() => {
-    fetchPredictions();
-    const intervalId = window.setInterval(fetchPredictions, 5 * 60 * 1000);
+    const cache = readCache();
+    const isFresh = !!cache && Date.now() - cache.fetchedAt < REFRESH_INTERVAL_MS;
+
+    if (cache) {
+      setPredictions(cache.predictions.slice(0, 3));
+      setLoading(false);
+    }
+
+    if (!isFresh) {
+      fetchPredictions();
+    }
+
+    const intervalId = window.setInterval(fetchPredictions, REFRESH_INTERVAL_MS);
     return () => window.clearInterval(intervalId);
   }, []);
 
@@ -31,10 +80,18 @@ export function PredictiveAlertsWidget() {
     try {
       setLoading(true);
       const predictionsData = await apiClient.getPredictions();
-      setPredictions(predictionsData.slice(0, 3));
+      const topPredictions = predictionsData.slice(0, 3);
+      setPredictions(topPredictions);
+      writeCache(topPredictions);
     } catch (error) {
       console.error('Error fetching predictions:', error);
-      setPredictions([]);
+
+      const cache = readCache();
+      if (cache) {
+        setPredictions(cache.predictions.slice(0, 3));
+      } else {
+        setPredictions([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -90,11 +147,11 @@ export function PredictiveAlertsWidget() {
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <TrendingUp className={cn('h-3.5 w-3.5', getImpactColor(prediction.impact))} />
-                  <h4 className="text-xs font-medium text-foreground truncate">{prediction.title}</h4>
+                  <h4 className="text-xs font-medium text-foreground truncate">{compactText(prediction.title, 55)}</h4>
                 </div>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">{prediction.timeframe}</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{compactText(prediction.timeframe, 30)}</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-2">{prediction.description}</p>
+              <p className="text-xs text-muted-foreground mb-2">{compactText(prediction.description, 115)}</p>
               <div className="text-xs text-muted-foreground mb-2">
                 {prediction.sensorName} - {prediction.metric} ({prediction.currentValue}) {prediction.trendPercentage > 0 ? '↑' : '↓'} {Math.abs(prediction.trendPercentage)}%
               </div>
@@ -118,7 +175,7 @@ export function PredictiveAlertsWidget() {
 
       <div className="mt-3 pt-3 border-t border-border/50 flex items-center gap-1.5 text-xs text-muted-foreground">
         <Info className="h-3 w-3" />
-        <span>Prédictions en temps réel basées sur tendances</span>
+        <span>Prédictions IA mises a jour environ chaque heure</span>
       </div>
     </motion.div>
   );

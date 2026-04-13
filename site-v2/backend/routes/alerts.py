@@ -87,6 +87,20 @@ def _parse_json_array(raw_text):
         return None
 
 
+def _compact_prediction_text(value, max_len):
+    """Normalize LLM text to a single compact line for dashboard widgets."""
+    if not isinstance(value, str):
+        return ''
+
+    compact = ' '.join(value.replace('\n', ' ').replace('\r', ' ').split())
+    if len(compact) <= max_len:
+        return compact
+
+    if max_len <= 3:
+        return compact[:max_len]
+    return compact[:max_len - 3].rstrip() + '...'
+
+
 def enrichir_predictions_avec_mistral(predictions):
     """Améliorer les titres/descriptions des prédictions via Mistral, sans changer le schéma de sortie."""
     if not predictions or not _mistral_key():
@@ -112,6 +126,10 @@ def enrichir_predictions_avec_mistral(predictions):
         "Tu reçois des alertes prédictives de qualité de l'air. "
         "Réécris title et description en français clair et professionnel, "
         "en restant fidèle aux chiffres et sans inventer d'informations. "
+        "Format widget compact obligatoire: "
+        "title <= 55 caractères (max 6 mots), "
+        "description = 1 seule phrase <= 115 caractères, "
+        "timeframe <= 30 caractères, sans retour ligne. "
         "Tu peux ajuster timeframe pour le rendre plus naturel. "
         "Retourne UNIQUEMENT un tableau JSON avec: index, title, description, timeframe.\n\n"
         f"Entrée:\n{json.dumps(donnees_llm, ensure_ascii=False)}"
@@ -139,11 +157,11 @@ def enrichir_predictions_avec_mistral(predictions):
         timeframe = suggestion.get('timeframe')
 
         if isinstance(titre, str) and titre.strip():
-            a_enrichir[index]['title'] = titre.strip()[:140]
+            a_enrichir[index]['title'] = _compact_prediction_text(titre, 55)
         if isinstance(description, str) and description.strip():
-            a_enrichir[index]['description'] = description.strip()[:260]
+            a_enrichir[index]['description'] = _compact_prediction_text(description, 115)
         if isinstance(timeframe, str) and timeframe.strip():
-            a_enrichir[index]['timeframe'] = timeframe.strip()[:60]
+            a_enrichir[index]['timeframe'] = _compact_prediction_text(timeframe, 30)
 
     return a_enrichir + predictions[len(a_enrichir):]
 
@@ -725,11 +743,11 @@ def construire_payload_prediction(capteur, metrique, valeur_courante, pourcentag
         'metric': metrique,
         'currentValue': round(valeur_courante, 1),
         'trendPercentage': pourcentage_tendance,
-        'title': titre,
+        'title': _compact_prediction_text(titre, 55),
         'likelihood': round(max(0, min(100, vraisemblance)), 1),
-        'timeframe': f'Prochaines {horizon_heures}h',
+        'timeframe': _compact_prediction_text(f'Prochaines {horizon_heures}h', 30),
         'impact': impact,
-        'description': description
+        'description': _compact_prediction_text(description, 115)
     }
 
 

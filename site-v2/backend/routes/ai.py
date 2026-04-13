@@ -112,6 +112,34 @@ Tu aides les utilisateurs à comprendre leurs données, interpréter les alertes
 """
 
 
+def _compute_health_score(avg_co2: float, avg_temp: float, avg_hum: float) -> int:
+    """Score 0-100 pondéré: CO2 (50%), température (25%), humidité (25%)."""
+    def _clamp(value: float, min_value: float, max_value: float) -> float:
+        return max(min_value, min(max_value, value))
+
+    if avg_co2 <= 600:
+        co2_score = 100.0
+    elif avg_co2 <= 800:
+        co2_score = 100.0 - ((avg_co2 - 600.0) / 200.0) * 20.0
+    elif avg_co2 <= 1000:
+        co2_score = 80.0 - ((avg_co2 - 800.0) / 200.0) * 20.0
+    elif avg_co2 <= 1500:
+        co2_score = 60.0 - ((avg_co2 - 1000.0) / 500.0) * 30.0
+    elif avg_co2 <= 2500:
+        co2_score = 30.0 - ((avg_co2 - 1500.0) / 1000.0) * 30.0
+    else:
+        co2_score = 0.0
+
+    temp_deviation = max(0.0, abs(avg_temp - 22.0) - 2.0)
+    temp_score = 100.0 - temp_deviation * 8.0
+
+    hum_deviation = max(0.0, abs(avg_hum - 50.0) - 10.0)
+    hum_score = 100.0 - hum_deviation * 2.5
+
+    weighted = co2_score * 0.5 + temp_score * 0.25 + hum_score * 0.25
+    return round(_clamp(weighted, 0.0, 100.0))
+
+
 def _call_mistral_json(messages: list, max_tokens: int = 800) -> str | None:
     """Appel Mistral synchrone, retourne le texte brut ou None en cas d'erreur."""
     try:
@@ -295,10 +323,7 @@ def recommendations():
         avg_temp = ctx.get('avg_temperature') or 22
         avg_hum  = ctx.get('avg_humidity')    or 50
 
-        co2_score  = max(0, min(100, round(100 - (avg_co2  - 400) / 5.5)))
-        temp_score = max(0, min(100, round(100 - abs(avg_temp - 22) * 12)))
-        hum_score  = max(0, min(100, round(100 - abs(avg_hum  - 50) * 2)))
-        health_score = round((co2_score + temp_score + hum_score) / 3)
+        health_score = _compute_health_score(avg_co2, avg_temp, avg_hum)
 
         # Si pas de clé Mistral → fallback immédiat
         if not _mistral_key():
