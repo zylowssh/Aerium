@@ -208,8 +208,6 @@ exit /b 0
 echo [INFO] Arrêt forcé de tous les services Aerium...
 taskkill /F /FI "WINDOWTITLE eq Aerium Backend" >nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Aerium Frontend" >nul 2>&1
-taskkill /IM python.exe /F >nul 2>&1
-taskkill /IM node.exe /F >nul 2>&1
 for /f "tokens=5" %%A in ('netstat -ano 2^>nul ^| findstr ":%BACKEND_PORT%.*LISTENING"') do (
     taskkill /PID %%A /F >nul 2>&1
 )
@@ -224,9 +222,6 @@ netstat -ano | findstr ":%BACKEND_PORT%.*LISTENING\|:%FRONTEND_PORT%.*LISTENING"
 if errorlevel 1 (
     echo [OK] Tous les ports libérés
     exit /b 0
-)
-if %attempt% geq 5 (
-    wmic process where "name='python.exe' or name='node.exe'" delete >nul 2>&1
 )
 if %attempt% lss 10 goto cleanup_wait
 echo [ERROR] Impossible de libérer les ports

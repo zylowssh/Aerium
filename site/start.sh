@@ -1,5 +1,8 @@
 #!/bin/bash
 
+BACKEND_PORT=5000
+FRONTEND_PORT=5173
+
 clear
 echo ""
 echo "================================================================================"
@@ -63,7 +66,7 @@ fi
 echo "[START] Starting Flask backend server..."
 python app.py &
 BACKEND_PID=$!
-echo "[OK] Backend started on http://localhost:5000 (PID: $BACKEND_PID)"
+echo "[OK] Backend started on http://localhost:${BACKEND_PORT} (PID: $BACKEND_PID)"
 
 cd ..
 
@@ -86,7 +89,7 @@ fi
 echo "[START] Starting React development server..."
 npm run dev &
 FRONTEND_PID=$!
-echo "[OK] Frontend started on http://localhost:8080 (PID: $FRONTEND_PID)"
+echo "[OK] Frontend started on http://localhost:${FRONTEND_PORT} (PID: $FRONTEND_PID)"
 
 echo ""
 echo "================================================================================"
@@ -94,12 +97,12 @@ echo "                        AERIUM IS NOW RUNNING!"
 echo "================================================================================"
 echo ""
 echo "[SERVICES]"
-echo "  Frontend (React):   http://localhost:8080"
-echo "  Backend API (Flask): http://localhost:5000"
-echo "  WebSocket:          ws://localhost:5000"
+echo "  Frontend (React):   http://localhost:${FRONTEND_PORT}"
+echo "  Backend API (Flask): http://localhost:${BACKEND_PORT}"
+echo "  WebSocket:          ws://localhost:${BACKEND_PORT}"
 echo ""
 echo "[NEXT STEPS]"
-echo "  1. Open http://localhost:8080 in your browser"
+echo "  1. Open http://localhost:${FRONTEND_PORT} in your browser"
 echo "  2. Sign up or log in with demo credentials"
 echo "  3. Start monitoring air quality in real-time!"
 echo ""
