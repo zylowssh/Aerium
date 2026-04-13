@@ -16,7 +16,7 @@ def creer_app():
     return app, socketio
 ```
 
-**Explication pour un débutant complet :**
+**Explication :**
 
 Imaginez que vous construisez une maison. Flask, c'est le terrain vide. La fonction `créer_app()` est le plan de construction : elle branche l'électricité (la base de données), installe la serrure (JWT), ouvre les fenêtres pour que l'extérieur puisse entrer (CORS), installe l'interphone en temps réel (Socket.IO), et numérote les pièces (les blueprints = les dossiers de routes).
 
@@ -44,7 +44,7 @@ def connexion():
     return jsonify({'access_token': ..., 'refresh_token': ..., 'user': ...}), 200
 ```
 
-**Explication pour un débutant complet :**
+**Explication :**
 
 Quand vous vous connectez à un site web, voici ce qui se passe dans les coulisses :
 
@@ -74,7 +74,7 @@ def generate():
             yield f"data: {json.dumps({'token': content})}\n\n"
 ```
 
-**Explication pour un débutant complet :**
+**Explication :**
 
 Normalement, quand vous posez une question à une IA, vous attendez qu'elle finisse de réfléchir, puis elle vous envoie toute la réponse d'un coup. Le **streaming** change ça : l'IA vous envoie sa réponse mot par mot (ou "token" par token) au fur et à mesure qu'elle l'écrit, exactement comme vous le voyez sur ChatGPT.
 
@@ -101,7 +101,7 @@ def _forecast_metric(values, hours):
         result.append(float(np.clip(trend_val + seasonal, 350, 2500)))
 ```
 
-**Explication pour un débutant complet :**
+**Explication :**
 
 Pour prédire le CO₂ dans les prochaines 24h, on utilise deux mécanismes combinés :
 
@@ -132,7 +132,7 @@ def generer_motif_co2(heure, base, facteur_occupance=1.0, nom_capteur=''):
     return max(400, min(1500, base + int(decalage * facteur_occupance) + variation))
 ```
 
-**Explication pour un débutant complet :**
+**Explication :**
 
 Puisqu'on n'a pas de vrais capteurs physiques branchés, il faut **simuler** des données réalistes. Le principe :
 
@@ -160,7 +160,7 @@ class Sensor(db.Model):
     readings = db.relationship('SensorReading', backref='sensor', lazy=True, cascade='all, delete-orphan')
 ```
 
-**Explication pour un débutant complet :**
+**Explication :**
 
 SQLAlchemy (la bibliothèque utilisée) permet d'écrire des classes Python qui correspondent directement à des tables dans une base de données. Chaque classe = une table. Chaque `db.Column` = une colonne.
 
@@ -188,7 +188,7 @@ def vers_dict(self, inclure_derniere_lecture=False):
     return result
 ```
 
-**Explication pour un débutant complet :**
+**Explication :**
 
 Le frontend (la page web en React/TypeScript) ne parle pas Python — il parle JSON (un format texte universel, comme un dictionnaire structuré). La méthode `vers_dict()` est le **traducteur** : elle transforme un objet Python (`Sensor`) en dictionnaire JSON que le navigateur peut comprendre.
 
