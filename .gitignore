@@ -1,4 +1,4 @@
-/site2/
+site2/
 .venv/
 
 # VS Code workspace storage (keep shared settings, but ignore local state)
@@ -12,3 +12,11 @@
 .DS_Store
 Thumbs.db
 site/data/aerium.sqlite
+
+__pycache__/*
+*.pyc
+
+venv/
+node_modules/
+dist/
+site-v2/
