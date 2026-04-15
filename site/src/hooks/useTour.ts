@@ -49,7 +49,7 @@
      id: 'sensors',
      target: '[data-tour="sensors"]',
      title: 'Vos Capteurs',
-     content: 'Gérez vos capteurs ici. Ajoutez des capteurs réels (SDC30) ou utilisez le mode simulation pour tester.',
+     content: 'Gérez vos capteurs ici. Ajoutez des capteurs réels (MQ-135, SCD30, etc.) ou utilisez le mode simulation pour tester.',
      placement: 'top',
      page: '/dashboard'
    },
@@ -123,7 +123,7 @@
      id: 'sensors-add',
      target: '[data-tour="sensors-add"]',
      title: 'Ajouter un Nouveau Capteur',
-     content: 'Cliquez ici pour ajouter un capteur réel (SDC30) ou en mode simulation.',
+     content: 'Cliquez ici pour ajouter un capteur réel (MQ-135, SCD30, etc.) ou en mode simulation.',
      placement: 'bottom',
      page: '/sensors'
    },

@@ -75,23 +75,31 @@ if errorlevel 1 (
 )
 echo [OK] Dépendances Python synchronisées
 
-:: Database creation - FIXED LOGIC
 if not exist "%BACKEND_DB%" (
-    echo [INFO] Création de la base de données...
-    if defined VERBOSE (
-        "%PYTHON%" seed_database.py
-    ) else (
-        "%PYTHON%" seed_database.py >nul 2>&1
-    )
-    :: Check if DB was created (seed_database.py starts server, so check file after)
-    timeout /t 3 >nul
-    if exist "%BACKEND_DB%" (
-        echo [OK] Base de données créée avec succès
-    ) else (
-        echo [WARN] La base de données n'a pas été créée - vérifiez seed_database.py
-    )
+    echo [INFO] Base de données absente, initialisation requise...
 ) else (
     echo [OK] Base de données déjà existante
+)
+
+:: Toujours vérifier/créer les comptes de démonstration.
+echo [INFO] Vérification des comptes demo/admin...
+if defined VERBOSE (
+    "%PYTHON%" seed_database.py
+) else (
+    "%PYTHON%" seed_database.py >nul 2>&1
+)
+if errorlevel 1 (
+    echo [ERROR] Échec de l'initialisation des comptes de démonstration
+    pause
+    exit /b 1
+)
+
+if exist "%BACKEND_DB%" (
+    echo [OK] Base de données prête
+) else (
+    echo [ERROR] La base de données est introuvable après initialisation
+    pause
+    exit /b 1
 )
 
 echo [START] Lancement du backend sur le port %BACKEND_PORT%...

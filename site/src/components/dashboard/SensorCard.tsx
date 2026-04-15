@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { MapPin, Thermometer, Droplets, Activity, Wifi } from 'lucide-react';
-import { Sensor, getAirQualityLevel } from '@/lib/sensorData';
+import { MapPin, Thermometer, Droplets, Activity } from 'lucide-react';
+import { Sensor } from '@/lib/sensorData';
 import { cn } from '@/lib/utils';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { useEffect, useState } from 'react';
@@ -18,8 +18,16 @@ export interface SensorCardProps {
 export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
   const [chartData, setChartData] = useState<Array<{value: number, index: number}>>([]);
   const [loading, setLoading] = useState(true);
+  const hasReading = sensor.hasReading !== false;
+  const isDisconnectedRealSensor = sensor.sensorType === 'real' && sensor.status === 'hors ligne' && !hasReading;
 
   useEffect(() => {
+    if (!hasReading) {
+      setChartData([]);
+      setLoading(false);
+      return;
+    }
+
     if (miniChartData) {
       setChartData(miniChartData.map((value, index) => ({ value, index })));
       setLoading(false);
@@ -27,10 +35,15 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
       // Fetch real data for mini chart
       fetchMiniChartData();
     }
-  }, [sensor.id, miniChartData]);
+  }, [sensor.id, miniChartData, hasReading]);
 
   const fetchMiniChartData = async () => {
     try {
+      if (!hasReading) {
+        setChartData([]);
+        return;
+      }
+
       setLoading(true);
       const readings = await apiClient.getSensorReadings(sensor.id, 6, 10);
       
@@ -60,8 +73,6 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
       setLoading(false);
     }
   };
-
-  const level = getAirQualityLevel(sensor.co2);
   
   const statusColors = {
     'en ligne': 'bg-success',
@@ -80,6 +91,15 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
     if (sensor.co2 < 1000) return 'hsl(var(--warning))';
     return 'hsl(var(--destructive))';
   };
+
+  const co2Display = hasReading ? String(sensor.co2) : '--';
+  const statusLabel = sensor.status === 'en ligne'
+    ? 'En Ligne'
+    : sensor.status === 'avertissement'
+      ? 'Avertissement'
+      : isDisconnectedRealSensor
+        ? 'Déconnecté'
+        : 'Hors Ligne';
 
   return (
     <motion.div
@@ -118,7 +138,7 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
                 : "bg-muted border-muted-foreground/30 text-muted-foreground"
             )}>
               <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", statusColors[sensor.status])} />
-              {sensor.status === 'en ligne' ? 'En Ligne' : sensor.status === 'avertissement' ? 'Avertissement' : 'Hors Ligne'}
+              {statusLabel}
             </span>
           </div>
         </div>
@@ -128,14 +148,18 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
             <div className="flex items-baseline gap-1">
               <span className={cn(
                 "text-4xl font-bold tracking-tight",
-                sensor.co2 < 800 ? "text-primary" : sensor.co2 < 1000 ? "text-warning" : "text-destructive"
+                !hasReading ? "text-muted-foreground" : sensor.co2 < 800 ? "text-primary" : sensor.co2 < 1000 ? "text-warning" : "text-destructive"
               )}>
-                {sensor.co2}
+                {co2Display}
               </span>
-              <span className="text-sm text-muted-foreground ml-1">ppm</span>
+              <span className="text-sm text-muted-foreground ml-1">{hasReading ? 'ppm' : ''}</span>
             </div>
+
+            {!hasReading && (
+              <span className="text-xs text-muted-foreground">Aucune mesure reçue</span>
+            )}
             
-            {sensor.isLive && (
+            {sensor.isLive && hasReading && (
               <div className="flex items-center gap-1.5 mt-2">
                 <div className="relative">
                   <Activity className="w-3.5 h-3.5 text-primary" />
@@ -168,11 +192,11 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
         <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border/50">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
             <Thermometer className="w-4 h-4 text-orange-400" />
-            <span className="text-sm font-medium text-foreground">{sensor.temperature}°C</span>
+            <span className="text-sm font-medium text-foreground">{hasReading ? `${sensor.temperature}°C` : '--'}</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
             <Droplets className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-medium text-foreground">{sensor.humidity}%</span>
+            <span className="text-sm font-medium text-foreground">{hasReading ? `${sensor.humidity}%` : '--'}</span>
           </div>
         </div>
       </div>

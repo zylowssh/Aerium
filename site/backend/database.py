@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text
 from datetime import datetime
 
 db = SQLAlchemy()
@@ -39,6 +39,8 @@ class Sensor(db.Model):
     location = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(50), default='en ligne')  # 'en ligne', 'hors ligne', 'avertissement'
     sensor_type = db.Column(db.String(50), default='simulation')  # 'réel' ou 'simulation'
+    sensor_model = db.Column(db.String(120), nullable=True)  # Ex: MQ-135, SCD30
+    connection_method = db.Column(db.String(50), nullable=True)  # Ex: http_push, mqtt_bridge
     battery = db.Column(db.Integer, default=100)
     is_live = db.Column(db.Boolean, default=True)
     
@@ -61,6 +63,8 @@ class Sensor(db.Model):
             'location': self.location,
             'status': self.status,
             'sensor_type': self.sensor_type,
+            'sensor_model': self.sensor_model if self.sensor_type == 'real' else None,
+            'connection_method': (self.connection_method or 'http_push') if self.sensor_type == 'real' else None,
             'battery': self.battery if self.sensor_type != 'simulation' else None,
             'is_live': self.is_live,
             'thresholds': {
@@ -73,12 +77,22 @@ class Sensor(db.Model):
             'updated_at': self.updated_at.isoformat()
         }
         
-        if inclure_dernière_lecture and self.readings:
-            dernière = max(self.readings, key=lambda r: r.recorded_at)
-            result['co2'] = dernière.co2
-            result['temperature'] = dernière.temperature
-            result['humidity'] = dernière.humidity
-            result['lastReading'] = dernière.recorded_at.isoformat()
+        if inclure_dernière_lecture:
+            # Always expose reading keys so the frontend gets a stable payload.
+            result['co2'] = 0
+            result['temperature'] = 0
+            result['humidity'] = 0
+            result['lastReading'] = None
+
+            # Fetch only the latest reading instead of loading all readings in memory.
+            dernière = SensorReading.query.filter_by(sensor_id=self.id).order_by(
+                SensorReading.recorded_at.desc()
+            ).first()
+            if dernière:
+                result['co2'] = dernière.co2
+                result['temperature'] = dernière.temperature
+                result['humidity'] = dernière.humidity
+                result['lastReading'] = dernière.recorded_at.isoformat()
         
         return result
 
@@ -214,7 +228,7 @@ def init_db():
 
 
 def vérifier_colonnes_seuil_capteur(app):
-    """Avertir si les colonnes de seuil de capteur attendues sont manquantes (pas d'auto-migration)."""
+    """Vérifier le schéma capteur: avertir pour les seuils, auto-ajouter les colonnes de connexion réelle."""
     try:
         with app.app_context():
             inspecteur = inspect(db.engine)
@@ -233,6 +247,34 @@ def vérifier_colonnes_seuil_capteur(app):
                 app.logger.warning(
                     '[DB] Colonnes de seuil de capteur manquantes: %s. Exécutez la migration ou recréez la BD.',
                     ', '.join(manquantes)
+                )
+
+            # Colonnes nécessaires pour configurer les capteurs réels (ajout non destructif).
+            colonnes_connexion = {
+                'sensor_model': 'VARCHAR(120)',
+                'connection_method': 'VARCHAR(50)'
+            }
+            manquantes_connexion = [
+                nom_colonne for nom_colonne in colonnes_connexion.keys() if nom_colonne not in colonnes
+            ]
+            if manquantes_connexion:
+                with db.engine.begin() as connexion:
+                    for nom_colonne in manquantes_connexion:
+                        type_sql = colonnes_connexion[nom_colonne]
+                        connexion.execute(text(f'ALTER TABLE sensors ADD COLUMN {nom_colonne} {type_sql}'))
+
+                    connexion.execute(text(
+                        """
+                        UPDATE sensors
+                        SET connection_method = 'http_push'
+                        WHERE sensor_type = 'real'
+                          AND (connection_method IS NULL OR TRIM(connection_method) = '')
+                        """
+                    ))
+
+                app.logger.info(
+                    '[DB] Colonnes de configuration capteur réel ajoutées automatiquement: %s',
+                    ', '.join(manquantes_connexion)
                 )
     except Exception as exc:
         app.logger.warning('[DB] La vérification du schéma a échoué: %s', exc)

@@ -175,8 +175,8 @@ def initialiser_planificateur(app, socketio):
     )
     
     scheduler.start()
-    print(f"✓ Planificateur initialisé - Mises à jour de capteurs en temps réel actives (toutes les {VITESSE_SIMULATION} secondes)")
-    print("✓ Émissions WebSocket activées pour les capteurs simulés")
+    print(f"[OK] Planificateur initialise - Mises a jour de capteurs en temps reel actives (toutes les {VITESSE_SIMULATION} secondes)")
+    print("[OK] Emissions WebSocket activees pour les capteurs simules")
 
 
 def marquer_maintenance_en_retard(app):

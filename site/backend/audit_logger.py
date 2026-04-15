@@ -37,7 +37,15 @@ class JournalAudit(db.Model):
         }
 
 
-def enregistrer_action(id_utilisateur, action, type_ressource, id_ressource=None, details=None, ip_address=None):
+def enregistrer_action(
+    id_utilisateur,
+    action,
+    type_ressource,
+    id_ressource=None,
+    details=None,
+    ip_address=None,
+    resource_id=None,
+):
     """
     Enregistrer une action utilisateur dans la piste d'audit
     
@@ -49,6 +57,10 @@ def enregistrer_action(id_utilisateur, action, type_ressource, id_ressource=None
         details: Dictionnaire de détails supplémentaires
         ip_address: Adresse IP de la requête
     """
+    # Backward-compatible alias used by some routes.
+    if resource_id is not None:
+        id_ressource = resource_id
+
     try:
         audit = JournalAudit(
             user_id=id_utilisateur,

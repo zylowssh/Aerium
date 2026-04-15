@@ -550,7 +550,23 @@ def predictions():
         sensor_ids = [s.id for s in sensors]
 
         if not sensor_ids:
-            return jsonify({'error': 'Aucun capteur disponible.'}), 404
+            return jsonify({
+                'forecast': [],
+                'trends': {
+                    'co2_direction': 'stable',
+                    'co2_change_pct': 0,
+                    'peak_co2': 0,
+                    'peak_hour': None,
+                    'risk_level': 'low',
+                    'current_avg_co2': 0,
+                },
+                'narrative': None,
+                'data_hours': 0,
+                'reading_count': 0,
+                'generated_at': datetime.utcnow().isoformat(),
+                'empty': True,
+                'reason': 'no_sensors',
+            }), 200
 
         # Lectures des 7 derniers jours
         since = datetime.utcnow() - timedelta(days=7)

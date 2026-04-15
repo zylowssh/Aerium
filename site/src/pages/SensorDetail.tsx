@@ -45,6 +45,12 @@ import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/apiClient';
 import { useSensors } from '@/hooks/useSensors';
 import { useWebSocket } from '@/contexts/WebSocketContext';
+import {
+  getConnectionMethodDescription,
+  getConnectionMethodLabel,
+  getConnectionMethodSteps,
+  getSensorModelLabel,
+} from '@/lib/realSensorConfig';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -68,7 +74,10 @@ interface SensorData {
   humidity: number;
   battery?: number;
   sensor_type: string;
+  sensor_model?: string | null;
+  connection_method?: string | null;
   is_live: boolean;
+  lastReading?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -158,9 +167,12 @@ const SensorDetail = () => {
         // Update sensor with latest reading
         setSensor(prev => prev ? {
           ...prev,
+          status: data.status ?? prev.status,
           co2: reading.co2,
           temperature: reading.temperature,
           humidity: reading.humidity,
+          is_live: true,
+          lastReading: reading.recorded_at,
         } : null);
 
         // Add new reading to the list
@@ -303,10 +315,18 @@ const SensorDetail = () => {
     );
   }
 
+  const hasReading = Boolean(sensor.lastReading);
+  const isDisconnectedRealSensor = sensor.sensor_type === 'real' && sensor.status === 'hors ligne' && !hasReading;
+  const sensorModelLabel = getSensorModelLabel(sensor.sensor_model);
+  const connectionMethodLabel = getConnectionMethodLabel(sensor.connection_method);
+  const connectionMethodDescription = getConnectionMethodDescription(sensor.connection_method);
+  const connectionMethodSteps = getConnectionMethodSteps(sensor.connection_method);
+  const ingestUrl = `${window.location.origin.replace(':5173', ':5000').replace(':8080', ':5000')}/api/readings/external/${sensor.id}`;
+
   const sensorMetrics = [
-    { label: 'CO₂', value: sensor.co2 || 0, unit: 'ppm', icon: Activity, color: 'text-primary' },
-    { label: 'Température', value: (sensor.temperature || 0).toFixed(1), unit: '°C', icon: Thermometer, color: 'text-warning' },
-    { label: 'Humidité', value: sensor.humidity || 0, unit: '%', icon: Droplets, color: 'text-blue-400' },
+    { label: 'CO₂', value: hasReading ? sensor.co2 : '--', unit: hasReading ? 'ppm' : '', icon: Activity, color: 'text-primary' },
+    { label: 'Température', value: hasReading ? sensor.temperature.toFixed(1) : '--', unit: hasReading ? '°C' : '', icon: Thermometer, color: 'text-warning' },
+    { label: 'Humidité', value: hasReading ? sensor.humidity : '--', unit: hasReading ? '%' : '', icon: Droplets, color: 'text-blue-400' },
   ];
 
   if (sensor.sensor_type === 'real') {
@@ -366,10 +386,10 @@ const SensorDetail = () => {
                         : 'bg-destructive/20 text-destructive border-destructive/30'
                     )}
                   >
-                    {sensor.status === 'en ligne' ? 'En Ligne' : sensor.status === 'avertissement' ? 'Avertissement' : 'Hors Ligne'}
+                    {sensor.status === 'en ligne' ? 'En Ligne' : sensor.status === 'avertissement' ? 'Avertissement' : isDisconnectedRealSensor ? 'Déconnecté' : 'Hors Ligne'}
                   </Badge>
                   <Badge variant="outline" className="bg-muted">
-                    {sensor.sensor_type === 'real' ? 'Capteur Réel' : 'Simulation'}
+                    {sensor.sensor_type === 'real' ? `Capteur Réel (${sensorModelLabel})` : 'Simulation'}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground mt-1">
@@ -447,16 +467,25 @@ const SensorDetail = () => {
               <div className="flex items-start gap-3">
                 <Wifi className="w-5 h-5 text-primary mt-1" />
                 <div>
-                  <h3 className="font-semibold text-foreground">Endpoint pour capteur réel</h3>
+                  <h3 className="font-semibold text-foreground">Integration capteur reel</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Envoyez les données de votre capteur SDC30 à l'URL suivante :
+                    Modele: <strong>{sensorModelLabel}</strong> · Connexion: <strong>{connectionMethodLabel}</strong>
                   </p>
                   <code className="block mt-2 p-2 bg-muted rounded text-xs">
-                    POST {window.location.origin.replace(':5173', ':5000').replace(':8080', ':5000')}/api/readings/external/{sensor.id}
+                    POST {ingestUrl}
                   </code>
                   <p className="text-xs text-muted-foreground mt-2">
+                    Header: <strong>X-API-Key</strong> = votre <strong>IOT_INGEST_API_KEY</strong> backend
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     Corps JSON : {`{ "co2": number, "temperature": number, "humidity": number }`}
                   </p>
+                  <p className="text-xs text-muted-foreground mt-2">{connectionMethodDescription}</p>
+                  <ol className="mt-2 space-y-1 text-xs text-muted-foreground list-decimal list-inside">
+                    {connectionMethodSteps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
                 </div>
               </div>
             </CardContent>
@@ -667,7 +696,8 @@ const SensorDetail = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     {[
-                      { label: 'Type', value: sensor.sensor_type === 'real' ? 'Capteur Physique (SDC30)' : 'Simulation', icon: Cpu },
+                      { label: 'Type', value: sensor.sensor_type === 'real' ? `Capteur Physique (${sensorModelLabel})` : 'Simulation', icon: Cpu },
+                      { label: 'Connexion', value: sensor.sensor_type === 'real' ? connectionMethodLabel : 'N/A', icon: Wifi },
                       { label: 'ID du Capteur', value: sensor.id, icon: Radio },
                       { label: 'Date de Création', value: format(new Date(sensor.created_at), 'dd/MM/yyyy'), icon: Clock },
                       { label: 'Dernière Activité', value: format(new Date(sensor.updated_at), 'dd/MM/yyyy HH:mm'), icon: Activity },

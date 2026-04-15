@@ -47,7 +47,7 @@ const SensorTypeSelector = ({ value, onChange }: SensorTypeSelectorProps) => {
             <Radio className="w-8 h-8 mb-2 text-muted-foreground peer-data-[state=checked]:text-primary" />
             <span className="font-medium text-foreground">Capteur Réel</span>
             <span className="text-xs text-muted-foreground text-center mt-1">
-              SDC30 via WebSocket
+              MQ-135, SCD30, MH-Z19B, etc.
             </span>
           </Label>
         </div>

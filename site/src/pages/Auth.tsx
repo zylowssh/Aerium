@@ -227,17 +227,15 @@ const Auth = () => {
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                       />
-                      <motion.button
+                      <button
                         type="button"
-                        whileHover={{ scale: 1.06 }}
-                        whileTap={{ scale: 0.95 }}
                         onClick={() => setShowLoginPassword((prev) => !prev)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                         aria-label={showLoginPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                         title={showLoginPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                       >
                         {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </motion.button>
+                      </button>
                     </div>
                     {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
                   </div>

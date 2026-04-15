@@ -52,21 +52,12 @@ const Dashboard = () => {
   const isFetchingTrend = useRef(false);
   const isFetchingReadings = useRef(false);
   const prevSensorsLength = useRef(0);
-  const isInitialized = useRef(false);
   const [aggregateData, setAggregateData] = useState({
     avgCo2: 0,
     avgTemp: 0,
     avgHumidity: 0,
     totalReadings: 0
   });
-
-  // Initialize prevSensorsLength on first render
-  useEffect(() => {
-    if (!isInitialized.current && sensors.length > 0) {
-      prevSensorsLength.current = sensors.length;
-      isInitialized.current = true;
-    }
-  }, [sensors.length]);
 
   // Fetch aggregate data - only when sensors length actually changes
   useEffect(() => {
@@ -84,13 +75,14 @@ const Dashboard = () => {
       }
     };
 
-    // Only fetch if sensors length changed or initial load
+    // Fetch on first non-empty load and whenever sensor count changes.
     const lengthChanged = sensors.length !== prevSensorsLength.current;
-    if (sensors.length > 0 && (lengthChanged || !isInitialized.current)) {
-      if (lengthChanged) {
-        prevSensorsLength.current = sensors.length;
-      }
+    if (sensors.length > 0 && lengthChanged) {
+      prevSensorsLength.current = sensors.length;
       fetchAggregate();
+    }
+    if (sensors.length === 0) {
+      prevSensorsLength.current = 0;
     }
   }, [sensors.length]);
 
@@ -255,19 +247,32 @@ const Dashboard = () => {
   // WebSocket listener for real-time aggregate updates - recalculate when sensors change
   useEffect(() => {
     if (sensors.length > 0) {
+      const capteursAvecMesures = sensors.filter((sensor) => sensor.hasReading !== false);
+      if (capteursAvecMesures.length === 0) {
+        setAggregateData((prev) => ({
+          ...prev,
+          avgCo2: 0,
+          avgTemp: 0,
+          avgHumidity: 0,
+        }));
+        return;
+      }
+
       setAggregateData((prev) => ({
         ...prev,
-        avgCo2: Math.round(sensors.reduce((acc, s) => acc + s.co2, 0) / sensors.length),
-        avgTemp: parseFloat((sensors.reduce((acc, s) => acc + s.temperature, 0) / sensors.length).toFixed(1)),
-        avgHumidity: Math.round(sensors.reduce((acc, s) => acc + s.humidity, 0) / sensors.length)
+        avgCo2: Math.round(capteursAvecMesures.reduce((acc, s) => acc + s.co2, 0) / capteursAvecMesures.length),
+        avgTemp: parseFloat((capteursAvecMesures.reduce((acc, s) => acc + s.temperature, 0) / capteursAvecMesures.length).toFixed(1)),
+        avgHumidity: Math.round(capteursAvecMesures.reduce((acc, s) => acc + s.humidity, 0) / capteursAvecMesures.length)
       }));
     }
   }, [sensors]); // Recalculate whenever sensors array changes (includes WebSocket updates)
 
+  const capteursAvecMesures = sensors.filter((sensor) => sensor.hasReading !== false);
+
   // Calculate aggregate metrics from sensors if no backend data
-  const avgCo2 = aggregateData.avgCo2 || (sensors.length > 0 ? Math.round(sensors.reduce((acc, s) => acc + s.co2, 0) / sensors.length) : 0);
-  const avgTemp = aggregateData.avgTemp || (sensors.length > 0 ? (sensors.reduce((acc, s) => acc + s.temperature, 0) / sensors.length).toFixed(1) : '0');
-  const avgHumidity = aggregateData.avgHumidity || (sensors.length > 0 ? Math.round(sensors.reduce((acc, s) => acc + s.humidity, 0) / sensors.length) : 0);
+  const avgCo2 = aggregateData.avgCo2 || (capteursAvecMesures.length > 0 ? Math.round(capteursAvecMesures.reduce((acc, s) => acc + s.co2, 0) / capteursAvecMesures.length) : 0);
+  const avgTemp = aggregateData.avgTemp || (capteursAvecMesures.length > 0 ? (capteursAvecMesures.reduce((acc, s) => acc + s.temperature, 0) / capteursAvecMesures.length).toFixed(1) : '0');
+  const avgHumidity = aggregateData.avgHumidity || (capteursAvecMesures.length > 0 ? Math.round(capteursAvecMesures.reduce((acc, s) => acc + s.humidity, 0) / capteursAvecMesures.length) : 0);
   const healthScore = getHealthScore(avgCo2, parseFloat(String(avgTemp)), avgHumidity);
   const readingsToday = aggregateData.totalReadings || trendData.length;
 
@@ -293,7 +298,7 @@ const Dashboard = () => {
   const sensorsOnline = sensors.filter(s => s.status === 'en ligne').length;
   const totalSensors = sensors.length;
   const efficientSensors = sensors.filter(
-    (sensor) => sensor.status === 'en ligne' && Number(sensor.co2 || 0) < 900
+    (sensor) => sensor.status === 'en ligne' && sensor.hasReading !== false && Number(sensor.co2 || 0) < 900
   ).length;
 
   return (

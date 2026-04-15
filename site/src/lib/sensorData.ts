@@ -8,9 +8,13 @@ export interface Sensor {
   co2: number;
   temperature: number;
   humidity: number;
-  lastReading: Date;
+  lastReading: Date | null;
   battery?: number;
   isLive?: boolean;
+  sensorType?: 'real' | 'simulation';
+  hasReading?: boolean;
+  sensorModel?: string;
+  connectionMethod?: string;
   thresholds?: {
     co2?: number | null;
     temp_min?: number | null;

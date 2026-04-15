@@ -13,7 +13,11 @@ export const sensorSchema = z.object({
     .max(500, 'La localisation ne peut pas dépasser 500 caractères'),
   sensorType: z.enum(['real', 'simulation'], {
     errorMap: () => ({ message: 'Type de capteur invalide' })
-  })
+  }),
+  sensorModel: z.string().max(120, 'Le modèle ne peut pas dépasser 120 caractères').optional(),
+  connectionMethod: z
+    .enum(['http_push', 'mqtt_bridge', 'serial_gateway', 'websocket_gateway'])
+    .optional(),
 });
 
 export type SensorInput = z.infer<typeof sensorSchema>;

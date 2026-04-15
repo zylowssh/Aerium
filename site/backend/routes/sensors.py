@@ -1,13 +1,103 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import db, Sensor, SensorReading, User
-from datetime import datetime
+from datetime import datetime, timezone
 from audit_logger import enregistrer_action
 from sensor_simulator import generate_current_simulated_reading
 import logging
 
 capteurs_bp = Blueprint('sensors', __name__)
 logger = logging.getLogger(__name__)
+
+REAL_SENSOR_OFFLINE_TIMEOUT_SECONDS = 120
+METHODES_CONNEXION_REELLES = {
+    'http_push',
+    'mqtt_bridge',
+    'serial_gateway',
+    'websocket_gateway',
+}
+MODELE_CAPTEUR_MAX_LEN = 120
+
+
+def normaliser_type_capteur(type_capteur):
+    valeur = str(type_capteur or 'simulation').strip().lower()
+    return valeur if valeur in ('real', 'simulation') else None
+
+
+def normaliser_modele_capteur(modele_capteur):
+    if modele_capteur is None:
+        return None
+
+    valeur = str(modele_capteur).strip()
+    if not valeur:
+        return None
+
+    return valeur[:MODELE_CAPTEUR_MAX_LEN]
+
+
+def normaliser_methode_connexion(methode_connexion):
+    if methode_connexion is None:
+        return None
+
+    valeur = str(methode_connexion).strip().lower()
+    if not valeur:
+        return None
+
+    return valeur if valeur in METHODES_CONNEXION_REELLES else None
+
+
+def analyser_horodatage_iso(valeur):
+    if not valeur:
+        return None
+
+    brut = str(valeur).strip()
+    if not brut:
+        return None
+
+    try:
+        if brut.endswith('Z'):
+            brut = brut[:-1] + '+00:00'
+        parsed = datetime.fromisoformat(brut)
+        if parsed.tzinfo is not None:
+            parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        return parsed
+    except ValueError:
+        return None
+
+
+def capteur_reel_connecte(last_reading_iso):
+    horodatage = analyser_horodatage_iso(last_reading_iso)
+    if horodatage is None:
+        return False
+
+    age_secondes = (datetime.utcnow() - horodatage).total_seconds()
+    return age_secondes <= REAL_SENSOR_OFFLINE_TIMEOUT_SECONDS
+
+
+def synchroniser_connectivite_capteur_reel(sensor, sensor_dict):
+    if sensor.sensor_type != 'real':
+        return False
+
+    connecte = capteur_reel_connecte(sensor_dict.get('lastReading'))
+    nouveau_statut = sensor.status
+
+    if connecte:
+        if nouveau_statut == 'hors ligne':
+            nouveau_statut = 'en ligne'
+    else:
+        nouveau_statut = 'hors ligne'
+
+    modifie = False
+    if sensor.is_live != connecte:
+        sensor.is_live = connecte
+        modifie = True
+    if sensor.status != nouveau_statut:
+        sensor.status = nouveau_statut
+        modifie = True
+
+    sensor_dict['is_live'] = connecte
+    sensor_dict['status'] = nouveau_statut
+    return modifie
 
 @capteurs_bp.route('', methods=['GET'])
 @jwt_required()
@@ -73,6 +163,7 @@ def obtenir_capteurs():
         
         # Inclure les dernières lectures pour chaque capteur (générer à la demande pour les capteurs simulés)
         donnees_capteurs = []
+        doit_commiter = False
         for sensor in capteurs:
             sensor_dict = sensor.vers_dict(inclure_dernière_lecture=True)
             
@@ -89,8 +180,15 @@ def obtenir_capteurs():
                     sensor_dict['temperature'] = simulated_data['temperature']
                     sensor_dict['humidity'] = simulated_data['humidity']
                     sensor_dict['lastReading'] = datetime.utcnow().isoformat()
+
+            if sensor.sensor_type == 'real':
+                if synchroniser_connectivite_capteur_reel(sensor, sensor_dict):
+                    doit_commiter = True
             
             donnees_capteurs.append(sensor_dict)
+
+        if doit_commiter:
+            db.session.commit()
         
         return jsonify({
             'sensors': donnees_capteurs,
@@ -146,6 +244,10 @@ def obtenir_capteur(sensor_id):
                 sensor_dict['temperature'] = simulated_data['temperature']
                 sensor_dict['humidity'] = simulated_data['humidity']
                 sensor_dict['lastReading'] = datetime.utcnow().isoformat()
+
+        if capteur.sensor_type == 'real':
+            if synchroniser_connectivite_capteur_reel(capteur, sensor_dict):
+                db.session.commit()
         
         return jsonify({'sensor': sensor_dict}), 200
         
@@ -164,23 +266,44 @@ def creer_capteur():
         if isinstance(id_utilisateur_courant, str):
             id_utilisateur_courant = int(id_utilisateur_courant)
             
-        data = request.get_json()
+        data = request.get_json() or {}
         
-        nom = data.get('name')
-        lieu = data.get('location')
-        type_capteur = data.get('sensor_type', 'simulation')
+        nom = str(data.get('name') or '').strip()
+        lieu = str(data.get('location') or '').strip()
+        type_capteur = normaliser_type_capteur(data.get('sensor_type', 'simulation'))
+        modele_capteur = normaliser_modele_capteur(data.get('sensor_model'))
+        methode_connexion = normaliser_methode_connexion(data.get('connection_method'))
         
         if not nom or not lieu:
             return jsonify({'error': 'Le nom et le lieu sont requis'}), 400
+
+        if type_capteur is None:
+            return jsonify({'error': 'Le type de capteur doit être real ou simulation'}), 400
+
+        if 'connection_method' in data and data.get('connection_method') is not None and methode_connexion is None:
+            return jsonify({'error': 'Méthode de connexion invalide'}), 400
+
+        capteur_reel = type_capteur == 'real'
+
+        if capteur_reel:
+            if methode_connexion is None:
+                methode_connexion = 'http_push'
+            if not modele_capteur:
+                modele_capteur = 'generic'
+        else:
+            modele_capteur = None
+            methode_connexion = None
         
         nouveau_capteur = Sensor(
             user_id=id_utilisateur_courant,
             name=nom,
             location=lieu,
             sensor_type=type_capteur,
-            status='en ligne',
+            sensor_model=modele_capteur,
+            connection_method=methode_connexion,
+            status='hors ligne' if capteur_reel else 'en ligne',
             battery=None if type_capteur == 'simulation' else 100,
-            is_live=True
+            is_live=not capteur_reel
         )
         
         db.session.add(nouveau_capteur)
@@ -190,7 +313,9 @@ def creer_capteur():
         enregistrer_action(id_utilisateur_courant, 'CREER', 'CAPTEUR', resource_id=nouveau_capteur.id, details={
             'name': nom,
             'location': lieu,
-            'sensor_type': type_capteur
+            'sensor_type': type_capteur,
+            'sensor_model': modele_capteur,
+            'connection_method': methode_connexion,
         })
         
         return jsonify({
@@ -226,22 +351,55 @@ def mettre_a_jour_capteur(sensor_id):
         if user.role != 'admin' and capteur.user_id != id_utilisateur_courant:
             return jsonify({'error': 'Accès non autorisé à ce capteur'}), 403
         
-        data = request.get_json()
+        data = request.get_json() or {}
         
         if 'name' in data:
             capteur.name = data['name']
         if 'location' in data:
             capteur.location = data['location']
         if 'sensor_type' in data:
-            capteur.sensor_type = data['sensor_type']
+            type_capteur = normaliser_type_capteur(data['sensor_type'])
+            if type_capteur is None:
+                return jsonify({'error': 'Le type de capteur doit être real ou simulation'}), 400
+
+            capteur.sensor_type = type_capteur
             if capteur.sensor_type == 'simulation':
+                capteur.sensor_model = None
+                capteur.connection_method = None
                 capteur.battery = None
+                capteur.status = 'en ligne'
+                capteur.is_live = True
+            else:
+                if not capteur.sensor_model:
+                    capteur.sensor_model = 'generic'
+                if not capteur.connection_method:
+                    capteur.connection_method = 'http_push'
+                capteur.status = 'hors ligne'
+                capteur.is_live = False
+                if capteur.battery is None:
+                    capteur.battery = 100
+        if 'sensor_model' in data:
+            modele_capteur = normaliser_modele_capteur(data.get('sensor_model'))
+            if capteur.sensor_type == 'real' and not modele_capteur:
+                return jsonify({'error': 'Le modèle du capteur réel est requis'}), 400
+            capteur.sensor_model = modele_capteur if capteur.sensor_type == 'real' else None
+        if 'connection_method' in data:
+            methode_connexion = normaliser_methode_connexion(data.get('connection_method'))
+            if capteur.sensor_type == 'real' and methode_connexion is None:
+                return jsonify({'error': 'Méthode de connexion invalide'}), 400
+            capteur.connection_method = methode_connexion if capteur.sensor_type == 'real' else None
         if 'status' in data:
             capteur.status = data['status']
         if 'battery' in data and capteur.sensor_type != 'simulation':
             capteur.battery = data['battery']
         if 'is_live' in data:
             capteur.is_live = data['is_live']
+
+        if capteur.sensor_type == 'real':
+            if not capteur.sensor_model:
+                capteur.sensor_model = 'generic'
+            if not capteur.connection_method:
+                capteur.connection_method = 'http_push'
         
         capteur.updated_at = datetime.utcnow()
         

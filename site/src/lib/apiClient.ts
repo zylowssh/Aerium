@@ -164,8 +164,56 @@ class ApiClient {
     return cards.sort((a, b) => b.likelihood - a.likelihood);
   }
 
+  private mapLegacyPredictionsToAlertCards(predictions: any[]): PredictiveAlertCard[] {
+    if (!Array.isArray(predictions)) {
+      return [];
+    }
+
+    return predictions
+      .map((item: any, index: number): PredictiveAlertCard => {
+        const impactRaw = String(item?.impact ?? '').toLowerCase();
+        const impact: 'low' | 'medium' | 'high' =
+          impactRaw === 'high' ? 'high' : impactRaw === 'medium' ? 'medium' : 'low';
+
+        return {
+          id: String(item?.id ?? `legacy-prediction-${index}`),
+          sensorName: String(item?.sensorName ?? 'Capteur inconnu'),
+          metric: String(item?.metric ?? 'co2'),
+          title: String(item?.title ?? 'Alerte predictive'),
+          description: String(item?.description ?? ''),
+          likelihood: this.clamp(this.toFiniteNumber(item?.likelihood, 0), 0, 100),
+          timeframe: String(item?.timeframe ?? 'Prochaines 24h'),
+          impact,
+          currentValue: this.toFiniteNumber(item?.currentValue, 0),
+          trendPercentage: this.toFiniteNumber(item?.trendPercentage, 0),
+        };
+      })
+      .sort((a, b) => b.likelihood - a.likelihood);
+  }
+
   async getPredictiveAlertsData(): Promise<PredictiveAlertsData> {
-    const response = await this.client.get('/ai/predictions');
+    const response = await this.client.get('/ai/predictions', {
+      // Treat 4xx as handled responses here to avoid noisy interceptor logs for expected fallback cases.
+      validateStatus: (status) => status < 500,
+    });
+
+    if (response.status === 404) {
+      const fallbackResponse = await this.client.get('/alerts/predictions');
+      const fallbackPayload = fallbackResponse.data ?? {};
+
+      return {
+        cards: this.mapLegacyPredictionsToAlertCards(
+          Array.isArray(fallbackPayload.predictions) ? fallbackPayload.predictions : []
+        ),
+        forecast: [],
+        trends: {},
+      };
+    }
+
+    if (response.status >= 400) {
+      throw new Error(response.data?.error || 'Impossible de charger les predictions IA.');
+    }
+
     const payload = response.data ?? {};
     return {
       cards: this.mapAIPredictionsToAlertCards(payload),
@@ -284,12 +332,37 @@ class ApiClient {
     return response.data.sensor;
   }
 
-  async createSensor(name: string, location: string, sensorType: 'real' | 'simulation' = 'simulation') {
-    const response = await this.client.post('/sensors', { name, location, sensor_type: sensorType });
+  async createSensor(
+    name: string,
+    location: string,
+    sensorType: 'real' | 'simulation' = 'simulation',
+    options?: { sensorModel?: string; connectionMethod?: string }
+  ) {
+    const payload: Record<string, any> = { name, location, sensor_type: sensorType };
+
+    if (sensorType === 'real') {
+      if (options?.sensorModel) {
+        payload.sensor_model = options.sensorModel;
+      }
+      if (options?.connectionMethod) {
+        payload.connection_method = options.connectionMethod;
+      }
+    }
+
+    const response = await this.client.post('/sensors', payload);
     return response.data.sensor;
   }
 
-  async updateSensor(sensorId: string, updates: { name?: string; location?: string; sensor_type?: string }) {
+  async updateSensor(
+    sensorId: string,
+    updates: {
+      name?: string;
+      location?: string;
+      sensor_type?: string;
+      sensor_model?: string;
+      connection_method?: string;
+    }
+  ) {
     const response = await this.client.put(`/sensors/${sensorId}`, updates);
     return response.data.sensor;
   }

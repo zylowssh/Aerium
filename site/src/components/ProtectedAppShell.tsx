@@ -13,15 +13,17 @@ interface ProtectedAppShellProps {
 
 export default function ProtectedAppShell({ children, requireAdmin = false }: ProtectedAppShellProps) {
   return (
-    <WebSocketProvider>
-      <BackendProvider>
-        <TourProvider>
-          <AppOverlays>
-            <ProtectedRoute requireAdmin={requireAdmin}>{children}</ProtectedRoute>
-            <AIChatWidget />
-          </AppOverlays>
-        </TourProvider>
-      </BackendProvider>
-    </WebSocketProvider>
+    <BackendProvider>
+      <TourProvider>
+        <AppOverlays>
+          <ProtectedRoute requireAdmin={requireAdmin}>
+            <WebSocketProvider>
+              {children}
+              <AIChatWidget />
+            </WebSocketProvider>
+          </ProtectedRoute>
+        </AppOverlays>
+      </TourProvider>
+    </BackendProvider>
   );
 }

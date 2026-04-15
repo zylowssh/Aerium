@@ -30,7 +30,15 @@ const Sensors = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const navigate = useNavigate();
 
-  const StatusBadge = ({ status }: { status: Sensor['status'] }) => {
+  const StatusBadge = ({
+    status,
+    sensorType,
+    hasReading,
+  }: {
+    status: Sensor['status'];
+    sensorType?: Sensor['sensorType'];
+    hasReading: boolean;
+  }) => {
     const styles = {
       'en ligne': 'bg-success/10 border-success/30 text-success',
       'hors ligne': 'bg-muted border-muted-foreground/30 text-muted-foreground',
@@ -43,6 +51,8 @@ const Sensors = () => {
       'avertissement': 'Avertissement'
     };
 
+    const isDisconnectedRealSensor = sensorType === 'real' && status === 'hors ligne' && !hasReading;
+
     return (
       <span className={cn(
         "inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border",
@@ -53,7 +63,7 @@ const Sensors = () => {
           'bg-muted-foreground': status === 'hors ligne',
           'bg-warning': status === 'avertissement'
         })} />
-        {labels[status]}
+        {isDisconnectedRealSensor ? 'Déconnecté' : labels[status]}
       </span>
     );
   };
@@ -145,9 +155,13 @@ const Sensors = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                sensors.map((sensor, index) => (
-                <TableRow 
-                  key={sensor.id} 
+                sensors.map((sensor) => {
+                  const hasReading = sensor.hasReading !== false;
+                  const isDisconnectedRealSensor = sensor.sensorType === 'real' && sensor.status === 'hors ligne' && !hasReading;
+
+                  return (
+                <TableRow
+                  key={sensor.id}
                   className="border-border hover:bg-muted/30 cursor-pointer"
                   onClick={() => navigate(`/sensors/${sensor.id}`)}
                 >
@@ -171,36 +185,64 @@ const Sensors = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={sensor.status} />
+                    <StatusBadge
+                      status={sensor.status}
+                      sensorType={sensor.sensorType}
+                      hasReading={hasReading}
+                    />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    <span className="text-sm">
-                      {sensor.lastReading.toLocaleDateString('fr-FR')}<br />
-                      <span className="text-xs">
-                        {sensor.lastReading.toLocaleTimeString('fr-FR', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                    {hasReading && sensor.lastReading ? (
+                      <span className="text-sm">
+                        {sensor.lastReading.toLocaleDateString('fr-FR')}<br />
+                        <span className="text-xs">
+                          {sensor.lastReading.toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
                       </span>
-                    </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Aucune mesure</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className={cn(
-                      "font-semibold",
-                      sensor.co2 < 800 ? 'text-primary' : 
-                      sensor.co2 < 1000 ? 'text-warning' : 'text-destructive'
-                    )}>
-                      {sensor.co2}
-                    </span>
-                    <span className="text-muted-foreground ml-1">ppm</span>
+                    {hasReading ? (
+                      <>
+                        <span className={cn(
+                          "font-semibold",
+                          sensor.co2 < 800 ? 'text-primary' :
+                          sensor.co2 < 1000 ? 'text-warning' : 'text-destructive'
+                        )}>
+                          {sensor.co2}
+                        </span>
+                        <span className="text-muted-foreground ml-1">ppm</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        {isDisconnectedRealSensor ? 'Non connecté' : '--'}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="font-medium text-foreground">{sensor.temperature}</span>
-                    <span className="text-muted-foreground">°C</span>
+                    {hasReading ? (
+                      <>
+                        <span className="font-medium text-foreground">{sensor.temperature}</span>
+                        <span className="text-muted-foreground">°C</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">--</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="font-medium text-foreground">{sensor.humidity}</span>
-                    <span className="text-muted-foreground">%</span>
+                    {hasReading ? (
+                      <>
+                        <span className="font-medium text-foreground">{sensor.humidity}</span>
+                        <span className="text-muted-foreground">%</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">--</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-center">
                     <Button variant="outline" size="sm" className="gap-1.5">
@@ -226,7 +268,8 @@ const Sensors = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
+                  );
+                })
               )}
             </TableBody>
           </Table>

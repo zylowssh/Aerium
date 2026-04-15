@@ -1,9 +1,39 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
-from database import db, User
+from database import db, User, Sensor
 import bcrypt
+import logging
+
+logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
+
+
+def _provision_starter_sensor_if_missing(user: User) -> None:
+    """Ensure non-admin users always have at least one simulation sensor."""
+    if not user or user.role == 'admin':
+        return
+
+    try:
+        existing_count = Sensor.query.filter_by(user_id=user.id).count()
+        if existing_count > 0:
+            return
+
+        starter_sensor = Sensor(
+            user_id=user.id,
+            name='Capteur Initial',
+            location='Zone Principale',
+            status='en ligne',
+            sensor_type='simulation',
+            battery=None,
+            is_live=True,
+        )
+        db.session.add(starter_sensor)
+        db.session.commit()
+        logger.info('Starter sensor provisioned for user_id=%s', user.id)
+    except Exception as exc:
+        db.session.rollback()
+        logger.warning('Failed to provision starter sensor for user_id=%s: %s', getattr(user, 'id', None), exc)
 
 @auth_bp.route('/register', methods=['POST'])
 def inscrire():
@@ -35,6 +65,9 @@ def inscrire():
         
         db.session.add(new_user)
         db.session.commit()
+
+        # Provision a starter simulation sensor so first dashboard load is never empty.
+        _provision_starter_sensor_if_missing(new_user)
         
         return jsonify({
             'message': 'Utilisateur enregistré avec succès',
@@ -70,6 +103,9 @@ def connexion():
         # Vérifier le mot de passe
         if not bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
             return jsonify({'error': 'Identifiants de connexion invalides'}), 401
+
+        # Backfill starter sensor for legacy accounts created before provisioning existed.
+        _provision_starter_sensor_if_missing(user)
         
         # Créer les jetons avec une identité explicite
         access_token = create_access_token(identity=str(user.id))
@@ -116,6 +152,9 @@ def obtenir_utilisateur_courant():
         
         if not user:
             return jsonify({'error': 'Utilisateur non trouvé'}), 404
+
+        # Ensure legacy accounts also receive starter data on active sessions.
+        _provision_starter_sensor_if_missing(user)
 
         return jsonify({'user': user.vers_dict()}), 200
         

@@ -125,6 +125,8 @@ def ajouter_lecture():
             capteur.status = 'avertissement'
         else:
             capteur.status = 'en ligne'
+
+        capteur.is_live = True
         
         capteur.updated_at = datetime.utcnow()
         
@@ -404,6 +406,8 @@ def ajouter_lecture_externe(sensor_api_key):
             capteur.status = 'avertissement'
         else:
             capteur.status = 'en ligne'
+
+        capteur.is_live = True
         
         capteur.updated_at = datetime.utcnow()
         
