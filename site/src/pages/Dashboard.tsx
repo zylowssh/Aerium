@@ -47,7 +47,7 @@ const Dashboard = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [sensorReadings, setSensorReadings] = useState<Record<string, number[]>>({});
-  const [isTrendLoading, setIsTrendLoading] = useState(false);
+  const [isTrendLoading, setIsTrendLoading] = useState(true);
   const [isAlertsLoading, setIsAlertsLoading] = useState(true);
   const isFetchingTrend = useRef(false);
   const isFetchingReadings = useRef(false);
@@ -304,6 +304,19 @@ const Dashboard = () => {
   return (
     <AppLayout>
        <div className="space-y-4" data-tour="dashboard">
+        {/* Air Quality Overview */}
+        <div data-tour="air-quality">
+          <AirQualityOverviewCard
+            key="air-quality-overview"
+            avgCo2={avgCo2}
+            trendData={trendData}
+            isRefreshing={isRefreshing}
+            sensorsOnline={sensorsOnline}
+            totalSensors={totalSensors}
+            isLoading={isTrendLoading}
+          />
+        </div>
+
         {/* KPI Cards */}
         {isLoading ? (
           <LoadingSkeleton variant="kpi" count={4} />
@@ -344,70 +357,54 @@ const Dashboard = () => {
         </div>
         )}
 
-        {/* Main Content Grid */}
-        <div className="space-y-4">
-           <div data-tour="air-quality">
-             <AirQualityOverviewCard
-            key="air-quality-overview"
-            avgCo2={avgCo2}
-            trendData={trendData}
-            isRefreshing={isRefreshing}
+        {/* Alerts and Insights Below */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-tour="alerts">
+          {/* Recent Alerts */}
+          {isAlertsLoading ? (
+            <LoadingSkeleton variant="alerts" count={3} />
+          ) : (
+          <motion.div
+            key="recent-alerts-container"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="p-4 rounded-xl bg-card border border-border"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-foreground">Alertes Récentes</h3>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 gap-1.5 text-xs"
+                onClick={handleExportCSV}
+                disabled={isExporting}
+              >
+                <Download className="w-3 h-3" />
+                {isExporting ? 'Exportation...' : 'CSV'}
+              </Button>
+            </div>
+            <div className="space-y-1">
+              {alerts.slice(0, 3).length > 0 ? (
+                alerts.slice(0, 3).map((alert: Alert) => (
+                  <AlertCard key={alert.id} alert={alert} onStatusChange={refreshAlerts} />
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">Aucune alerte</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+          )}
+
+          {/* Quick Insights */}
+          <QuickInsights
             sensorsOnline={sensorsOnline}
             totalSensors={totalSensors}
-             />
-           </div>
-
-          {isTrendLoading && <LoadingSkeleton variant="air-quality" />}
-
-          {/* Alerts and Insights Below */}
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-tour="alerts">
-            {/* Recent Alerts */}
-            {isAlertsLoading ? (
-              <LoadingSkeleton variant="alerts" count={3} />
-            ) : (
-            <motion.div
-              key="recent-alerts-container"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="p-4 rounded-xl bg-card border border-border"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-foreground">Alertes Récentes</h3>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 gap-1.5 text-xs"
-                  onClick={handleExportCSV}
-                  disabled={isExporting}
-                >
-                  <Download className="w-3 h-3" />
-                  {isExporting ? 'Exportation...' : 'CSV'}
-                </Button>
-              </div>
-              <div className="space-y-1">
-                {alerts.slice(0, 3).length > 0 ? (
-                  alerts.slice(0, 3).map((alert: Alert) => (
-                    <AlertCard key={alert.id} alert={alert} onStatusChange={refreshAlerts} />
-                  ))
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-muted-foreground">Aucune alerte</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-            )}
-
-            {/* Quick Insights */}
-            <QuickInsights
-              sensorsOnline={sensorsOnline}
-              totalSensors={totalSensors}
-              readingsToday={readingsToday}
-              peakCO2={trendData.length > 0 ? Math.max(...trendData.map(d => d.co2)) : 0}
-              bestAirTime={bestAirTime}
-            />
-          </div>
+            readingsToday={readingsToday}
+            peakCO2={trendData.length > 0 ? Math.max(...trendData.map(d => d.co2)) : 0}
+            bestAirTime={bestAirTime}
+          />
         </div>
 
         {/* Secondary Widgets Grid */}
