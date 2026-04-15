@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/apiClient';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MiniChartReadingPayload {
   co2: number;
@@ -108,13 +109,14 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
       whileHover={{ y: -6 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "group relative p-5 rounded-xl bg-card/50 backdrop-blur-sm border border-border",
+        "group relative overflow-hidden rounded-2xl border border-border/80 p-5",
+        "bg-card/70 backdrop-blur-sm supports-[backdrop-filter]:bg-card/55",
         "hover:border-primary/40 transition-all duration-300",
-        "hover:shadow-xl hover:shadow-primary/5 overflow-hidden"
+        "hover:shadow-lg hover:shadow-primary/10"
       )}
     >
       {/* Gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/8 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
       
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-4">
@@ -132,10 +134,10 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
             <span className={cn(
               "flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border",
               sensor.status === 'en ligne' 
-                ? "bg-success/10 border-success/30 text-success"
+                ? "bg-success/10 border-success/40 text-success"
                 : sensor.status === 'avertissement'
-                ? "bg-warning/10 border-warning/30 text-warning"
-                : "bg-muted border-muted-foreground/30 text-muted-foreground"
+                ? "bg-warning/10 border-warning/40 text-warning"
+                : "bg-muted/50 border-muted-foreground/40 text-muted-foreground"
             )}>
               <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", statusColors[sensor.status])} />
               {statusLabel}
@@ -173,7 +175,7 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
           </div>
 
           {!loading && chartData.length > 0 && (
-            <div className="w-28 h-12">
+            <div className="h-12 w-28 rounded-lg border border-border/60 bg-background/45 px-1.5 py-1">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <Line
@@ -187,14 +189,20 @@ export function SensorCard({ sensor, miniChartData }: SensorCardProps) {
               </ResponsiveContainer>
             </div>
           )}
+
+          {loading && hasReading && (
+            <div className="h-12 w-28 rounded-lg border border-border/60 bg-background/45 px-1.5 py-1">
+              <Skeleton className="h-full w-full rounded-md" />
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border/50">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+        <div className="mt-4 flex items-center gap-3 border-t border-border/60 pt-4">
+          <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/55 px-3 py-1.5">
             <Thermometer className="w-4 h-4 text-orange-400" />
             <span className="text-sm font-medium text-foreground">{hasReading ? `${sensor.temperature}°C` : '--'}</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+          <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/55 px-3 py-1.5">
             <Droplets className="w-4 h-4 text-blue-400" />
             <span className="text-sm font-medium text-foreground">{hasReading ? `${sensor.humidity}%` : '--'}</span>
           </div>

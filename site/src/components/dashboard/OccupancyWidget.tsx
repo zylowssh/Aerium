@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
-import { Users, TrendingUp, Clock, MapPin } from 'lucide-react';
+import { Users, Clock, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/apiClient';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ZoneOccupancy {
   zone: string;
@@ -79,20 +80,29 @@ export function OccupancyWidget() {
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'rounded-xl border border-border p-4 overflow-hidden',
-        'bg-card/50 backdrop-blur-sm'
+        'relative overflow-hidden rounded-2xl border border-border/80 p-4 md:p-5',
+        'bg-card/70 backdrop-blur-sm supports-[backdrop-filter]:bg-card/55'
       )}
     >
-      <div className="flex items-center gap-2 mb-4">
-        <Users className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground">Occupation</h3>
-        <span className="ml-auto px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary font-medium">
+      <div className="pointer-events-none absolute -left-20 -top-20 h-44 w-44 rounded-full bg-primary/10 blur-3xl" />
+
+      <div className="relative mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+            Activité
+          </div>
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Occupation</h3>
+          </div>
+        </div>
+        <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
           {totalOccupancy}/{totalCapacity}
         </span>
       </div>
 
       {/* Overall bar */}
-      <div className="mb-4">
+      <div className="relative mb-4 rounded-lg border border-border/70 bg-background/55 p-2.5">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs text-muted-foreground">Capteurs actifs</span>
           <span className={cn(
@@ -116,11 +126,22 @@ export function OccupancyWidget() {
       </div>
 
       {/* Zone breakdown */}
-      <div className="space-y-2">
+      <div className="relative space-y-2">
         {loading ? (
-          <div className="text-xs text-muted-foreground">Chargement...</div>
+          Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="rounded-lg border border-border/70 bg-background/55 p-2.5">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-3 rounded-full" />
+                <Skeleton className="h-3 flex-1" />
+                <Skeleton className="h-3 w-12" />
+                <Skeleton className="h-3 w-7" />
+              </div>
+            </div>
+          ))
         ) : zones.length === 0 || zones[0].max === 0 ? (
-          <div className="text-xs text-muted-foreground">Aucune donnée d'occupation</div>
+          <div className="rounded-lg border border-dashed border-border/70 bg-background/45 p-3 text-xs text-muted-foreground">
+            Aucune donnée d'occupation
+          </div>
         ) : (
           zones.map((zone, index) => {
             const percent = zone.max > 0 ? Math.round((zone.current / zone.max) * 100) : 0;
@@ -130,7 +151,7 @@ export function OccupancyWidget() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 rounded-lg border border-border/70 bg-background/55 p-2.5"
               >
                 <MapPin className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-foreground flex-1 truncate">{zone.zone}</span>
@@ -152,7 +173,7 @@ export function OccupancyWidget() {
         )}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-border/50 flex items-center gap-1.5 text-xs text-muted-foreground">
+      <div className="mt-3 flex items-center gap-1.5 border-t border-border/60 pt-3 text-xs text-muted-foreground">
         <Clock className="h-3 w-3" />
         <span>Mise à jour en temps réel</span>
       </div>

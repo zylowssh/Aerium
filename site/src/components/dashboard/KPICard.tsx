@@ -49,16 +49,19 @@ export function KPICard({
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "group p-5 rounded-xl bg-card/50 backdrop-blur-sm border border-border",
-        "hover:border-primary/30 transition-all duration-300",
-        "hover:shadow-xl",
+        "group relative overflow-hidden rounded-2xl border border-border/80 p-4 md:p-5",
+        "bg-card/70 backdrop-blur-sm supports-[backdrop-filter]:bg-card/55",
+        "hover:border-primary/40 transition-all duration-300",
+        "hover:shadow-lg",
         glowColors[status]
       )}
     >
+      <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-primary/10 blur-2xl" />
+
       <div className="flex items-start justify-between mb-4">
         <span className="text-sm font-medium text-muted-foreground">{label}</span>
         <motion.div 
-          className={cn("p-2.5 rounded-xl", iconBgColors[status])}
+          className={cn("rounded-xl border border-border/50 p-2.5", iconBgColors[status])}
           whileHover={{ scale: 1.1, rotate: 5 }}
           transition={{ duration: 0.2 }}
         >
@@ -72,7 +75,7 @@ export function KPICard({
       </div>
       
       {trend !== undefined && (
-        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border/50">
+        <div className="mt-3 flex items-center gap-1.5 border-t border-border/60 pt-3">
           <div className={cn(
             "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
             trend >= 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"

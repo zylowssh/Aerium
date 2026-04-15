@@ -3,6 +3,7 @@ import { Wrench, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/apiClient';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MaintenanceItem {
   id: string;
@@ -97,9 +98,9 @@ export function MaintenanceWidget() {
 
   const getStatusColor = (type: MaintenanceItem['type']) => {
     switch (type) {
-      case 'scheduled': return 'border-primary/30 bg-primary/5';
-      case 'required': return 'border-amber-500/30 bg-amber-500/5';
-      case 'completed': return 'border-emerald-500/30 bg-emerald-500/5';
+      case 'scheduled': return 'border-primary/30 bg-primary/10';
+      case 'required': return 'border-amber-500/30 bg-amber-500/10';
+      case 'completed': return 'border-emerald-500/30 bg-emerald-500/10';
     }
   };
 
@@ -108,24 +109,46 @@ export function MaintenanceWidget() {
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'rounded-xl border border-border p-4 overflow-hidden',
-        'bg-card/50 backdrop-blur-sm'
+        'relative overflow-hidden rounded-2xl border border-border/80 p-4 md:p-5',
+        'bg-card/70 backdrop-blur-sm supports-[backdrop-filter]:bg-card/55'
       )}
     >
-      <div className="flex items-center gap-2 mb-4">
-        <Wrench className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground">Maintenance</h3>
-        <span className="ml-auto text-xs text-muted-foreground">
+      <div className="pointer-events-none absolute -right-20 -top-20 h-44 w-44 rounded-full bg-primary/10 blur-3xl" />
+
+      <div className="relative mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+            Opérations
+          </div>
+          <div className="flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Maintenance</h3>
+          </div>
+        </div>
+        <span className="text-xs text-muted-foreground">
           <Clock className="h-3 w-3 inline mr-1" />
           {items.length > 0 ? 'Actif' : 'À jour'}
         </span>
       </div>
 
-      <div className="space-y-2">
+      <div className="relative space-y-2.5">
         {loading ? (
-          <div className="text-xs text-muted-foreground">Chargement...</div>
+          Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="rounded-lg border border-border/70 bg-background/55 p-3">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-7 w-7 rounded-lg" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-36" />
+                </div>
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+          ))
         ) : items.length === 0 ? (
-          <div className="text-xs text-muted-foreground">Aucune maintenance requise</div>
+          <div className="rounded-lg border border-dashed border-border/70 bg-background/45 p-3 text-xs text-muted-foreground">
+            Aucune maintenance requise
+          </div>
         ) : (
           items.map((item, index) => (
             <motion.div
@@ -134,7 +157,7 @@ export function MaintenanceWidget() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
               className={cn(
-                'flex items-center gap-3 p-2.5 rounded-lg border',
+                'flex items-center gap-3 rounded-lg border p-2.5 transition-colors hover:border-primary/35',
                 getStatusColor(item.type)
               )}
             >

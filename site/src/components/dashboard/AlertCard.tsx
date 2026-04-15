@@ -70,21 +70,24 @@ export const AlertCard = memo(function AlertCard({ alert, onStatusChange }: Aler
   
   const typeStyles = {
     avertissement: {
-      bg: 'bg-warning/10',
-      border: 'border-warning/30 hover:border-warning/50',
+      bg: 'bg-background/55',
+      border: 'border-warning/35 hover:border-warning/55',
       icon: 'text-warning',
+      iconWrap: 'bg-warning/15 border-warning/30',
       badge: 'bg-warning/20 text-warning border border-warning/30'
     },
     critique: {
-      bg: 'bg-destructive/10',
-      border: 'border-destructive/30 hover:border-destructive/50',
+      bg: 'bg-background/55',
+      border: 'border-destructive/35 hover:border-destructive/55',
       icon: 'text-destructive',
+      iconWrap: 'bg-destructive/15 border-destructive/30',
       badge: 'bg-destructive/20 text-destructive border border-destructive/30'
     },
     info: {
-      bg: 'bg-primary/10',
-      border: 'border-primary/30 hover:border-primary/50',
+      bg: 'bg-background/55',
+      border: 'border-primary/35 hover:border-primary/55',
       icon: 'text-primary',
+      iconWrap: 'bg-primary/15 border-primary/30',
       badge: 'bg-primary/20 text-primary border border-primary/30'
     }
   };
@@ -95,17 +98,17 @@ export const AlertCard = memo(function AlertCard({ alert, onStatusChange }: Aler
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      whileHover={{ x: 4 }}
+      whileHover={{ x: 2 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "p-4 rounded-xl border transition-all duration-300",
+        "rounded-lg border p-3.5 transition-all duration-300 backdrop-blur-sm",
         style.bg,
         style.border
       )}
     >
       <div className="flex items-start gap-3">
         <motion.div 
-          className={cn("p-2.5 rounded-xl", style.bg)}
+          className={cn("rounded-xl border p-2", style.iconWrap)}
           whileHover={{ scale: 1.1 }}
         >
           <AlertTriangle className={cn("w-4 h-4", style.icon)} />

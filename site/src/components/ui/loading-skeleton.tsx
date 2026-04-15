@@ -14,7 +14,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
     return (
       <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4", className)}>
         {items.map((i) => (
-          <div key={i} className="p-5 rounded-xl bg-card border border-border">
+          <div key={i} className="p-5 rounded-2xl bg-card/70 border border-border/80">
             <div className="flex items-center justify-between mb-3">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-8 rounded-lg" />
@@ -31,7 +31,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
     return (
       <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4", className)}>
         {items.map((i) => (
-          <div key={i} className="p-5 rounded-xl bg-card border border-border">
+          <div key={i} className="p-5 rounded-2xl bg-card/70 border border-border/80">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-10 w-10 rounded-lg" />
@@ -164,11 +164,11 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
 
   if (variant === 'alerts') {
     return (
-      <div className={cn("rounded-xl border border-border p-5", className)}>
+      <div className={cn("rounded-2xl border border-border/80 bg-card/70 p-5", className)}>
         <Skeleton className="h-5 w-32 mb-4" />
         <div className="space-y-3">
           {Array.from({ length: count || 3 }).map((_, i) => (
-            <div key={i} className="flex items-start gap-4 p-3 rounded-lg bg-background/50 border border-border/50">
+            <div key={i} className="flex items-start gap-4 p-3 rounded-lg bg-background/55 border border-border/70">
               <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />
               <div className="flex-1">
                 <Skeleton className="h-4 w-40 mb-2" />

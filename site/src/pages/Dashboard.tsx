@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Thermometer, Droplets, Activity, Heart, Plus, Download } from 'lucide-react';
+import { Thermometer, Droplets, Activity, Heart, Plus, Download, BellRing } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { AirQualityOverviewCard } from '@/components/dashboard/AirQualityOverviewCard';
@@ -300,6 +300,7 @@ const Dashboard = () => {
   const efficientSensors = sensors.filter(
     (sensor) => sensor.status === 'en ligne' && sensor.hasReading !== false && Number(sensor.co2 || 0) < 900
   ).length;
+  const isMetricsLoading = isLoading || isTrendLoading;
 
   return (
     <AppLayout>
@@ -368,10 +369,20 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="p-4 rounded-xl bg-card border border-border"
+            className="relative overflow-hidden rounded-2xl border border-border/80 p-4 md:p-5 bg-card/70 backdrop-blur-sm supports-[backdrop-filter]:bg-card/55"
           >
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-foreground">Alertes Récentes</h3>
+            <div className="pointer-events-none absolute -right-20 -top-20 h-44 w-44 rounded-full bg-destructive/10 blur-3xl" />
+
+            <div className="relative mb-3 flex items-start justify-between gap-3">
+              <div>
+                <div className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                  Priorité en cours
+                </div>
+                <div className="flex items-center gap-2">
+                  <BellRing className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Alertes Récentes</h3>
+                </div>
+              </div>
               <Button
                 size="sm"
                 variant="ghost"
@@ -383,7 +394,7 @@ const Dashboard = () => {
                 {isExporting ? 'Exportation...' : 'CSV'}
               </Button>
             </div>
-            <div className="space-y-1">
+            <div className="relative space-y-1.5">
               {alerts.slice(0, 3).length > 0 ? (
                 alerts.slice(0, 3).map((alert: Alert) => (
                   <AlertCard key={alert.id} alert={alert} onStatusChange={refreshAlerts} />
@@ -404,11 +415,12 @@ const Dashboard = () => {
             readingsToday={readingsToday}
             peakCO2={trendData.length > 0 ? Math.max(...trendData.map(d => d.co2)) : 0}
             bestAirTime={bestAirTime}
+            isLoading={isMetricsLoading}
           />
         </div>
 
         {/* Secondary Widgets Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MaintenanceWidget />
           <PredictiveAlertsWidget />
           <EnergyMonitorWidget
@@ -418,6 +430,7 @@ const Dashboard = () => {
             onlineSensors={sensorsOnline}
             totalSensors={totalSensors}
             efficientSensors={efficientSensors}
+            isLoading={isMetricsLoading}
           />
           <OccupancyWidget />
         </div>

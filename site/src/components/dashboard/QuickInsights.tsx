@@ -2,6 +2,7 @@ import { Radio, Activity, TrendingUp, Clock, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { memo } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface QuickInsightsProps {
   sensorsOnline: number;
@@ -9,6 +10,7 @@ interface QuickInsightsProps {
   readingsToday: number;
   peakCO2: number;
   bestAirTime: string;
+  isLoading?: boolean;
 }
 
 export const QuickInsights = memo(function QuickInsights({
@@ -16,7 +18,8 @@ export const QuickInsights = memo(function QuickInsights({
   totalSensors,
   readingsToday,
   peakCO2,
-  bestAirTime
+  bestAirTime,
+  isLoading = false,
 }: QuickInsightsProps) {
   const insights = [
     {
@@ -53,32 +56,52 @@ export const QuickInsights = memo(function QuickInsights({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-5 rounded-xl bg-card/50 backdrop-blur-sm border border-border"
+      className="relative overflow-hidden rounded-2xl border border-border/80 p-4 md:p-5 bg-card/70 backdrop-blur-sm supports-[backdrop-filter]:bg-card/55"
     >
-      <div className="flex items-center gap-2 mb-5">
-        <Sparkles className="w-4 h-4 text-primary" />
-        <h3 className="text-base font-semibold text-foreground">Aperçus Rapides</h3>
+      <div className="pointer-events-none absolute -right-20 -top-20 h-44 w-44 rounded-full bg-primary/10 blur-3xl" />
+
+      <div className="relative mb-5">
+        <div className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+          Synthèse instantanée
+        </div>
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h3 className="text-base font-semibold text-foreground">Aperçus Rapides</h3>
+        </div>
       </div>
       
-      <div className="space-y-3">
-        {insights.map((insight, index) => (
-          <motion.div 
-            key={index} 
-            className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50 hover:border-primary/20 transition-colors"
-            whileHover={{ x: 4 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center gap-3">
-              <div className={cn("p-2 rounded-lg", insight.bg)}>
-                <insight.icon className={cn("w-4 h-4", insight.color)} />
+      <div className="relative space-y-2.5">
+        {isLoading
+          ? Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={`quick-insight-skeleton-${index}`}
+                className="flex items-center justify-between rounded-lg border border-border/70 bg-background/55 p-3"
+              >
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 rounded-lg" />
+                  <Skeleton className="h-4 w-28" />
+                </div>
+                <Skeleton className="h-4 w-16" />
               </div>
-              <span className="text-sm text-muted-foreground">{insight.label}</span>
-            </div>
-            <span className={cn("text-sm font-bold tabular-nums", insight.color)}>
-              {insight.value}
-            </span>
-          </motion.div>
-        ))}
+            ))
+          : insights.map((insight, index) => (
+              <motion.div 
+                key={index} 
+                className="flex items-center justify-between rounded-lg border border-border/70 bg-background/55 p-3 transition-colors hover:border-primary/30"
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn("rounded-lg border border-border/50 p-2", insight.bg)}>
+                    <insight.icon className={cn("w-4 h-4", insight.color)} />
+                  </div>
+                  <span className="text-sm text-muted-foreground">{insight.label}</span>
+                </div>
+                <span className={cn("text-sm font-semibold tabular-nums", insight.color)}>
+                  {insight.value}
+                </span>
+              </motion.div>
+            ))}
       </div>
     </motion.div>
   );
