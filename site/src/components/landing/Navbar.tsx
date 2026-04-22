@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/hooks/useTheme';
-import { Github, BarChart3, Moon, Sun, Leaf } from 'lucide-react';
+import { BarChart3, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import aeriumLogo from '@/assets/aerium-logo.png';
 
@@ -38,7 +38,7 @@ const Navbar = ({ onScrollToSection }: NavbarProps) => {
       style={{
         top: isScrolled ? '10px' : '14px',
         width: 'min(980px, calc(100vw - 16px))',
-        transition: 'top 0.5s cubic-bezier(0.22, 1, 0.36, 1), width 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+        transition: 'top 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
       }}
     >
       <div
@@ -78,9 +78,9 @@ const Navbar = ({ onScrollToSection }: NavbarProps) => {
             </Link>
           </motion.div>
 
-          {/* Center Navigation Links */}
+          {/* Center Navigation */}
           <motion.div
-            className="hidden md:flex items-center gap-1.5 rounded-full px-2 py-1 border border-white/40 dark:border-white/15 bg-white/35 dark:bg-black/30 shadow-inner"
+            className="hidden lg:flex items-center rounded-full px-2 py-1 border border-white/40 dark:border-white/15 bg-white/35 dark:bg-black/30 shadow-inner"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -91,12 +91,6 @@ const Navbar = ({ onScrollToSection }: NavbarProps) => {
             >
               Découvrir
             </button>
-            <Link
-              to="/dashboard"
-              className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors rounded-full px-4 py-2 font-manrope hover:bg-white/40 dark:hover:bg-white/10"
-            >
-              Tableau de bord
-            </Link>
           </motion.div>
 
           {/* Right Actions */}
@@ -121,14 +115,6 @@ const Navbar = ({ onScrollToSection }: NavbarProps) => {
               )}
             </motion.button>
 
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hidden sm:block">
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-full bg-white/25 hover:bg-white/45 dark:bg-black/25 dark:hover:bg-black/45">
-                  <Github className="w-4 h-4" />
-                </Button>
-              </motion.div>
-            </a>
-
             <Link to="/dashboard">
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -138,9 +124,8 @@ const Navbar = ({ onScrollToSection }: NavbarProps) => {
                   size="sm"
                   className="h-9 rounded-full px-4 bg-foreground text-background hover:opacity-90 gap-2 shadow-md shadow-black/25"
                 >
-                  <Leaf className="w-4 h-4" />
-                  <span className="hidden sm:inline text-[0.78rem] uppercase tracking-[0.12em] font-manrope">Explorer</span>
-                  <BarChart3 className="w-4 h-4 sm:hidden" />
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="hidden sm:inline text-[0.78rem] uppercase tracking-[0.12em] font-manrope">Tableau de bord</span>
                 </Button>
               </motion.div>
             </Link>

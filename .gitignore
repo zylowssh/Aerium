@@ -22,3 +22,8 @@ dist/
 site-v2/
 
 .agents/
+skills-lock.json
+.impeccable.md
+
+__pycache__/
+*.pyc
