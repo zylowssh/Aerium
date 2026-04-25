@@ -10,6 +10,7 @@ const AppOverlays = lazy(() => import("./components/AppOverlays"));
 const Landing = lazy(() => import("./pages/Landing"));
 const Landing2 = lazy(() => import("./pages/Landing2"));
 const Landing3 = lazy(() => import("./pages/Landing3"));
+const Landing4 = lazy(() => import("./pages/Landing4"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ProtectedAppShell = lazy(() => import("./components/ProtectedAppShell"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -62,6 +63,7 @@ const App = () => {
                 <Route path="/" element={<Landing />} />
                 <Route path="/landing-2" element={<Landing2 />} />
                 <Route path="/landing-3" element={<Landing3 />} />
+                <Route path="/landing-4" element={<Landing4 />} />
                 <Route path="/auth" element={<AppOverlays><Auth /></AppOverlays>} />
                 <Route path="/dashboard" element={<ProtectedAppShell><Dashboard /></ProtectedAppShell>} />
                 <Route path="/analytics" element={<ProtectedAppShell><Analytics /></ProtectedAppShell>} />

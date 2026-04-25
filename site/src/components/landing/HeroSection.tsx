@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import heroDarkImage from '@/assets/landing/hero-dark-nature.jpg';
+import heroDarkVideo from '@/assets/landing/hero-dark-nature.mp4';
 import heroLightImage from '@/assets/landing/hero-light-nature.jpg';
 import { Button } from '@/components/ui/button';
 
@@ -55,6 +56,18 @@ const HeroSection = ({ onScrollToSection }: HeroSectionProps) => {
             className="absolute inset-0 h-full w-full object-cover object-[center_24%]"
             loading="eager"
           />
+          <video
+            className="absolute inset-0 h-full w-full object-cover object-[center_24%] motion-reduce:hidden"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={heroDarkImage}
+            aria-hidden="true"
+          >
+            <source src={heroDarkVideo} type="video/mp4" />
+          </video>
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/45 to-black/80" />
         </div>
       </div>
