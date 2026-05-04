@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { forwardRef } from 'react';
-import { BookOpenText, Github, ShieldCheck } from 'lucide-react';
 import footerDarkImage from '@/assets/landing/footer-dark.png';
 import footerLightImage from '@/assets/landing/footer-light.png';
 import aeriumLogo from '@/assets/aerium-logo.png';
@@ -16,19 +15,11 @@ const footerColumns = [
     ],
   },
   {
-    title: 'Surveillance',
-    links: [
-      { label: 'Capteurs', to: '/sensors' },
-      { label: 'Alertes', to: '/alerts' },
-      { label: 'Rapports', to: '/reports' },
-    ],
-  },
-  {
     title: 'Ressources',
     links: [
+      { label: 'Documentation', href: 'https://github.com/zylowssh/Aerium/tree/main/docs' },
+      { label: 'Guide utilisateur', href: 'https://github.com/zylowssh/Aerium/blob/main/docs/GUIDE-UTILISATEUR.md' },
       { label: 'Dépôt GitHub', href: 'https://github.com/zylowssh/Aerium' },
-      { label: 'Documentation', href: 'https://github.com/zylowssh/Aerium/tree/main/site-v2/docs' },
-      { label: 'Guide de démarrage', href: 'https://github.com/zylowssh/Aerium/blob/main/site-v2/docs/fr/QUICKSTART.md' },
     ],
   },
 ];
@@ -69,7 +60,7 @@ const Footer = forwardRef<HTMLElement, FooterProps>(({ className = '' }, ref) =>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 lg:gap-10">
+              <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
                 {footerColumns.map((column) => (
                   <div key={column.title}>
                     <h4 className="font-manrope font-semibold text-base sm:text-lg lg:text-[1.4rem] leading-none text-foreground mb-3">{column.title}</h4>

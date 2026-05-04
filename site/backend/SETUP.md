@@ -1,218 +1,47 @@
-# Aerium Flask Backend
+# Setup backend
 
-Air quality monitoring backend built with Flask and SQLite with advanced features including rate limiting, audit logging, and search/filtering.
+Procedure de mise en route du backend Flask Aerium.
 
-## Features
+## 1. Environnement Python
 
-- 🔐 JWT Authentication with role-based access control
-
-- 🛡️ Rate limiting to prevent API abuse
-- 📊 Comprehensive logging with rotating file handler
-- 🔍 Advanced search and filtering for sensors and alerts
-- 📝 Audit trail for all user actions
-- 🔄 WebSocket support for real-time updates
-- ⚡ Data caching for performance
-- ✅ Input validation with Marshmallow schemas
-- 📚 API documentation endpoint
-
-## Quick Start
-
-### 1. Install Dependencies
-
-```bash
-cd backend
+```powershell
+cd site/backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+## 2. Configuration
 
-Create a `.env` file in the backend directory:
-
-```env
-# Alert Thresholds
-ALERT_CO2_THRESHOLD=1200
-ALERT_TEMP_MIN=15
-ALERT_TEMP_MAX=28
-ALERT_HUMIDITY_THRESHOLD=80
-
-# Rate Limiting
-ENABLE_RATE_LIMITING=True
-RATELIMIT_DEFAULT=200 per day;50 per hour;10 per minute
-
-# Logging
-LOG_LEVEL=INFO
-
-FLASK_ENV=development
-FLASK_DEBUG=True
+```powershell
+copy .env.example .env
 ```
 
-### 3. Initialize Database
+Verifier au minimum :
 
-The database will be automatically created when you first run the app.
+- `SECRET_KEY`
+- `JWT_SECRET_KEY`
+- `MISTRAL_API_KEY` (optionnel mais recommande)
 
-### 4. Seed Demo Data (optional)
+## 3. Initialisation des donnees
 
-```bash
+```powershell
 python seed_database.py
 ```
 
-This creates demo accounts:
-- **User Account**: demo@aerium.app / demo123
-- **Admin Account**: admin@aerium.app / admin123
+## 4. Lancement
 
-### 5. Run the Backend
-
-```bash
+```powershell
 python app.py
 ```
 
-Server runs on `http://localhost:5000`
+## 5. Validation
 
-## API Endpoints
+- `http://localhost:5000/api/health`
+- `http://localhost:5000/api/docs`
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login and get JWT token
-- `POST /api/auth/refresh` - Refresh JWT token
+## 6. Outils maintenance
 
-### Sensors
-- `GET /api/sensors` - List sensors with search/filter
-- `GET /api/sensors/<id>` - Get specific sensor
-- `POST /api/sensors` - Create new sensor
-- `PUT /api/sensors/<id>` - Update sensor
-- `DELETE /api/sensors/<id>` - Delete sensor
-
-**Query Parameters:**
-```
-?search=kitchen          # Search by name/location
-&status=en%20ligne      # Filter by status
-&type=CO2               # Filter by type
-&active=true            # Filter by active status
-&sort=updated_at        # Sort by field
-&limit=50               # Limit results
-```
-
-### Readings
-- `GET /api/readings/sensor/<sensor_id>` - Get readings for sensor
-- `POST /api/readings` - Add new reading
-- `GET /api/readings/aggregate` - Get aggregate data
-- `POST /api/readings/external/<sensor_id>` - Add external sensor data
-- `GET /api/readings/latest/<sensor_id>` - Get latest reading
-
-### Alerts
-- `GET /api/alerts` - List alerts
-- `PUT /api/alerts/<id>` - Update alert status
-- `DELETE /api/alerts/<id>` - Delete alert
-- `GET /api/alerts/history/list` - Get alert history
-- `PUT /api/alerts/history/acknowledge/<id>` - Acknowledge alert
-- `GET /api/alerts/history/stats` - Get alert statistics
-
-### Reports
-- `GET /api/reports/daily/<sensor_id>` - Daily report
-- `GET /api/reports/weekly/<sensor_id>` - Weekly report
-- `GET /api/reports/monthly/<sensor_id>` - Monthly report
-- `GET /api/reports/export` - Export data as CSV
-
-### System
-- `GET /api/health` - Health check with feature status
-- `GET /api/docs` - API documentation
-
-## Configuration
-
-See `.env.example` for all available configuration options.
-
-Key features:
-- **Rate Limiting**: Prevent API abuse with configurable request limits
-- **Logging**: Comprehensive logging with rotating file handler
-- **Audit Trail**: All user actions are tracked and can be audited
-
-## Search and Filtering
-
-```bash
-# Search by name
-GET /api/sensors?search=kitchen
-
-# Filter by status
-GET /api/sensors?status=avertissement
-
-# Search and sort
-GET /api/sensors?search=office&sort=updated_at&limit=10
-
-# Complex filter
-GET /api/sensors?search=floor&status=en%20ligne&type=MULTI&active=true&sort=name
-```
-
-## Audit Logging
-
-All user actions are logged:
-
-```python
-from audit_logger import get_user_audit_history, get_resource_audit_history
-
-# Get user's recent actions
-logs = get_user_audit_history(user_id=1, limit=50)
-
-# Get changes to specific sensor
-logs = get_resource_audit_history('SENSOR', sensor_id=5)
-```
-
-## Rate Limiting
-
-Default limits (configurable via environment):
-- **Daily**: 200 requests
-- **Hourly**: 50 requests
-- **Per minute**: 10 requests
-
-When exceeded:
-```json
-{
-    "error": "Rate limit exceeded. Try again later."
-}
-```
-
-## Database Schema
-
-### Core Tables
-- **user**: User accounts with authentication
-- **sensor**: Sensor devices and configuration
-- **sensor_reading**: Time-series sensor data
-- **alert**: Alert configurations
-- **alert_history**: Alert events log
-- **audit_log**: User action audit trail
-
-## Troubleshooting
-
-### Rate limiting too strict
-```env
-ENABLE_RATE_LIMITING=False  # Disable in development
-```
-
-### Database errors
-```bash
-# Reset database
-rm aerium.db
-python app.py  # Creates new database
-python seed_database.py  # Add demo data
-```
-
-## Development
-
-```bash
-python app.py  # Runs with auto-reload
-```
-
-Check `logs/aerium.log` for detailed logging.
-
-## Production Deployment
-
-1. Enable rate limiting and logging
-2. Run with production server:
-
-```bash
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
-
-## Documentation
-
-See [FEATURES.md](../FEATURES.md) for detailed feature documentation.
+- Promouvoir admin : `python make_user_admin.py <email>`
+- Migrer seuils legacy : `python migrate_add_thresholds.py`

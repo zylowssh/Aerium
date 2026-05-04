@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark scroll-smooth"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aerium | Intelligence Atmosphérique</title>
+    
+    <!-- 
+      aesthetic_dna: Deep Spatial Software / Cyber-Ecology
+      ui_paradigm: Asymmetric Dashboard Preview & Scrollytelling Bento
+      palette: Zinc-950 Base, Cyan-400 (Pure Air Accent), Emerald-400 (Safe Status)
+    -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            900: '#18181b',
+                            950: '#09090b',
+                        },
+                        aerium: {
+                            cyan: '#22d3ee', // Cyan 400
+                            emerald: '#34d399', // Emerald 400
+                        }
+                    },
+                    backgroundImage: {
+                        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)',
+                        'glass-gradient-hover': 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                    },
+                    boxShadow: {
+                        'glass-inset': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
+                        'float': '0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base & Resets */
+        body {
+            background-color: #09090b;
+            color: #fafafa;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+
+        /* Typography Tension Utils */
+        .text-huge {
+            font-size: clamp(3rem, 8vw, 6.5rem);
+            line-height: 0.9;
+            letter-spacing: -0.04em;
+        }
+
+        /* Ambient Background Logic - Using User Image as a heavily blurred ambient source */
+        .ambient-texture {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Transforming the provided nature scene into a deep abstract ambient software background */
+            filter: blur(80px) saturate(4) brightness(0.2) hue-rotate(180deg);
+            opacity: 0.8;
+            mix-blend-mode: color-dodge;
+            pointer-events: none;
+            z-index: 0;
+            animation: breathe 20s infinite alternate ease-in-out;
+            transform: scale(1.2);
+        }
+
+        /* Synthetic Grid */
+        .cyber-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: radial-gradient(circle at center, black 20%, transparent 80%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Animations */
+        @keyframes floating {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(1deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float-slow { animation: floating 8s ease-in-out infinite; }
+        .animate-float-fast { animation: floating 5s ease-in-out infinite; }
+        .animate-float-delayed { animation: floating 7s ease-in-out infinite 2s; }
+
+        @keyframes breathe {
+            0% { opacity: 0.6; transform: scale(1.1); }
+            100% { opacity: 0.9; transform: scale(1.3); }
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 30s linear infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .pulse-circle::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px solid #22d3ee;
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes drawLine {
+            to { stroke-dashoffset: 0; }
+        }
+        .path-animated {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 3s cubic-bezier(0.8, 0, 0.2, 1) forwards;
+        }
+
+        /* Spotlight Effect for Bento Cards */
+        .spotlight-card {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+        }
+        .spotlight-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                800px circle at var(--mouse-x) var(--mouse-y), 
+                rgba(255,255,255,0.06),
+                transparent 40%
+            );
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .spotlight-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Utility */
+        .glass-panel {
+            @apply bg-glass-gradient backdrop-blur-xl border border-white/10 shadow-glass-inset rounded-3xl transition-all duration-300;
+        }
+        
+        .interactive-scale {
+            @apply active:scale-[0.98] transition-transform duration-200 cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Sequential reveal */
+        .reveal-item {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-item.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-aerium-cyan/30 selection:text-white">
+
+    <!-- Ambient Setup combining Prompt Image DNA -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-zinc-950">
+        <!-- Using the original image as a heavily distorted data gradient -->
+        <img src="https://cdn.aidesigner.ai/user-assets/b1085761bbffa26d/1777324028308-image.png" alt="Ambient Flow" class="ambient-texture">
+        <div class="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/80 to-zinc-950"></div>
+        <div class="cyber-grid"></div>
+    </div>
+
+    <!-- Navigation - Mac OS Dynamic Island Style -->
+    <header class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-4xl interactive-scale">
+        <div class="glass-panel flex items-center justify-between px-2 py-2 w-full !rounded-full">
+            <div class="flex items-center gap-2 pl-4">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-aerium-cyan to-blue-600 flex items-center justify-center relative pulse-circle">
+                    <i class="ph-fill ph-wind text-white text-lg relative z-10"></i>
+                </div>
+                <span class="font-bold tracking-tight text-white/90">Aerium</span>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
+                <a href="#" class="hover:text-white transition-colors" rel="nofollow">Plateforme</a>
+                <a href="#" class="hover:text-white transition-colors" rel="nofollow">Capteurs</a>
+                <a href="#" class="hover:text-white transition-colors" rel="nofollow">Cas d'usage</a>
+                <a href="#" class="hover:text-white transition-colors" rel="nofollow">Tarifs</a>
+            </nav>
+
+            <div class="flex items-center gap-2 pr-2">
+                <button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors hidden md:flex text-zinc-400 hover:text-white">
+                    <i class="ph ph-sun text-lg"></i>
+                </button>
+                <a href="#" class="bg-white text-black px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-zinc-200 transition-colors flex items-center gap-2" rel="nofollow">
+                    <i class="ph ph-chart-bar text-lg"></i>
+                    Tableau de bord
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Macro Architecture: Main Wrapper -->
+    <main class="relative z-10 w-full flex flex-col items-center">
+
+        <!-- Hero Section -->
+        <section class="relative w-full min-h-[100dvh] flex items-center justify-center pt-32 pb-20 px-4 md:px-8 max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
+            
+            <!-- Left: Typography & Action -->
+            <div class="lg:col-span-6 flex flex-col justify-center z-20 space-y-8 reveal-item is-visible">
+                <h1 class="text-huge font-bold text-white">
+                    Respirez l'esprit <span class="text-transparent bg-clip-text bg-gradient-to-r from-aerium-cyan to-blue-500">tranquille.</span><br>
+                    Agissez avec certitude.
+                </h1>
+                
+                <p class="text-lg md:text-xl text-zinc-400 font-light max-w-xl leading-relaxed">
+                    Surveillez la qualité de l'air en temps réel, anticipez les risques grâce à l'IA prédictive et passez à l'action en quelques secondes depuis un tableau de bord opérationnel unique.
+                </p>
+
+                <div class="flex flex-col sm:flex-row items-center gap-4 pt-4">
+                    <a class="w-full sm:w-auto px-8 py-4 bg-white text-black rounded-full font-semibold hover:scale-[0.98] transition-transform flex items-center justify-center gap-2" href="/aerium-home-page">
+                        Ouvrir le tableau de bord
+                        <i class="ph-bold ph-arrow-right"></i>
+                    </a>
+                    <button class="w-full sm:w-auto px-8 py-4 glass-panel rounded-full font-semibold hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-white">
+                        Découvrir les capteurs
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Meso-Architecture / Dashboard Spatial Preview -->
+            <div class="lg:col-span-6 relative h-[600px] hidden lg:block perspective-1000">
+                <!-- Floating Widget 1: Main AQI Status -->
+                <div class="absolute top-[10%] right-[10%] w-[380px] glass-panel p-6 shadow-float animate-float-slow z-30 transform hover:scale-[1.02] transition-transform">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-zinc-800/80 flex items-center justify-center border border-white/5">
+                                <i class="ph-fill ph-buildings text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-white">Campus Principal</h3>
+                                <p class="text-xs text-zinc-400">Zone Alpha - Paris</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 bg-aerium-emerald/20 text-aerium-emerald text-xs font-mono rounded border border-aerium-emerald/30">En Ligne</span>
+                    </div>
+                    
+                    <div class="flex items-end gap-6 mb-8 border-b border-white/5 pb-6">
+                        <div class="relative w-24 h-24 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="#27272a" stroke-width="8" stroke-linecap="round"></circle>
+                                <circle cx="50" cy="50" r="40" fill="none" class="path-animated" stroke="#34d399" stroke-width="8" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="60"></circle> <!-- 251.2 is circ -->
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span class="text-3xl font-bold text-white tracking-tighter">42</span>
+                                <span class="text-[10px] text-zinc-400 font-mono">IQA</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 space-y-3">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-zinc-400">PM2.5</span>
+                                <span class="font-mono text-white">12 µg/m³</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-aerium-emerald w-1/3 rounded-full"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-zinc-400">CO2</span>
+                                <span class="font-mono text-white">410 ppm</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-aerium-cyan w-[40%] rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-zinc-500 font-mono flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-aerium-emerald animate-pulse"></span>
+                        Qualité de l'air optimale. Aucune action requise.
+                    </div>
+                </div>
+
+                <!-- Floating Widget 2: Chart -->
+                <div class="absolute top-[50%] left-[-5%] w-[320px] glass-panel p-5 shadow-float animate-float-fast z-20 opacity-90 backdrop-blur-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm font-medium text-white"><i class="ph ph-trend-up mr-2 text-aerium-cyan"></i>Tendance COV</span>
+                        <span class="text-xs text-zinc-400 font-mono">Dernières 24h</span>
+                    </div>
+                    <div class="h-24 flex items-end justify-between gap-1 w-full relative">
+                        <!-- CSS Bar Chart -->
+                        <div class="w-full bg-aerium-cyan/50 hover:bg-aerium-cyan transition-colors rounded-t-sm h-[30%]"></div>
+                        <div class="w-full bg-aerium-cyan/50 hover:bg-aerium-cyan transition-colors rounded-t-sm h-[45%]"></div>
+                        <div class="w-full bg-aerium-cyan/50 hover:bg-aerium-cyan transition-colors rounded-t-sm h-[35%]"></div>
+                        <div class="w-full bg-aerium-cyan/50 hover:bg-aerium-cyan transition-colors rounded-t-sm h-[60%]"></div>
+                        <div class="w-full bg-aerium-emerald hover:bg-aerium-emerald transition-colors rounded-t-sm h-[80%] relative group">
+                            <!-- Tooltip mock -->
+                            <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">Pic: 14:00</div>
+                        </div>
+                        <div class="w-full bg-aerium-cyan/50 hover:bg-aerium-cyan transition-colors rounded-t-sm h-[50%]"></div>
+                        <div class="w-full bg-aerium-cyan/50 hover:bg-aerium-cyan transition-colors rounded-t-sm h-[40%]"></div>
+                    </div>
+                </div>
+
+                <!-- Floating Widget 3: Alert Logic -->
+                <div class="absolute bottom-[5%] right-[25%] w-[280px] bg-zinc-900 border border-red-500/30 p-4 rounded-2xl shadow-float animate-float-delayed z-40 transform scale-90 backdrop-blur-2xl">
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                            <i class="ph-fill ph-warning-circle text-red-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-white mb-1">Alerte Ventilation</h4>
+                            <p class="text-xs text-zinc-400 leading-relaxed mb-3">Taux C02 élevé (1200ppm) détecté Zone B.</p>
+                            <button class="w-full py-1.5 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-xs font-semibold text-white">
+                                Forcer l'extraction VMC
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Marquee / Live Data Band -->
+        <div class="w-full border-y border-white/5 bg-zinc-900/50 backdrop-blur-sm overflow-hidden py-3 reveal-item">
+            <div class="flex whitespace-nowrap animate-marquee items-center text-sm font-mono tracking-wider text-zinc-400 gap-16">
+                <!-- Group 1 -->
+                <span class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-aerium-emerald"></div> PARIS: IQA 42 (BON)</span>
+                <span class="flex items-center gap-2"><i class="ph ph-activity text-aerium-cyan"></i> LATENCE: 12ms</span>
+                <span class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-yellow-500"></div> LONDRES: IQA 85 (MOYEN)</span>
+                <span class="flex items-center gap-2"><i class="ph ph-database"></i> CAPTEURS ACTIFS: 1,492</span>
+                <span class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-red-500"></div> BERLIN: PM2.5 ALERTE</span>
+                <span class="flex items-center gap-2"><i class="ph ph-cpu text-purple-400"></i> IA PREDICTIVE: ONLINE</span>
+                <!-- Group 2 (Duplicate for seamless loop) -->
+                <span class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-aerium-emerald"></div> PARIS: IQA 42 (BON)</span>
+                <span class="flex items-center gap-2"><i class="ph ph-activity text-aerium-cyan"></i> LATENCE: 12ms</span>
+                <span class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-yellow-500"></div> LONDRES: IQA 85 (MOYEN)</span>
+                <span class="flex items-center gap-2"><i class="ph ph-database"></i> CAPTEURS ACTIFS: 1,492</span>
+                <span class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-red-500"></div> BERLIN: PM2.5 ALERTE</span>
+                <span class="flex items-center gap-2"><i class="ph ph-cpu text-purple-400"></i> IA PREDICTIVE: ONLINE</span>
+            </div>
+        </div>
+
+        <!-- Bento Grid: Features Section -->
+        <section class="w-full max-w-[1400px] mx-auto py-32 px-4 md:px-8">
+            <div class="mb-16 text-center md:text-left reveal-item">
+                <h2 class="text-4xl md:text-5xl font-bold tracking-tighter text-white mb-4">L'écosystème de <br><span class="text-zinc-500">données parfait.</span></h2>
+                <p class="text-zinc-400 max-w-2xl text-lg">Oubliez les graphiques illisibles. Aerium transforme vos capteurs en actions immédiates grâce à une interface structurée pour la prise de décision.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-4 lg:gap-6 auto-rows-fr" id="bento-grid">
+                
+                <!-- Card 1: Main Graph (Spans 2 cols) -->
+                <div class="spotlight-card md:col-span-2 glass-panel p-8 flex flex-col justify-between group reveal-item">
+                    <div class="flex justify-between items-start mb-8 z-10 w-full">
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-1">Analyse Haute Fréquence</h3>
+                            <p class="text-sm text-zinc-400">Rafraîchissement milliseconde par milliseconde.</p>
+                        </div>
+                        <div class="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-mono text-white">Live</div>
+                    </div>
+                    
+                    <!-- SVG Mesh area mock -->
+                    <div class="relative w-full h-48 mt-auto rounded-xl overflow-hidden bg-black/20 border border-white/5 p-4 flex items-end gap-1">
+                        <!-- Abstract Wave / Area Chart -->
+                        <div class="absolute inset-x-0 bottom-0 h-3/4 opacity-20 bg-gradient-to-t from-aerium-cyan to-transparent pointer-events-none" style="clip-path: polygon(0 100%, 0 60%, 20% 50%, 40% 70%, 60% 40%, 80% 80%, 100% 30%, 100% 100%);"></div>
+                        <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                            <path d="M0,60 Q10,40 20,50 T40,70 T60,40 T80,80 T100,30" fill="none" stroke="#22d3ee" stroke-width="0.5" class="path-animated" style="animation-delay: 0.5s; stroke-dasharray: 200; stroke-dashoffset: 200;"></path>
+                        </svg>
+                        
+                        <!-- Mini data points over chart -->
+                        <div class="absolute top-4 right-4 bg-zinc-900 border border-white/10 p-2 rounded text-xs font-mono">
+                            <span class="text-zinc-500">Max C02:</span> <span class="text-white">840ppm</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Alerts (1 col) -->
+                <div class="spotlight-card glass-panel p-8 flex flex-col relative overflow-hidden group reveal-item">
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-colors"></div>
+                    <h3 class="text-xl font-bold text-white mb-1 z-10">Règles &amp; Automations</h3>
+                    <p class="text-sm text-zinc-400 mb-8 z-10">Déclenchez vos systèmes CVC automatiquement.</p>
+                    
+                    <div class="mt-auto space-y-3 z-10">
+                        <div class="bg-black/40 border border-white/5 p-3 rounded-xl flex items-center justify-between">
+                            <span class="text-xs text-white">Si IQA &gt; 100</span>
+                            <i class="ph ph-arrow-right text-zinc-500"></i>
+                            <span class="text-xs text-aerium-cyan bg-aerium-cyan/10 px-2 py-1 rounded">Activer Purificateur V2</span>
+                        </div>
+                        <div class="bg-black/40 border border-white/5 p-3 rounded-xl flex items-center justify-between opacity-50">
+                            <span class="text-xs text-white">Si TEMP &gt; 26°</span>
+                            <i class="ph ph-arrow-right text-zinc-500"></i>
+                            <span class="text-xs text-white bg-white/10 px-2 py-1 rounded">Webhook API</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: AI Prediction (1 col) -->
+                <div class="spotlight-card glass-panel p-8 flex flex-col relative overflow-hidden group reveal-item">
+                    <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-colors"></div>
+                    <i class="ph-duotone ph-brain text-4xl text-purple-400 mb-4 z-10"></i>
+                    <h3 class="text-xl font-bold text-white mb-1 z-10">Projection IA</h3>
+                    <p class="text-sm text-zinc-400 z-10">Anticipation des pics de pollution à 48h.</p>
+                    
+                    <div class="mt-auto z-10 pt-8">
+                        <div class="w-full bg-zinc-900 border border-white/5 rounded-lg p-4 font-mono text-[10px] text-zinc-500 leading-relaxed">
+                            <span class="text-purple-400">&gt; prediction_model</span> --run<br>
+                            Analyzing historic vectors... [OK]<br>
+                            Weather API linked... [OK]<br>
+                            <span class="text-white">Alert probability T+12h: 84%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Global Map/Network (Spans 2 cols) -->
+                <div class="spotlight-card md:col-span-2 glass-panel p-0 flex flex-col md:flex-row items-center overflow-hidden group reveal-item">
+                    <div class="p-8 md:w-1/2 flex flex-col justify-center h-full z-10">
+                        <h3 class="text-xl font-bold text-white mb-2">Cartographie Réseau</h3>
+                        <p class="text-sm text-zinc-400 mb-6">Supervisez l'ensemble de votre parc immobilier depuis une vue satellite unifiée. Identifiez les anomalies structurelles en un coup d'œil.</p>
+                        <button class="text-sm font-semibold text-white flex items-center gap-2 group-hover:translate-x-2 transition-transform w-fit">
+                            Explorer la carte <i class="ph ph-arrow-right text-aerium-cyan"></i>
+                        </button>
+                    </div>
+                    <!-- Abstract Map Area -->
+                    <div class="md:w-1/2 w-full h-48 md:h-full bg-zinc-900 relative border-l border-white/5 hidden md:block">
+                        <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px;"></div>
+                        <!-- UI Node Pins -->
+                        <div class="absolute top-[30%] left-[20%] w-4 h-4 bg-aerium-emerald rounded-full shadow-[0_0_15px_rgba(52,211,153,0.6)] pulse-circle"></div>
+                        <div class="absolute top-[60%] left-[50%] w-4 h-4 bg-aerium-emerald rounded-full shadow-[0_0_15px_rgba(52,211,153,0.6)] pulse-circle" style="animation-delay: 1s"></div>
+                        <div class="absolute top-[40%] right-[30%] w-4 h-4 bg-yellow-500 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.6)] pulse-circle" style="animation-delay: 0.5s"></div>
+                        
+                        <!-- Connecting Line mock -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 20% 30% L 50% 60% L 70% 40%" stroke="rgba(255,255,255,0.1)" stroke-width="1" fill="none" stroke-dasharray="4 4"></path>
+                        </svg>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Technical Integration Section (Asymmetric Brutalism) -->
+        <section class="w-full border-t border-white/5 bg-zinc-950 py-32">
+            <div class="max-w-[1400px] mx-auto px-4 md:px-8 grid grid-cols-1 lg:grid-cols-12 gap-16">
+                
+                <!-- Sticky Left Text -->
+                <div class="lg:col-span-5 relative">
+                    <div class="sticky top-40 space-y-8 reveal-item">
+                        <div class="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center">
+                            <i class="ph-duotone ph-plugs-connected text-2xl text-white"></i>
+                        </div>
+                        <h2 class="text-4xl md:text-5xl font-bold tracking-tighter text-white">Agnostique par design.</h2>
+                        <p class="text-zinc-400 text-lg leading-relaxed">
+                            Aerium ne vous enferme pas dans du matériel propriétaire. Notre API Edge se connecte à n'importe quel capteur de l'industrie (LoRaWAN, MQTT, HTTP) en quelques secondes.
+                        </p>
+                        
+                        <div class="pt-8 flex flex-col gap-4">
+                            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                                <span class="text-white font-medium">Latence d'ingestion</span>
+                                <span class="font-mono text-sm text-aerium-cyan">&lt; 50ms</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                                <span class="text-white font-medium">Rétention des données</span>
+                                <span class="font-mono text-sm text-zinc-400">Illimitée (SLA 99.9%)</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                                <span class="text-white font-medium">Protocoles natifs</span>
+                                <span class="font-mono text-sm text-zinc-400">MQTT, CoAP, Webhooks</span>
+                            </div>
+                        </div>
+
+                        <a href="#" class="inline-flex items-center gap-2 text-aerium-cyan font-semibold hover:text-white transition-colors mt-4" rel="nofollow">
+                            Lire la documentation API <i class="ph-bold ph-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Side Scrolling Code/Visuals -->
+                <div class="lg:col-span-7 space-y-6 pt-16">
+                    <div class="glass-panel p-2 rounded-2xl reveal-item overflow-hidden">
+                        <!-- Mock Terminal Editor -->
+                        <div class="bg-[#0d0d0f] rounded-xl w-full h-[400px] border border-white/5 flex flex-col">
+                            <div class="h-10 border-b border-white/5 flex items-center px-4 gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                                <div class="ml-4 text-xs font-mono text-zinc-500">aerium-client.ts</div>
+                            </div>
+                            <div class="p-6 font-mono text-sm text-zinc-300 overflow-hidden relative">
+                                <pre><code><span class="text-purple-400">import</span> { AeriumClient } <span class="text-purple-400">from</span> '@aerium/sdk';
+
+<span class="text-zinc-500">// 1. Initialize client</span>
+<span class="text-aerium-cyan">const</span> client = <span class="text-purple-400">new</span> AeriumClient(process.env.<span class="text-yellow-200">AERIUM_KEY</span>);
+
+<span class="text-zinc-500">// 2. Connect incoming stream</span>
+client.on(<span class="text-green-300">'sensor:data'</span>, <span class="text-purple-400">async</span> (payload) =&gt; {
+    <span class="text-aerium-cyan">const</span> { co2, voc, temp } = payload.metrics;
+    
+    <span class="text-purple-400">if</span> (co2 &gt; <span class="text-orange-400">1000</span>) {
+        <span class="text-aerium-cyan">await</span> client.triggerAlert({
+            <span class="text-yellow-200">severity</span>: <span class="text-green-300">'CRITICAL'</span>,
+            <span class="text-yellow-200">zoneId</span>: payload.zone,
+            <span class="text-yellow-200">action</span>: <span class="text-green-300">'HVAC_BOOST'</span>
+        });
+    }
+});</code></pre>
+                                <div class="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-[#0d0d0f] to-transparent"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Final CTA (Massive Typography) -->
+        <section class="w-full py-40 relative flex items-center justify-center overflow-hidden mix-blend-screen bg-zinc-950">
+            <!-- Background Glow -->
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-aerium-cyan/10 via-zinc-950/0 to-zinc-950 pointer-events-none"></div>
+            
+            <div class="relative z-10 text-center px-4 reveal-item max-w-4xl mx-auto flex flex-col items-center">
+                <h2 class="text-5xl md:text-7xl font-bold tracking-tighter text-white mb-6">
+                    L'air de rien,<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 to-zinc-300">tout change.</span>
+                </h2>
+                <p class="text-zinc-400 text-lg md:text-xl mb-10 max-w-xl">
+                    Rejoignez les innovateurs qui sécurisent leurs environnements avec l'intelligence atmosphérique d'Aerium.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+                    <button class="w-full sm:w-auto px-10 py-5 bg-white text-black rounded-full font-bold text-lg hover:scale-[0.98] transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                        Démarrez gratuitement
+                    </button>
+                    <button class="w-full sm:w-auto px-10 py-5 glass-panel rounded-full font-bold text-lg hover:bg-white/10 transition-colors text-white">
+                        Contacter les ventes
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dense Footer -->
+        <footer class="w-full border-t border-white/5 bg-zinc-950 pt-20 pb-10 px-4 md:px-8">
+            <div class="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-5 gap-8 mb-16">
+                
+                <div class="col-span-2">
+                    <div class="flex items-center gap-2 mb-6">
+                        <div class="w-6 h-6 rounded-full bg-aerium-cyan flex items-center justify-center">
+                            <i class="ph-fill ph-wind text-black text-xs"></i>
+                        </div>
+                        <span class="font-bold text-white text-lg tracking-tight">Aerium</span>
+                    </div>
+                    <p class="text-zinc-500 text-sm max-w-xs mb-6">Intelligence atmosphérique et tableaux de bord opérationnels pour les entreprises modernes.</p>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors" rel="nofollow"><i class="ph-fill ph-twitter-logo"></i></a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors" rel="nofollow"><i class="ph-fill ph-linkedin-logo"></i></a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors" rel="nofollow"><i class="ph-fill ph-github-logo"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Produit</h4>
+                    <ul class="space-y-3 text-sm text-zinc-500 cursor-pointer">
+                        <li class="hover:text-white transition-colors">Plateforme Dashboard</li>
+                        <li class="hover:text-white transition-colors">API &amp; Webhooks</li>
+                        <li class="hover:text-white transition-colors">Compatibilité Capteurs</li>
+                        <li class="hover:text-white transition-colors flex items-center gap-2">Moteur IA <span class="text-[10px] bg-aerium-cyan/20 text-aerium-cyan px-1.5 py-0.5 rounded">Nouveau</span></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Société</h4>
+                    <ul class="space-y-3 text-sm text-zinc-500 cursor-pointer">
+                        <li class="hover:text-white transition-colors">À propos</li>
+                        <li class="hover:text-white transition-colors">Clients</li>
+                        <li class="hover:text-white transition-colors">Carrières</li>
+                        <li class="hover:text-white transition-colors">Blog</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Légal</h4>
+                    <ul class="space-y-3 text-sm text-zinc-500 cursor-pointer">
+                        <li class="hover:text-white transition-colors">Confidentialité</li>
+                        <li class="hover:text-white transition-colors">CGV</li>
+                        <li class="hover:text-white transition-colors">Status système</li>
+                    </ul>
+                </div>
+
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- Vanilla JS for Micro-Interactions (Framer Motion emulation) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Spotlight Effect for Bento Cards
+            const cards = document.querySelectorAll('.spotlight-card');
+            
+            const handleMouseMove = (e) => {
+                const { currentTarget: target } = e;
+                const rect = target.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                target.style.setProperty("--mouse-x", `${x}px`);
+                target.style.setProperty("--mouse-y", `${y}px`);
+            };
+
+            for(const card of cards) {
+                card.addEventListener("mousemove", handleMouseMove);
+            }
+
+            // 2. Intersection Observer for Scroll Reveals (Staggered)
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Add slight delay based on document position to create stagger effect naturally
+                        setTimeout(() => {
+                            entry.target.classList.add('is-visible');
+                        }, 100);
+                        observer.unobserve(entry.target); // Only animate once
+                    }
+                });
+            }, observerOptions);
+
+            const revealElements = document.querySelectorAll('.reveal-item');
+            revealElements.forEach(el => observer.observe(el));
+            
+            // Re-trigger hero animation explicitly after load to ensure it pops
+            setTimeout(() => {
+                const heroItems = document.querySelectorAll('.hero-content .reveal-item');
+                heroItems.forEach((el, index) => {
+                    setTimeout(() => el.classList.add('is-visible'), index * 100);
+                });
+            }, 100);
+        });
+    </script>
+
+</body></html>

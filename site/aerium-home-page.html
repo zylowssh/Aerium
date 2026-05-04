@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark scroll-smooth"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aerium | Respirez l'esprit tranquille</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        background: '#09090b',
+                        surface: '#18181b', // zinc-900 equivalent for softer contrast
+                        primary: '#22d3ee', // cyan-400
+                        secondary: '#34d399', // emerald-400
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'reveal-up': 'revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'image-pan': 'imagePan 30s linear infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        revealUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        imagePan: {
+                            '0%': { transform: 'scale(1.05) translate(0, 0)' },
+                            '100%': { transform: 'scale(1.1) translate(-1%, 2%)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom Utilities ensuring high-end feel */
+        body {
+            background-color: #09090b;
+            color: #fafafa;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Beautiful native scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+
+        /* Premium Glass effect for cards */
+        .glass-soft {
+            background: rgba(24, 24, 27, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* Hero Image Masking - Crucial for blending the image into the dark page */
+        .hero-mask {
+            mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+        }
+
+        /* Staggered animation delays for sequential revealing */
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-400 { animation-delay: 400ms; }
+    </style>
+</head>
+<body class="selection:bg-primary/30 selection:text-white flex flex-col relative">
+
+    <!-- NAVIGATION (Dynamic Island Style - Softened) -->
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[800px]">
+        <div class="glass-soft rounded-full px-2 py-2 flex items-center justify-between shadow-2xl shadow-black/50 transition-all duration-300 hover:bg-surface/60">
+            <!-- Logo area -->
+            <div class="flex items-center gap-3 pl-4">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-blue-500 flex items-center justify-center p-1.5 shadow-[0_0_15px_rgba(34,211,238,0.4)]">
+                    <svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-white" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                        <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                        <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                    </svg>
+                </div>
+                <span class="font-semibold text-sm tracking-wide text-zinc-100">Aerium</span>
+            </div>
+
+            <!-- Links (Hidden on mobile) -->
+            <div class="hidden md:flex items-center gap-1 px-6">
+                <a href="#philosophie" class="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-200 rounded-full hover:bg-white/5" rel="nofollow">Philosophie</a>
+                <a href="#bienfaits" class="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-200 rounded-full hover:bg-white/5" rel="nofollow">Bienfaits</a>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 pr-1">
+                <button class="w-10 h-10 flex items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+                    <i class="ph ph-moon text-xl"></i>
+                </button>
+                <a href="#" class="px-5 py-2.5 text-sm font-medium bg-white text-zinc-900 rounded-full hover:scale-[0.98] transition-transform duration-200 flex items-center gap-2 shadow-lg shadow-white/10" rel="nofollow">
+                    <i class="ph ph-leaf"></i>
+                    <span>L'Expérience</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="relative min-h-[100dvh] flex flex-col justify-center items-center pt-20">
+        <!-- Background Image Container -->
+        <div class="absolute inset-0 z-0 overflow-hidden bg-background">
+            <!-- The User's Image -->
+            <img src="https://cdn.aidesigner.ai/user-assets/b1085761bbffa26d/1777324532229-hero-dark-nature.jpg" alt="Paysage nocturne paisible avec des collines fleuries et une lune brillante" class="absolute inset-0 w-full h-full object-cover animate-image-pan hero-mask opacity-90">
+            <!-- Overlay to ensure bottom blends perfectly into #09090b body background -->
+            <div class="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent"></div>
+            <!-- Overlay to darken the top slightly for Nav/Text readability -->
+            <div class="absolute inset-0 bg-black/20"></div>
+        </div>
+
+        <!-- Hero Content -->
+        <div class="relative z-10 w-full max-w-5xl mx-auto px-4 flex flex-col items-center text-center mt-[-10vh]">
+            
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-black/20 backdrop-blur-md mb-8 animate-reveal-up opacity-0">
+                <span class="w-2 h-2 rounded-full bg-secondary animate-pulse-slow"></span>
+                <span class="text-xs font-medium tracking-widest text-zinc-300 uppercase">Respiration Consciente</span>
+            </div>
+
+            <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-6 text-white text-balance drop-shadow-2xl animate-reveal-up delay-100 opacity-0">
+                Respirez l'esprit <br class="hidden md:block"><span class="text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-400">tranquille.</span>
+            </h1>
+            
+            <p class="text-lg md:text-xl text-zinc-300/90 max-w-2xl mx-auto leading-relaxed mb-10 font-light text-balance animate-reveal-up delay-200 opacity-0">
+                L'air invisible qui vous entoure façonne votre clarté, votre sommeil et votre énergie. Retrouvez un environnement pur, naturellement, sans complexité.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-reveal-up delay-300 opacity-0 relative z-20">
+                <button class="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-zinc-950 font-semibold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 hover:scale-[0.98] duration-200 origin-center cursor-pointer">
+                    Découvrir l'harmonie
+                </button>
+                <a class="w-full sm:w-auto px-8 py-4 rounded-full glass-soft text-white font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2 cursor-pointer" href="/air-quality-intelligence">
+                    <i class="ph ph-play-circle text-xl"></i>
+                    Voir comment ça marche
+                </a>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 opacity-50 animate-bounce cursor-pointer" onclick="document.getElementById('philosophie').scrollIntoView({behavior: 'smooth'})">
+            <span class="text-xs text-zinc-400 uppercase tracking-widest">Explorez</span>
+            <i class="ph ph-arrow-down text-zinc-400"></i>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT (Replacing the dense tech with organic, airy layout) -->
+    <main class="relative z-10 w-full max-w-7xl mx-auto px-4 py-24 sm:py-32 flex flex-col gap-32">
+
+        <!-- SECTION: The Philosophy (Text Heavy, Minimalist) -->
+        <section id="philosophie" class="flex flex-col md:flex-row gap-12 md:gap-24 items-center">
+            <div class="w-full md:w-1/2 space-y-6">
+                <h2 class="text-3xl md:text-5xl font-semibold tracking-tight leading-tight text-balance">
+                    Nous avons oublié <br><span class="text-zinc-500">l'importance de l'air.</span>
+                </h2>
+                <div class="w-12 h-1 bg-gradient-to-r from-primary to-transparent rounded-full"></div>
+                <p class="text-zinc-400 text-lg leading-relaxed">
+                    Nous passons 90% de notre temps à l'intérieur. Pourtant, l'air que nous y respirons est souvent négligé. Aerium traduit l'invisible en sensations douces, vous invitant à prendre soin de votre espace comme vous prenez soin de vous-même.
+                </p>
+                <p class="text-zinc-400 text-lg leading-relaxed">
+                    Pas de graphiques intimidants. Pas d'alertes stressantes. Juste une présence sereine qui veille sur vous.
+                </p>
+            </div>
+            <div class="w-full md:w-1/2 relative">
+                <!-- Abstract visual representation replacing hard data dashboard -->
+                <div class="aspect-square w-full max-w-md mx-auto relative rounded-[3rem] overflow-hidden glass-soft flex items-center justify-center group">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-700"></div>
+                    
+                    <!-- Gentle concentric circles indicating purity -->
+                    <div class="relative w-64 h-64 flex items-center justify-center">
+                        <div class="absolute w-full h-full border border-primary/20 rounded-full animate-[spin_20s_linear_infinite]"></div>
+                        <div class="absolute w-3/4 h-3/4 border border-secondary/20 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
+                        <div class="absolute w-1/2 h-1/2 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-full blur-xl animate-pulse-slow"></div>
+                        <div class="z-10 text-center">
+                            <span class="block text-4xl font-light text-white">Pur</span>
+                            <span class="block text-sm text-zinc-400 mt-1">Qualité de l'air</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: Softened Bento Grid (Focus on Well-being) -->
+        <section id="bienfaits" class="space-y-12">
+            <div class="text-center space-y-4 max-w-2xl mx-auto">
+                <h2 class="text-3xl md:text-5xl font-semibold tracking-tight">Vivre au rythme de la nature.</h2>
+                <p class="text-zinc-400 text-lg">Nos sens humains réagissent subtilement à la qualité de notre environnement.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="glass-soft rounded-[2.5rem] p-8 flex flex-col h-[300px] hover:bg-surface/50 transition-colors duration-500 group relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors duration-500"></div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+                        <i class="ph ph-moon-stars text-2xl text-zinc-300"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-3">Sommeil Profond</h3>
+                    <p class="text-zinc-400 flex-grow">Un taux de CO2 équilibré pendant la nuit réduit les réveils nocturnes et favorise une récupération optimale.</p>
+                </div>
+
+                <!-- Card 2 (Spans 2 columns on tablet/desktop) -->
+                <div class="glass-soft rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center gap-8 h-auto md:h-[300px] md:col-span-2 hover:bg-surface/50 transition-colors duration-500 overflow-hidden relative group">
+                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-secondary/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000 ease-out"></div>
+                    
+                    <div class="flex-1 space-y-4 relative z-10">
+                        <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-2">
+                            <i class="ph ph-wind text-2xl text-zinc-300"></i>
+                        </div>
+                        <h3 class="text-2xl font-semibold">Le Souffle Invisible</h3>
+                        <p class="text-zinc-400">Nous détectons les particules fines (PM2.5) et les composés organiques (COV) issus du quotidien, pour que vous sachiez exactement quand d'ouvrir une fenêtre.</p>
+                    </div>
+                    
+                    <div class="w-full md:w-1/3 flex justify-center relative z-10">
+                        <!-- Soft abstract graphic -->
+                        <div class="flex items-end gap-2 h-32">
+                            <div class="w-3 rounded-full bg-zinc-800 h-1/3"></div>
+                            <div class="w-3 rounded-full bg-zinc-700 h-2/3"></div>
+                            <div class="w-3 rounded-full bg-secondary/60 h-full animate-[pulse_3s_ease-in-out_infinite]"></div>
+                            <div class="w-3 rounded-full bg-zinc-700 h-1/2"></div>
+                            <div class="w-3 rounded-full bg-zinc-800 h-1/4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="glass-soft rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center justify-between h-auto md:h-[300px] md:col-span-3 hover:bg-surface/50 transition-colors duration-500 bg-gradient-to-r from-transparent to-primary/5">
+                    <div class="max-w-xl space-y-6">
+                        <h3 class="text-3xl font-semibold">L'application s'efface.</h3>
+                        <p class="text-zinc-400 text-lg">Aerium est conçu pour être silencieux. Une lueur subtile sur l'appareil principal ou une notification douce uniquement lorsque l'air nécessite votre attention. Retournez à ce qui compte.</p>
+                        <button class="px-6 py-2.5 rounded-full border border-white/20 text-white font-medium hover:bg-white hover:text-black transition-all">Découvrir le matériel</button>
+                    </div>
+                    
+                    <!-- Abstract representation of the physical device -->
+                    <div class="mt-8 md:mt-0 w-48 h-64 rounded-full border-4 border-zinc-900 bg-zinc-950 flex flex-col items-center justify-end pb-8 relative shadow-2xl overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/5 before:to-transparent">
+                        <div class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-black animate-float">
+                            <div class="w-8 h-8 rounded-full bg-primary/20 blur-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-20 border-t border-white/5 bg-background relative z-10">
+        <div class="max-w-7xl mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-2 opacity-50">
+                <i class="ph ph-wind text-xl"></i>
+                <span class="font-medium text-sm tracking-widest uppercase">Aerium</span>
+            </div>
+            <div class="text-zinc-500 text-sm">
+                © 2024 Aerium. L'air, par nature.
+            </div>
+            <div class="flex gap-4">
+                <a href="#" class="text-zinc-500 hover:text-white transition-colors" rel="nofollow"><i class="ph ph-instagram-logo leading-none text-xl"></i></a>
+                <a href="#" class="text-zinc-500 hover:text-white transition-colors" rel="nofollow"><i class="ph ph-twitter-logo leading-none text-xl"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Minimal JS to handle the delayed reveals on load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Re-trigger animations if needed, though CSS animations with delays handle the initial load beautifully.
+            // Using a simple observer to trigger animations on scroll for main content sections
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('opacity-100');
+                        entry.target.classList.remove('opacity-0', 'translate-y-8');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            // Select sections to animate in
+            document.querySelectorAll('main section').forEach((el) => {
+                el.classList.add('transition-all', 'duration-1000', 'opacity-0', 'translate-y-8');
+                observer.observe(el);
+            });
+        });
+    </script>
+
+</body></html>
