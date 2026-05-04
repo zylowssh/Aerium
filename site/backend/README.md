@@ -24,7 +24,7 @@ Use `backend/.env.example` as template.
 
 Important:
 - Put secrets only in `backend/.env`.
-- Keep `site-v2/.env` for frontend `VITE_*` variables only.
+- Keep `site/.env` for frontend `VITE_*` variables only.
 
 3. **Initialize the database:**
 The database will be automatically created when you first run the app.

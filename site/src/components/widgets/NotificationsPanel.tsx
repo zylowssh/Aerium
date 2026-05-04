@@ -1,12 +1,18 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, AlertTriangle, Info, CheckCircle, Trash2, Check } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, AlertTriangle, Info, CheckCircle, Trash2, Check, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { apiClient } from '@/lib/apiClient';
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { formatDistanceToNow, isValid } from 'date-fns';
+import { parseBackendDate } from '@/lib/dateTime';
 
 interface NotificationsPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUnreadCountChange?: (count: number) => void;
 }
 
 interface Notification {
@@ -18,40 +24,14 @@ interface Notification {
   read: boolean;
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'CO₂ Élevé Détecté',
-    message: 'Le capteur Bureau A a détecté un niveau de CO₂ de 1200 ppm.',
-    type: 'warning',
-    time: 'Il y a 5 min',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Capteur Reconnecté',
-    message: 'Le capteur Salle de Réunion B est de nouveau en ligne.',
-    type: 'success',
-    time: 'Il y a 15 min',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Rapport Hebdomadaire',
-    message: 'Votre rapport de qualité de l\'air est disponible.',
-    type: 'info',
-    time: 'Il y a 1 heure',
-    read: true,
-  },
-  {
-    id: '4',
-    title: 'Maintenance Planifiée',
-    message: 'Une maintenance système est prévue pour demain à 3h00.',
-    type: 'info',
-    time: 'Il y a 2 heures',
-    read: true,
-  },
-];
+interface RawAlert {
+  id?: string | number;
+  sensorName?: string;
+  type?: string;
+  message?: string;
+  status?: string;
+  timestamp?: string;
+}
 
 const typeIcons = {
   warning: AlertTriangle,
@@ -65,21 +45,159 @@ const typeColors = {
   success: 'text-emerald-500',
 };
 
-export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelProps) {
-  const [notifications, setNotifications] = useState(mockNotifications);
+const normalizeNotificationType = (type: string, status: string): Notification['type'] => {
+  const normalizedStatus = (status || '').toLowerCase();
+  if (normalizedStatus === 'résolue' || normalizedStatus === 'resolved') {
+    return 'success';
+  }
+  const normalizedType = (type || '').toLowerCase();
+  if (normalizedType === 'info') {
+    return 'info';
+  }
+  return 'warning';
+};
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+const normalizeStatusToRead = (status: string): boolean => {
+  const normalized = (status || '').toLowerCase();
+  return normalized === 'reconnue' || normalized === 'acknowledged' || normalized === 'résolue' || normalized === 'resolved';
+};
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+const toRelativeTime = (iso?: string): string => {
+  if (!iso) {
+    return 'À l\'instant';
+  }
+  const parsed = parseBackendDate(iso);
+  if (!isValid(parsed)) {
+    return 'À l\'instant';
+  }
+  return formatDistanceToNow(parsed, { addSuffix: true });
+};
+
+const mapAlertToNotification = (alert: RawAlert): Notification => {
+  const sensorName = alert.sensorName || 'Capteur';
+  const message = alert.message || 'Alerte sans message';
+  return {
+    id: String(alert.id ?? ''),
+    title: sensorName,
+    message,
+    type: normalizeNotificationType(alert.type || '', alert.status || ''),
+    time: toRelativeTime(alert.timestamp),
+    read: normalizeStatusToRead(alert.status || ''),
+  };
+};
+
+export function NotificationsPanel({ open, onOpenChange, onUnreadCountChange }: NotificationsPanelProps) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const { toast } = useToast();
+
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications],
+  );
+
+  const loadNotifications = async () => {
+    if (!open) {
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const alerts = await apiClient.getAlerts(undefined, 100);
+      const mapped = (alerts || []).map((item: RawAlert) => mapAlertToNotification(item));
+      setNotifications(mapped);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les notifications.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const clearAll = () => {
-    setNotifications([]);
+  useEffect(() => {
+    onUnreadCountChange?.(unreadCount);
+  }, [unreadCount, onUnreadCountChange]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    void loadNotifications();
+    const intervalId = window.setInterval(() => {
+      void loadNotifications();
+    }, 30000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [open]);
+
+  const markAllAsRead = async () => {
+    const unread = notifications.filter((n) => !n.read);
+    if (unread.length === 0) {
+      return;
+    }
+
+    setIsMutating(true);
+    try {
+      await Promise.all(
+        unread.map((notification) => apiClient.updateAlertStatus(notification.id, 'reconnue')),
+      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de marquer toutes les notifications comme lues.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsMutating(false);
+    }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const clearAll = async () => {
+    if (notifications.length === 0) {
+      return;
+    }
+
+    setIsMutating(true);
+    try {
+      await Promise.all(
+        notifications.map((notification) => apiClient.deleteAlert(notification.id)),
+      );
+      setNotifications([]);
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer les notifications.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const markAsRead = async (id: string) => {
+    const target = notifications.find((n) => n.id === id);
+    if (!target || target.read) {
+      return;
+    }
+
+    try {
+      await apiClient.updateAlertStatus(id, 'reconnue');
+      setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de marquer cette notification comme lue.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -101,19 +219,25 @@ export function NotificationsPanel({ open, onOpenChange }: NotificationsPanelPro
         <div className="mt-6">
           {notifications.length > 0 && (
             <div className="flex gap-2 mb-4">
-              <Button variant="outline" size="sm" onClick={markAllAsRead} className="gap-1">
+              <Button variant="outline" size="sm" onClick={markAllAsRead} className="gap-1" disabled={isMutating}>
                 <Check className="w-3 h-3" />
                 Tout marquer lu
               </Button>
-              <Button variant="outline" size="sm" onClick={clearAll} className="gap-1">
+              <Button variant="outline" size="sm" onClick={clearAll} className="gap-1" disabled={isMutating}>
                 <Trash2 className="w-3 h-3" />
                 Effacer tout
+              </Button>
+              <Button variant="outline" size="sm" onClick={loadNotifications} className="gap-1 ml-auto" disabled={isLoading}>
+                <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+                Actualiser
               </Button>
             </div>
           )}
 
           <div className="space-y-3">
-            {notifications.length === 0 ? (
+            {isLoading ? (
+              <LoadingSkeleton variant="alerts" count={3} />
+            ) : notifications.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>Aucune notification</p>

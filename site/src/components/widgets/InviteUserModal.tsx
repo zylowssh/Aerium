@@ -10,23 +10,36 @@ import { toast } from 'sonner';
 interface InviteUserModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isInviting?: boolean;
+  onInvite?: (payload: { email: string; full_name: string; password: string; role: 'admin' | 'user' }) => Promise<void> | void;
 }
 
-export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
+export function InviteUserModal({ open, onOpenChange, onInvite, isInviting = false }: InviteUserModalProps) {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('viewer');
+  const [fullName, setFullName] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'admin' | 'user'>('user');
   const [message, setMessage] = useState('');
 
-  const handleInvite = () => {
-    if (!email) {
-      toast.error('Veuillez entrer une adresse email');
+  const handleInvite = async () => {
+    if (!email || !password) {
+      toast.error('Email et mot de passe sont requis');
       return;
     }
-    toast.success('Invitation envoyée', {
-      description: `Une invitation a été envoyée à ${email}.`,
-    });
+
+    if (onInvite) {
+      await onInvite({
+        email,
+        full_name: fullName,
+        password,
+        role,
+      });
+    }
+
     setEmail('');
-    setRole('viewer');
+    setFullName('');
+    setPassword('');
+    setRole('user');
     setMessage('');
     onOpenChange(false);
   };
@@ -61,6 +74,27 @@ export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="invite-name">Nom complet</Label>
+            <Input
+              id="invite-name"
+              placeholder="Alex Martin"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="invite-password">Mot de passe initial</Label>
+            <Input
+              id="invite-password"
+              type="password"
+              placeholder="Minimum 8 caractères"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="invite-role">Rôle</Label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger>
@@ -68,8 +102,7 @@ export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Administrateur</SelectItem>
-                <SelectItem value="manager">Gestionnaire</SelectItem>
-                <SelectItem value="viewer">Lecteur</SelectItem>
+                <SelectItem value="user">Utilisateur</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -86,12 +119,12 @@ export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isInviting}>
             Annuler
           </Button>
-          <Button onClick={handleInvite} className="gap-2">
+          <Button onClick={handleInvite} className="gap-2" disabled={isInviting || !email || !password}>
             <Send className="w-4 h-4" />
-            Envoyer l'Invitation
+            {isInviting ? 'Création...' : "Envoyer l'Invitation"}
           </Button>
         </DialogFooter>
       </DialogContent>

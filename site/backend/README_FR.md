@@ -37,7 +37,7 @@ FRONTEND_URL=http://localhost:5173
 
 Important:
 - `MISTRAL_API_KEY` doit être dans `backend/.env`.
-- `site-v2/.env` est réservé aux variables frontend `VITE_*`.
+- `site/.env` est réservé aux variables frontend `VITE_*`.
 
 ### Lancer
 

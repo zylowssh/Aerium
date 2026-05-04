@@ -15,7 +15,7 @@ export function BackendStatusWidget() {
      <motion.div
        initial={{ opacity: 0, y: 20 }}
        animate={{ opacity: 1, y: 0 }}
-       className="p-5 rounded-xl bg-card border border-border"
+       className="widget-shell p-5"
      >
        <div className="flex items-center justify-between mb-4">
          <div>
@@ -28,7 +28,7 @@ export function BackendStatusWidget() {
        </div>
  
       <div className="space-y-3">
-        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+        <div className="widget-shell-subtle flex items-center justify-between p-3">
           <div className="flex items-center gap-3">
             <div className={cn(
               'p-2 rounded-lg',

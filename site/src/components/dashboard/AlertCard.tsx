@@ -1,12 +1,13 @@
 import { AlertTriangle, Clock, CheckCircle, Check, XCircle } from 'lucide-react';
 import { Alert } from '@/lib/sensorData';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
+import { formatDistanceToNow, isValid } from 'date-fns';
 import { motion } from 'framer-motion';
 import { memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/apiClient';
 import { useToast } from '@/hooks/use-toast';
+import { parseBackendDate } from '@/lib/dateTime';
 
 export interface AlertCardProps {
   alert: Alert;
@@ -22,7 +23,7 @@ export const AlertCard = memo(function AlertCard({ alert, onStatusChange }: Aler
       return isValid(alert.timestamp) ? alert.timestamp : null;
     }
     if (typeof alert.timestamp === 'string') {
-      const d = parseISO(alert.timestamp);
+      const d = parseBackendDate(alert.timestamp);
       return isValid(d) ? d : null;
     }
     return null;

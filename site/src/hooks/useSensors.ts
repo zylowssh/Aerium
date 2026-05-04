@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "@/lib/apiClient";
 import { Sensor } from "@/lib/sensorData";
 import { useWebSocket } from "@/contexts/WebSocketContext";
+import { parseBackendDate } from "@/lib/dateTime";
 
 const SENSORS_REFRESH_EVENT = "aerium:sensors:refresh";
 
@@ -65,7 +66,7 @@ export const useSensors = () => {
           co2: toFiniteNumber(s.co2),
           temperature: toFiniteNumber(s.temperature),
           humidity: toFiniteNumber(s.humidity),
-          lastReading: hasReading ? new Date(s.lastReading) : null,
+          lastReading: hasReading ? parseBackendDate(s.lastReading) : null,
           battery:
             sensorType === "simulation" ? undefined : (s.battery ?? undefined),
           isLive:
@@ -127,7 +128,7 @@ export const useSensors = () => {
                   temperature: toFiniteNumber(reading.temperature),
                   humidity: toFiniteNumber(reading.humidity),
                   lastReading: reading.recorded_at
-                    ? new Date(reading.recorded_at)
+                    ? parseBackendDate(reading.recorded_at)
                     : new Date(),
                   isLive: nextStatus !== "hors ligne",
                   hasReading: true,

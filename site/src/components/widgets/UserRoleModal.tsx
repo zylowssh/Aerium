@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserCog, Mail, Save } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface UserRoleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isSaving?: boolean;
+  onSave?: (payload: { id: string; full_name: string; email: string; role: 'admin' | 'user' }) => Promise<void> | void;
   user?: {
     id: string;
     name: string;
@@ -18,22 +19,33 @@ interface UserRoleModalProps {
   };
 }
 
-export function UserRoleModal({ open, onOpenChange, user }: UserRoleModalProps) {
-  const [name, setName] = useState(user?.name || 'Alex Martin');
-  const [email, setEmail] = useState(user?.email || 'alex@aerium.io');
-  const [role, setRole] = useState(user?.role || 'viewer');
+export function UserRoleModal({ open, onOpenChange, user, onSave, isSaving = false }: UserRoleModalProps) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<'admin' | 'user'>('user');
 
-  const handleSave = () => {
-    toast.success('Utilisateur mis à jour', {
-      description: `Les permissions de ${name} ont été modifiées.`,
+  useEffect(() => {
+    setName(user?.name || '');
+    setEmail(user?.email || '');
+    setRole(user?.role === 'admin' ? 'admin' : 'user');
+  }, [user, open]);
+
+  const handleSave = async () => {
+    if (!user?.id || !onSave) {
+      return;
+    }
+    await onSave({
+      id: user.id,
+      full_name: name,
+      email,
+      role,
     });
-    onOpenChange(false);
   };
 
   const handleSendInvite = () => {
-    toast.success('Invitation envoyée', {
-      description: `Un email a été envoyé à ${email}.`,
-    });
+    if (email && typeof window !== 'undefined') {
+      window.open(`mailto:${email}`, '_blank');
+    }
   };
 
   return (
@@ -82,16 +94,10 @@ export function UserRoleModal({ open, onOpenChange, user }: UserRoleModalProps) 
                     <span className="text-xs text-muted-foreground">Accès complet à toutes les fonctionnalités</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="manager">
+                <SelectItem value="user">
                   <div className="flex flex-col">
-                    <span>Gestionnaire</span>
-                    <span className="text-xs text-muted-foreground">Peut gérer les capteurs et les alertes</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="viewer">
-                  <div className="flex flex-col">
-                    <span>Lecteur</span>
-                    <span className="text-xs text-muted-foreground">Accès en lecture seule</span>
+                    <span>Utilisateur</span>
+                    <span className="text-xs text-muted-foreground">Accès standard aux fonctionnalités utilisateur</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -105,12 +111,12 @@ export function UserRoleModal({ open, onOpenChange, user }: UserRoleModalProps) 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Annuler
           </Button>
-          <Button onClick={handleSave} className="gap-2">
+          <Button onClick={handleSave} className="gap-2" disabled={isSaving || !name || !email || !user?.id}>
             <Save className="w-4 h-4" />
-            Enregistrer
+            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
           </Button>
         </DialogFooter>
       </DialogContent>

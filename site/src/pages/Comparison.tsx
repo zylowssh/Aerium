@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GitCompare, Plus, X, TrendingUp, TrendingDown } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -11,8 +11,19 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { useSensors } from '@/hooks/useSensors';
 import { apiClient } from '@/lib/apiClient';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
+import { parseBackendDate } from '@/lib/dateTime';
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--warning))', 'hsl(var(--success))'];
+const SENSOR_PALETTE = [
+  'hsl(var(--primary))',
+  'hsl(var(--success))',
+  'hsl(var(--warning))',
+  'hsl(205 86% 58%)',
+  'hsl(164 58% 44%)',
+  'hsl(24 88% 54%)',
+];
+
+const getSensorHash = (sensorId: string) =>
+  sensorId.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
 
 const Comparison = () => {
   const { sensors, isLoading } = useSensors();
@@ -25,6 +36,22 @@ const Comparison = () => {
     .map((s) => `${s.id}:${s.name}`)
     .sort()
     .join('|');
+
+  const sensorColorMap = useMemo(() => {
+    const usedIndexes = new Set<number>();
+    const map = new Map<string, string>();
+
+    selectedSensors.forEach((sensorId) => {
+      let paletteIndex = getSensorHash(sensorId) % SENSOR_PALETTE.length;
+      while (usedIndexes.has(paletteIndex)) {
+        paletteIndex = (paletteIndex + 1) % SENSOR_PALETTE.length;
+      }
+      usedIndexes.add(paletteIndex);
+      map.set(sensorId, SENSOR_PALETTE[paletteIndex]);
+    });
+
+    return map;
+  }, [selectedSensors]);
 
   // Initialize with first sensor when sensors load
   useEffect(() => {
@@ -48,28 +75,41 @@ const Comparison = () => {
         const allReadings = await Promise.all(readingsPromises);
 
         // Group by timestamp
-        const timeMap = new Map<string, any>();
+        const timeMap = new Map<number, any>();
         
         allReadings.forEach((readings, sensorIndex) => {
           const sensorId = selectedSensors[sensorIndex];
           const sensor = sensors.find(s => s.id === sensorId);
           
           readings.forEach((reading: any) => {
-            const time = new Date(reading.recorded_at).toLocaleTimeString('fr-FR', { 
+            const timestamp = parseBackendDate(reading.recorded_at).getTime();
+            if (!Number.isFinite(timestamp)) {
+              return;
+            }
+
+            const roundedTimestamp = Math.floor(timestamp / 30000) * 30000;
+            const time = new Date(roundedTimestamp).toLocaleTimeString('fr-FR', {
               hour: '2-digit', 
               minute: '2-digit' 
             });
             
-            if (!timeMap.has(time)) {
-              timeMap.set(time, { time });
+            if (!timeMap.has(roundedTimestamp)) {
+              timeMap.set(roundedTimestamp, {
+                timestamp: roundedTimestamp,
+                time,
+              });
             }
             
-            const entry = timeMap.get(time);
+            const entry = timeMap.get(roundedTimestamp);
             entry[sensor?.name || sensorId] = reading[metric];
           });
         });
 
-        setComparisonData(Array.from(timeMap.values()).slice(-24));
+        setComparisonData(
+          Array.from(timeMap.values())
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .slice(-24),
+        );
       } catch (error) {
         console.error('Error fetching comparison data:', error);
       } finally {
@@ -147,7 +187,7 @@ const Comparison = () => {
                 <div key={index} className="flex items-center gap-2">
                   <div 
                     className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: COLORS[index] }}
+                    style={{ backgroundColor: sensorColorMap.get(sensorId) || SENSOR_PALETTE[index % SENSOR_PALETTE.length] }}
                   />
                   <Select value={sensorId} onValueChange={(v) => updateSensor(index, v)}>
                     <SelectTrigger className="w-48">
@@ -220,10 +260,11 @@ const Comparison = () => {
                     <defs>
                       {selectedSensors.map((sensorId, index) => {
                         const sensor = sensors.find(s => s.id === sensorId);
+                        const sensorColor = sensorColorMap.get(sensorId) || SENSOR_PALETTE[index % SENSOR_PALETTE.length];
                         return sensor ? (
                           <linearGradient key={sensor.id} id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={COLORS[index]} stopOpacity={0.3} />
-                            <stop offset="95%" stopColor={COLORS[index]} stopOpacity={0} />
+                            <stop offset="5%" stopColor={sensorColor} stopOpacity={0.35} />
+                            <stop offset="95%" stopColor={sensorColor} stopOpacity={0} />
                           </linearGradient>
                         ) : null;
                       })}
@@ -237,16 +278,23 @@ const Comparison = () => {
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px'
                       }}
+                      cursor={{
+                        fill: 'hsl(var(--muted))',
+                        fillOpacity: 0.26,
+                        stroke: 'hsl(var(--border))',
+                        strokeOpacity: 0.4,
+                      }}
                     />
                     <Legend />
                     {selectedSensors.map((sensorId, index) => {
                       const sensor = sensors.find(s => s.id === sensorId);
+                      const sensorColor = sensorColorMap.get(sensorId) || SENSOR_PALETTE[index % SENSOR_PALETTE.length];
                       return sensor ? (
                         <Area
                           key={sensor.id}
                           type="monotone"
                           dataKey={sensor.name}
-                          stroke={COLORS[index]}
+                          stroke={sensorColor}
                           fill={`url(#gradient-${index})`}
                           strokeWidth={2}
                         />
@@ -268,6 +316,7 @@ const Comparison = () => {
             
             const stats = getSensorStats(sensorId);
             const quality = getAirQualityLevel(sensor.co2);
+            const qualityTone = quality === 'bonne' || quality === 'excellente' ? 'text-emerald-600' : 'text-amber-600';
 
             return (
               <motion.div
@@ -276,28 +325,42 @@ const Comparison = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="border-l-4" style={{ borderLeftColor: COLORS[index] }}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">{sensor.name}</CardTitle>
-                    <Badge variant={quality === 'bonne' || quality === 'excellente' ? 'default' : 'destructive'}>
-                      {quality}
+                <Card className="widget-shell border-border/80 overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <CardTitle className="text-sm font-semibold">{sensor.name}</CardTitle>
+                      <span
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: sensorColorMap.get(sensorId) || SENSOR_PALETTE[index % SENSOR_PALETTE.length] }}
+                      />
+                    </div>
+                    <Badge variant="outline" className={`w-fit capitalize ${qualityTone}`}>
+                      Qualité: {quality}
                     </Badge>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Moyenne</span>
-                      <span className="font-semibold">{stats.avg}</span>
+                    <div className="widget-shell-subtle p-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Moyenne</span>
+                        <span className="font-semibold text-foreground">{stats.avg}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Min / Max</span>
-                      <span className="text-sm">{stats.min} / {stats.max}</span>
+
+                    <div className="widget-shell-subtle p-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Min / Max</span>
+                        <span className="text-sm text-foreground">{stats.min} / {stats.max}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Tendance</span>
-                      <span className={`flex items-center gap-1 text-sm ${stats.trend > 0 ? 'text-destructive' : 'text-success'}`}>
+
+                    <div className="widget-shell-subtle p-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Tendance</span>
+                        <span className={`flex items-center gap-1 text-sm font-medium ${stats.trend > 0 ? 'text-destructive' : 'text-success'}`}>
                         {stats.trend > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                         {Math.abs(stats.trend).toFixed(1)}
-                      </span>
+                        </span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

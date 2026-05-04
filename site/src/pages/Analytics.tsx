@@ -11,6 +11,7 @@ import { useSensors } from '@/hooks/useSensors';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { cn } from '@/lib/utils';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { parseBackendDate } from '@/lib/dateTime';
 
 interface Reading {
   recorded_at: string;
@@ -31,6 +32,13 @@ const Analytics = () => {
   const [predLoading, setPredLoading]     = useState(false);
   const [predError,   setPredError]       = useState<string | null>(null);
   const [predOpen,    setPredOpen]        = useState(false);
+
+  const tooltipCursorStyle = {
+    fill: 'hsl(var(--muted))',
+    fillOpacity: 0.26,
+    stroke: 'hsl(var(--border))',
+    strokeOpacity: 0.4,
+  };
 
   const fetchPredictions = useCallback(async () => {
     setPredLoading(true);
@@ -73,7 +81,7 @@ const Analytics = () => {
         const combinedReadings = allReadings
           .flat()
           .sort((a: Reading, b: Reading) => 
-            new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+            parseBackendDate(a.recorded_at).getTime() - parseBackendDate(b.recorded_at).getTime()
           );
         
         setReadings(combinedReadings);
@@ -95,7 +103,7 @@ const Analytics = () => {
     const groupedData = new Map<string, Reading[]>();
     
     readings.forEach(reading => {
-      const date = new Date(reading.recorded_at);
+      const date = parseBackendDate(reading.recorded_at);
       let key: string;
       
       if (timeRange === '24h') {
@@ -127,7 +135,7 @@ const Analytics = () => {
     const dayGroups = new Map<string, number[]>();
     
     readings.forEach(reading => {
-      const day = format(new Date(reading.recorded_at), 'EEE');
+      const day = format(parseBackendDate(reading.recorded_at), 'EEE');
       if (!dayGroups.has(day)) {
         dayGroups.set(day, []);
       }
@@ -156,7 +164,7 @@ const Analytics = () => {
     
     const peakCo2 = Math.max(...readings.map(r => r.co2));
     const peakReading = readings.find(r => r.co2 === peakCo2);
-    const peakTime = peakReading ? format(new Date(peakReading.recorded_at), 'h:mm a') : 'N/A';
+    const peakTime = peakReading ? format(parseBackendDate(peakReading.recorded_at), 'h:mm a') : 'N/A';
     
     return {
       goodRangePercent,
@@ -168,7 +176,7 @@ const Analytics = () => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
+        <div className="widget-shell-subtle p-3 shadow-xl">
           <p className="text-sm font-medium text-foreground mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
@@ -253,7 +261,7 @@ const Analytics = () => {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-4 rounded-lg bg-card border border-border"
+            className="widget-shell-subtle p-4"
           >
             <p className="text-xs text-muted-foreground mb-1">Bonne Qualité</p>
             <p className="text-2xl font-bold text-primary">{stats.goodRangePercent}%</p>
@@ -263,7 +271,7 @@ const Analytics = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="p-4 rounded-lg bg-card border border-border"
+            className="widget-shell-subtle p-4"
           >
             <p className="text-xs text-muted-foreground mb-1">Pic CO₂</p>
             <p className="text-2xl font-bold text-destructive">{stats.avgPeak}</p>
@@ -273,7 +281,7 @@ const Analytics = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="p-4 rounded-lg bg-card border border-border"
+            className="widget-shell-subtle p-4"
           >
             <p className="text-xs text-muted-foreground mb-1">Heure Idéale</p>
             <p className="text-2xl font-bold text-success">{stats.peakTime}</p>
@@ -283,7 +291,7 @@ const Analytics = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="p-4 rounded-lg bg-card border border-border"
+            className="widget-shell-subtle p-4"
           >
             <p className="text-xs text-muted-foreground mb-1">Lectures</p>
             <p className="text-2xl font-bold text-primary">{readings.length}</p>
@@ -299,7 +307,7 @@ const Analytics = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center p-12 rounded-xl border border-border bg-card"
+            className="widget-shell flex flex-col items-center justify-center p-12"
           >
             <BarChart3 className="w-12 h-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">Aucune donnée disponible</h3>
@@ -311,7 +319,7 @@ const Analytics = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-           className="p-6 rounded-xl bg-card border border-border"
+            className="widget-shell p-6"
            data-tour="analytics-charts"
         >
           <div className="flex items-center justify-between mb-6">
@@ -367,7 +375,7 @@ const Analytics = () => {
                 domain={[15, 35]}
               />
               
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={tooltipCursorStyle} />
               
               <Area
                 yAxisId="co2"
@@ -414,7 +422,7 @@ const Analytics = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="p-6 rounded-xl bg-card border border-border"
+          className="widget-shell p-6"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -437,7 +445,7 @@ const Analytics = () => {
                 tickLine={false}
                 tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={tooltipCursorStyle} />
               <Bar dataKey="avg" name="Average" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               <Bar dataKey="peak" name="Peak" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} opacity={0.7} />
             </BarChart>
@@ -458,7 +466,7 @@ const Analytics = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * (index + 2) }}
-              className="p-5 rounded-xl bg-card border border-border"
+              className="widget-shell p-5"
             >
               <p className="text-sm text-muted-foreground">{stat.label}</p>
               <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
@@ -476,7 +484,7 @@ const Analytics = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="rounded-xl border border-border bg-card overflow-hidden"
+          className="widget-shell overflow-hidden"
         >
           {/* Collapsible header */}
           <button
@@ -494,7 +502,7 @@ const Analytics = () => {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {predictions
-                    ? `Basé sur ${predictions.data_hours}h de données · Généré à ${new Date(predictions.generated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+                    ? `Basé sur ${predictions.data_hours}h de données · Généré à ${parseBackendDate(predictions.generated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
                     : 'Prévisions CO₂, température et humidité par Aéria'}
                 </p>
               </div>
@@ -649,6 +657,7 @@ const Analytics = () => {
                                     borderRadius: '8px',
                                     fontSize: '12px',
                                   }}
+                                  cursor={tooltipCursorStyle}
                                   formatter={(v: any, name: string) => [
                                     `${Math.round(v)} ppm`,
                                     name === 'co2' ? 'CO₂ prévu'

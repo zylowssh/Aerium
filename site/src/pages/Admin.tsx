@@ -40,6 +40,7 @@ import { InviteUserModal } from '@/components/widgets/InviteUserModal';
 import { apiClient } from '@/lib/apiClient';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { parseBackendDate } from '@/lib/dateTime';
 
 type LogType = 'settings' | 'alert' | 'system' | 'report' | 'user';
 
@@ -95,7 +96,7 @@ interface ActivityLog {
 
 const toRelativeTime = (isoDate?: string): string => {
   if (!isoDate) return 'Inconnu';
-  const then = new Date(isoDate).getTime();
+  const then = parseBackendDate(isoDate).getTime();
   if (Number.isNaN(then)) return 'Inconnu';
 
   const diffMs = Date.now() - then;
@@ -158,10 +159,9 @@ const maintenanceStatusLabel = (status: string): string => {
 const getRoleBadge = (role: string) => {
   const styles = {
     admin: 'bg-primary/20 text-primary border-primary/30',
-    manager: 'bg-warning/20 text-warning border-warning/30',
-    viewer: 'bg-muted text-muted-foreground border-border',
+    user: 'bg-muted text-muted-foreground border-border',
   };
-  return styles[role as keyof typeof styles] || styles.viewer;
+  return styles[role as keyof typeof styles] || styles.user;
 };
 
 const getActionIcon = (type: string) => {
@@ -184,155 +184,160 @@ const Admin = () => {
   const [healthMetrics, setHealthMetrics] = useState<SystemHealthMetric[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMutating, setIsMutating] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchAdminData = async () => {
-      try {
-        const [usersData, sensorsData, alertsData, maintenanceData, simulationResponse] = await Promise.all([
-          apiClient.getAllUsers(),
-          apiClient.getSensors(),
-          apiClient.getAlerts(undefined, 250),
-          apiClient.getMaintenance(undefined, undefined, 250),
-          apiClient.get('/admin/simulation/speed').catch(() => null),
-        ]);
+  const fetchAdminData = async (showLoader = false) => {
+    if (showLoader) {
+      setIsLoading(true);
+    }
 
-        const normalizedUsers: AdminUser[] = (usersData || []).map((user: AdminUser) => ({
-          id: String(user.id),
-          email: user.email,
-          full_name: user.full_name,
-          role: user.role,
-          created_at: user.created_at,
+    try {
+      const [usersData, sensorsData, alertsData, maintenanceData, simulationResponse] = await Promise.all([
+        apiClient.getAllUsers(),
+        apiClient.getSensors(),
+        apiClient.getAlerts(undefined, 250),
+        apiClient.getMaintenance(undefined, undefined, 250),
+        apiClient.get('/admin/simulation/speed').catch(() => null),
+      ]);
+
+      const normalizedUsers: AdminUser[] = (usersData || []).map((user: AdminUser) => ({
+        id: String(user.id),
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+        created_at: user.created_at,
+      }));
+
+      const normalizedSensors: AdminSensor[] = (sensorsData || []).map((sensor: AdminSensor) => ({
+        id: String(sensor.id),
+        status: sensor.status,
+      }));
+
+      const normalizedAlerts: AdminAlert[] = (alertsData || []).map((alert: AdminAlert) => ({
+        id: String(alert.id),
+        sensorName: alert.sensorName,
+        message: alert.message,
+        status: alert.status,
+        timestamp: alert.timestamp,
+        acknowledgedAt: alert.acknowledgedAt,
+        resolvedAt: alert.resolvedAt,
+      }));
+
+      const normalizedMaintenance: AdminMaintenance[] = (maintenanceData || []).map((task: AdminMaintenance) => ({
+        id: String(task.id),
+        sensorName: task.sensorName,
+        type: task.type,
+        status: task.status,
+        scheduledDate: task.scheduledDate,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+      }));
+
+      setUsers(normalizedUsers);
+
+      const onlineSensors = normalizedSensors.filter((sensor) => sensor.status === 'en ligne').length;
+      const totalSensors = normalizedSensors.length;
+      const openAlerts = normalizedAlerts.filter((alert) => normalizeAlertStatus(alert.status || '') !== 'résolue').length;
+      const overdueMaintenance = normalizedMaintenance.filter((task) => normalizeMaintenanceStatus(task.status || '') === 'overdue').length;
+      const simulationSpeed = Number(simulationResponse?.data?.speed ?? 0);
+
+      setHealthMetrics([
+        {
+          label: 'Vitesse Simulation',
+          value: simulationSpeed > 0 ? `${simulationSpeed}s` : 'N/A',
+          status: simulationSpeed > 0 && simulationSpeed <= 5 ? 'healthy' : 'warning',
+          icon: Server,
+        },
+        {
+          label: 'Capteurs en Ligne',
+          value: `${onlineSensors}/${totalSensors}`,
+          status: totalSensors === 0 || onlineSensors / Math.max(totalSensors, 1) >= 0.8 ? 'healthy' : 'warning',
+          icon: Activity,
+        },
+        {
+          label: 'Alertes Ouvertes',
+          value: String(openAlerts),
+          status: openAlerts === 0 ? 'healthy' : 'warning',
+          icon: Database,
+        },
+        {
+          label: 'Maintenance en Retard',
+          value: String(overdueMaintenance),
+          status: overdueMaintenance === 0 ? 'healthy' : 'warning',
+          icon: Clock,
+        },
+      ]);
+
+      const userActivity: ActivityLog[] = normalizedUsers
+        .map((user) => ({
+          id: `user-${user.id}`,
+          user: user.full_name || user.email,
+          action: 'Compte utilisateur actif',
+          target: `Rôle: ${user.role}`,
+          timestamp: toRelativeTime(user.created_at),
+          sortDate: user.created_at,
+          type: 'user',
         }));
 
-        const normalizedSensors: AdminSensor[] = (sensorsData || []).map((sensor: AdminSensor) => ({
-          id: String(sensor.id),
-          status: sensor.status,
-        }));
-
-        const normalizedAlerts: AdminAlert[] = (alertsData || []).map((alert: AdminAlert) => ({
-          id: String(alert.id),
-          sensorName: alert.sensorName,
-          message: alert.message,
-          status: alert.status,
-          timestamp: alert.timestamp,
-          acknowledgedAt: alert.acknowledgedAt,
-          resolvedAt: alert.resolvedAt,
-        }));
-
-        const normalizedMaintenance: AdminMaintenance[] = (maintenanceData || []).map((task: AdminMaintenance) => ({
-          id: String(task.id),
-          sensorName: task.sensorName,
-          type: task.type,
-          status: task.status,
-          scheduledDate: task.scheduledDate,
-          createdAt: task.createdAt,
-          updatedAt: task.updatedAt,
-        }));
-
-        setUsers(normalizedUsers);
-
-        const onlineSensors = normalizedSensors.filter((sensor) => sensor.status === 'en ligne').length;
-        const totalSensors = normalizedSensors.length;
-        const openAlerts = normalizedAlerts.filter((alert) => normalizeAlertStatus(alert.status || '') !== 'résolue').length;
-        const overdueMaintenance = normalizedMaintenance.filter((task) => normalizeMaintenanceStatus(task.status || '') === 'overdue').length;
-        const simulationSpeed = Number(simulationResponse?.data?.speed ?? 0);
-
-        setHealthMetrics([
-          {
-            label: 'Vitesse Simulation',
-            value: simulationSpeed > 0 ? `${simulationSpeed}s` : 'N/A',
-            status: simulationSpeed > 0 && simulationSpeed <= 5 ? 'healthy' : 'warning',
-            icon: Server,
-          },
-          {
-            label: 'Capteurs en Ligne',
-            value: `${onlineSensors}/${totalSensors}`,
-            status: totalSensors === 0 || onlineSensors / Math.max(totalSensors, 1) >= 0.8 ? 'healthy' : 'warning',
-            icon: Activity,
-          },
-          {
-            label: 'Alertes Ouvertes',
-            value: String(openAlerts),
-            status: openAlerts === 0 ? 'healthy' : 'warning',
-            icon: Database,
-          },
-          {
-            label: 'Maintenance en Retard',
-            value: String(overdueMaintenance),
-            status: overdueMaintenance === 0 ? 'healthy' : 'warning',
-            icon: Clock,
-          },
-        ]);
-
-        const userActivity: ActivityLog[] = normalizedUsers
-          .map((user) => ({
-            id: `user-${user.id}`,
-            user: user.full_name || user.email,
-            action: 'Compte utilisateur actif',
-            target: `Rôle: ${user.role}`,
-            timestamp: toRelativeTime(user.created_at),
-            sortDate: user.created_at,
-            type: 'user',
-          }));
-
-        const alertActivity: ActivityLog[] = normalizedAlerts
-          .map((alert) => {
-            const normalizedStatus = normalizeAlertStatus(alert.status || '');
-            const eventDate =
-              normalizedStatus === 'résolue'
-                ? alert.resolvedAt || alert.timestamp
-                : normalizedStatus === 'reconnue'
+      const alertActivity: ActivityLog[] = normalizedAlerts
+        .map((alert) => {
+          const normalizedStatus = normalizeAlertStatus(alert.status || '');
+          const eventDate =
+            normalizedStatus === 'résolue'
+              ? alert.resolvedAt || alert.timestamp
+              : normalizedStatus === 'reconnue'
                 ? alert.acknowledgedAt || alert.timestamp
                 : alert.timestamp;
 
-            const action =
-              normalizedStatus === 'résolue'
-                ? 'Alerte résolue'
-                : normalizedStatus === 'reconnue'
+          const action =
+            normalizedStatus === 'résolue'
+              ? 'Alerte résolue'
+              : normalizedStatus === 'reconnue'
                 ? 'Alerte reconnue'
                 : 'Alerte détectée';
 
-            return {
-              id: `alert-${alert.id}`,
-              user: 'Système',
-              action,
-              target: `${alert.sensorName || 'Capteur'} · ${(alert.message || 'Sans message').slice(0, 56)}`,
-              timestamp: toRelativeTime(eventDate),
-              sortDate: eventDate || new Date().toISOString(),
-              type: 'alert' as const,
-            };
-          });
-
-        const maintenanceActivity: ActivityLog[] = normalizedMaintenance
-          .map((task) => ({
-            id: `maintenance-${task.id}`,
-            user: 'Maintenance',
-            action: maintenanceStatusLabel(task.status || ''),
-            target: `${task.sensorName || 'Capteur'} · ${task.type || 'Intervention'}`,
-            timestamp: toRelativeTime(task.updatedAt || task.createdAt || task.scheduledDate),
-            sortDate: task.updatedAt || task.createdAt || task.scheduledDate || new Date().toISOString(),
-            type: 'settings' as const,
-          }));
-
-        const allActivity = [...alertActivity, ...maintenanceActivity, ...userActivity]
-          .sort((a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime())
-          .slice(0, 30);
-
-        setActivityLogs(allActivity);
-      } catch (error) {
-        console.error('Error fetching admin data:', error);
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de charger les données administrateur',
-          variant: 'destructive'
+          return {
+            id: `alert-${alert.id}`,
+            user: 'Système',
+            action,
+            target: `${alert.sensorName || 'Capteur'} · ${(alert.message || 'Sans message').slice(0, 56)}`,
+            timestamp: toRelativeTime(eventDate),
+            sortDate: eventDate || new Date().toISOString(),
+            type: 'alert' as const,
+          };
         });
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    fetchAdminData();
+      const maintenanceActivity: ActivityLog[] = normalizedMaintenance
+        .map((task) => ({
+          id: `maintenance-${task.id}`,
+          user: 'Maintenance',
+          action: maintenanceStatusLabel(task.status || ''),
+          target: `${task.sensorName || 'Capteur'} · ${task.type || 'Intervention'}`,
+          timestamp: toRelativeTime(task.updatedAt || task.createdAt || task.scheduledDate),
+          sortDate: task.updatedAt || task.createdAt || task.scheduledDate || new Date().toISOString(),
+          type: 'settings' as const,
+        }));
+
+      const allActivity = [...alertActivity, ...maintenanceActivity, ...userActivity]
+        .sort((a, b) => parseBackendDate(b.sortDate).getTime() - parseBackendDate(a.sortDate).getTime())
+        .slice(0, 30);
+
+      setActivityLogs(allActivity);
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les données administrateur',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAdminData(true);
   }, []);
 
   const filteredUsers = users.filter(user =>
@@ -343,6 +348,82 @@ const Admin = () => {
   const handleEditUser = (user: AdminUser) => {
     setSelectedUser(user);
     setUserRoleOpen(true);
+  };
+
+  const handleSaveUser = async (payload: { id: string; full_name: string; email: string; role: 'admin' | 'user' }) => {
+    setIsMutating(true);
+    try {
+      await apiClient.updateUser(payload.id, {
+        full_name: payload.full_name,
+        email: payload.email,
+        role: payload.role,
+      });
+      toast({
+        title: 'Utilisateur mis à jour',
+        description: `Le profil de ${payload.full_name || payload.email} a été mis à jour.`,
+      });
+      setUserRoleOpen(false);
+      setSelectedUser(null);
+      await fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error?.response?.data?.error || 'Impossible de mettre à jour cet utilisateur.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleInviteUser = async (payload: { email: string; full_name: string; password: string; role: 'admin' | 'user' }) => {
+    setIsMutating(true);
+    try {
+      await apiClient.createUser(payload);
+      toast({
+        title: 'Utilisateur créé',
+        description: `${payload.email} a été ajouté avec succès.`,
+      });
+      setInviteUserOpen(false);
+      await fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error?.response?.data?.error || 'Impossible de créer cet utilisateur.',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleDeleteUser = async (user: AdminUser) => {
+    const shouldDelete = typeof window !== 'undefined'
+      ? window.confirm(`Supprimer l'utilisateur ${user.full_name || user.email} ?`)
+      : true;
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setIsMutating(true);
+    try {
+      await apiClient.deleteUser(user.id);
+      toast({
+        title: 'Utilisateur supprimé',
+        description: `${user.full_name || user.email} a été supprimé.`,
+      });
+      await fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error?.response?.data?.error || 'Impossible de supprimer cet utilisateur.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   return (
@@ -469,7 +550,7 @@ const Admin = () => {
                           </TableCell>
                           <TableCell className="text-muted-foreground">{user.email}</TableCell>
                           <TableCell className="text-muted-foreground">
-                            {new Date(user.created_at).toLocaleDateString('fr-FR')}
+                            {parseBackendDate(user.created_at).toLocaleDateString('fr-FR')}
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -481,7 +562,7 @@ const Admin = () => {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleEditUser(user)}>Modifier l'Utilisateur</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleEditUser(user)}>Changer le Rôle</DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteUser(user)}>
                                   Supprimer l'Utilisateur
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -546,9 +627,16 @@ const Admin = () => {
         <UserRoleModal 
           open={userRoleOpen} 
           onOpenChange={setUserRoleOpen}
+          isSaving={isMutating}
+          onSave={handleSaveUser}
           user={selectedUser ? { id: selectedUser.id, name: selectedUser.full_name || selectedUser.email, email: selectedUser.email, role: selectedUser.role } : undefined}
         />
-        <InviteUserModal open={inviteUserOpen} onOpenChange={setInviteUserOpen} />
+        <InviteUserModal
+          open={inviteUserOpen}
+          onOpenChange={setInviteUserOpen}
+          onInvite={handleInviteUser}
+          isInviting={isMutating}
+        />
       </div>
     </AppLayout>
   );

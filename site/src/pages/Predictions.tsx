@@ -206,7 +206,7 @@ const Alerts = () => {
           </Button>
         </div>
 
-        <div className="p-4 rounded-xl bg-card border border-border">
+        <div className="widget-shell p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-semibold text-foreground">Prédictions IA 24h</h3>
@@ -247,7 +247,7 @@ const Alerts = () => {
               </div>
 
               {predictionForecast.length > 0 && (
-                <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <div className="widget-shell-subtle p-3">
                   <p className="text-xs font-medium text-foreground mb-2">Tendance CO2 prévue (24h)</p>
                   <ResponsiveContainer width="100%" height={220}>
                     <ComposedChart data={predictionForecast} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
@@ -310,7 +310,7 @@ const Alerts = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {predictions.slice(0, 6).map((prediction) => (
-                  <div key={prediction.id} className="p-3 rounded-lg border border-border bg-muted/40">
+                  <div key={prediction.id} className="widget-shell-subtle p-3">
                     <div className="flex items-center justify-between mb-1">
                       <h4 className="text-xs font-medium text-foreground truncate">{prediction.title}</h4>
                       <span className="text-[11px] text-muted-foreground">{prediction.timeframe}</span>
@@ -344,7 +344,7 @@ const Alerts = () => {
           )}
         </div>
 
-        <div className="p-4 rounded-xl bg-card border border-border">
+        <div className="widget-shell p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
@@ -379,7 +379,7 @@ const Alerts = () => {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.06 }}
-                    className="p-3 rounded-lg border border-border bg-muted/30"
+                    className="widget-shell-subtle p-3"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h4 className="text-sm font-medium text-foreground">{item.title}</h4>
@@ -398,7 +398,7 @@ const Alerts = () => {
           )}
         </div>
 
-        <div className="p-4 rounded-xl bg-card border border-border">
+        <div className="widget-shell p-4">
           <div className="flex items-center gap-2 mb-2">
             <MessageCircle className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold text-foreground">Chat IA Aéria</h3>

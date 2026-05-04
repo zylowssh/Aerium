@@ -14,7 +14,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
     return (
       <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4", className)}>
         {items.map((i) => (
-          <div key={i} className="p-5 rounded-2xl bg-card/70 border border-border/80">
+          <div key={i} className="widget-shell p-5">
             <div className="flex items-center justify-between mb-3">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-8 rounded-lg" />
@@ -31,7 +31,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
     return (
       <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4", className)}>
         {items.map((i) => (
-          <div key={i} className="p-5 rounded-2xl bg-card/70 border border-border/80">
+          <div key={i} className="widget-shell p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-10 w-10 rounded-lg" />
@@ -65,7 +65,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
 
   if (variant === 'chart') {
     return (
-      <div className={cn("p-5 rounded-xl bg-card border border-border", className)}>
+      <div className={cn("widget-shell p-5", className)}>
         <div className="flex items-center justify-between mb-4">
           <Skeleton className="h-5 w-40" />
           <div className="flex gap-2">
@@ -80,7 +80,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
 
   if (variant === 'table') {
     return (
-      <div className={cn("rounded-xl bg-card border border-border overflow-hidden", className)}>
+      <div className={cn("widget-shell overflow-hidden", className)}>
         <div className="p-4 border-b border-border">
           <Skeleton className="h-5 w-32" />
         </div>
@@ -108,7 +108,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
     return (
       <div className={cn("space-y-3", className)}>
         {items.map((i) => (
-          <div key={i} className="flex items-center gap-4 p-4 rounded-lg bg-card border border-border">
+          <div key={i} className="widget-shell-subtle flex items-center gap-4 p-4">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1">
               <Skeleton className="h-4 w-40 mb-2" />
@@ -123,7 +123,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
 
   if (variant === 'trend-chart') {
     return (
-      <div className={cn("p-5 rounded-xl bg-card border border-border", className)}>
+      <div className={cn("widget-shell p-5", className)}>
         <div className="mb-4">
           <Skeleton className="h-5 w-48 mb-2" />
           <Skeleton className="h-3 w-64" />
@@ -139,7 +139,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
 
   if (variant === 'air-quality') {
     return (
-      <div className={cn("lg:col-span-2 rounded-xl border border-border p-6", className)}>
+      <div className={cn("widget-shell lg:col-span-2 p-6", className)}>
         <div className="mb-6">
           <Skeleton className="h-6 w-48 mb-2" />
           <Skeleton className="h-4 w-64" />
@@ -164,7 +164,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
 
   if (variant === 'alerts') {
     return (
-      <div className={cn("rounded-2xl border border-border/80 bg-card/70 p-5", className)}>
+      <div className={cn("widget-shell p-5", className)}>
         <Skeleton className="h-5 w-32 mb-4" />
         <div className="space-y-3">
           {Array.from({ length: count || 3 }).map((_, i) => (
@@ -187,7 +187,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
     return (
       <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-4", className)}>
         {items.map((i) => (
-          <div key={i} className="p-4 rounded-lg bg-card border border-border">
+          <div key={i} className="widget-shell-subtle p-4">
             <Skeleton className="h-4 w-20 mb-3" />
             <Skeleton className="h-6 w-16 mb-2" />
             <Skeleton className="h-3 w-24" />
@@ -201,7 +201,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className }: Load
   return (
     <div className={cn("grid gap-4", className)}>
       {items.map((i) => (
-        <div key={i} className="p-5 rounded-xl bg-card border border-border">
+        <div key={i} className="widget-shell p-5">
           <Skeleton className="h-5 w-32 mb-4" />
           <Skeleton className="h-4 w-full mb-2" />
           <Skeleton className="h-4 w-3/4" />

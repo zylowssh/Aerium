@@ -45,6 +45,7 @@ import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/apiClient';
 import { useSensors } from '@/hooks/useSensors';
 import { useWebSocket } from '@/contexts/WebSocketContext';
+import { parseBackendDate } from '@/lib/dateTime';
 import {
   getConnectionMethodDescription,
   getConnectionMethodLabel,
@@ -198,7 +199,7 @@ const SensorDetail = () => {
       .slice()
       .reverse()
       .map(reading => ({
-        time: format(new Date(reading.recorded_at), 'HH:mm'),
+        time: format(parseBackendDate(reading.recorded_at), 'HH:mm'),
         co2: reading.co2,
         temperature: reading.temperature,
         humidity: reading.humidity,
@@ -253,7 +254,7 @@ const SensorDetail = () => {
     const csvContent = [
       ['Date/Heure', 'CO2 (ppm)', 'Température (°C)', 'Humidité (%)'].join(','),
       ...readings.map(r => [
-        new Date(r.recorded_at).toISOString(),
+        parseBackendDate(r.recorded_at).toISOString(),
         r.co2,
         r.temperature,
         r.humidity
@@ -273,7 +274,7 @@ const SensorDetail = () => {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
+        <div className="widget-shell-subtle p-3 shadow-xl">
           <p className="text-sm text-muted-foreground">{payload[0]?.payload?.time}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm font-medium" style={{ color: entry.color }}>
@@ -678,7 +679,7 @@ const SensorDetail = () => {
                       <span className="text-sm text-muted-foreground">Dernière mise à jour</span>
                     </div>
                     <p className="font-medium text-foreground">
-                      {format(new Date(sensor.updated_at), 'dd/MM/yyyy HH:mm')}
+                      {format(parseBackendDate(sensor.updated_at), 'dd/MM/yyyy HH:mm')}
                     </p>
                   </div>
                 </CardContent>
@@ -699,8 +700,8 @@ const SensorDetail = () => {
                       { label: 'Type', value: sensor.sensor_type === 'real' ? `Capteur Physique (${sensorModelLabel})` : 'Simulation', icon: Cpu },
                       { label: 'Connexion', value: sensor.sensor_type === 'real' ? connectionMethodLabel : 'N/A', icon: Wifi },
                       { label: 'ID du Capteur', value: sensor.id, icon: Radio },
-                      { label: 'Date de Création', value: format(new Date(sensor.created_at), 'dd/MM/yyyy'), icon: Clock },
-                      { label: 'Dernière Activité', value: format(new Date(sensor.updated_at), 'dd/MM/yyyy HH:mm'), icon: Activity },
+                      { label: 'Date de Création', value: format(parseBackendDate(sensor.created_at), 'dd/MM/yyyy'), icon: Clock },
+                      { label: 'Dernière Activité', value: format(parseBackendDate(sensor.updated_at), 'dd/MM/yyyy HH:mm'), icon: Activity },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
                         <div className="p-2 rounded-lg bg-background">

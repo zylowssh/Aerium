@@ -8,6 +8,7 @@ import { AddSensorModal } from '@/components/widgets/AddSensorModal';
 import { ProfileModal } from '@/components/widgets/ProfileModal';
 import { NotificationsPanel } from '@/components/widgets/NotificationsPanel';
 import { AlertThresholdsModal } from '@/components/widgets/AlertThresholdsModal';
+import { useLocation } from 'react-router-dom';
 import { MobileNav } from './MobileNav';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
  import { useTourContext } from '@/contexts/TourContext';
@@ -21,23 +22,35 @@ interface TopBarProps {
 
 export function TopBar({ title = "Tableau de bord", subtitle }: TopBarProps) {
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
   const { user } = useAuth();
   const [exportOpen, setExportOpen] = useState(false);
   const [addSensorOpen, setAddSensorOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [thresholdsOpen, setThresholdsOpen] = useState(false);
-   const { startTour, hasCompletedTour } = useTourContext();
+  const { startTour, startPageTour, hasCompletedTour, isOpen: isTourOpen } = useTourContext();
+
+  const handleTourLaunch = () => {
+    if (!hasCompletedTour) {
+      startTour();
+      return;
+    }
+
+    startPageTour();
+  };
  
-   // Auto-start tour for first-time users (with a small delay to let page load)
+   // Auto-start onboarding once on dashboard for first-time users.
    useEffect(() => {
-     if (!hasCompletedTour) {
+     const isDashboardRoute = location.pathname === '/dashboard';
+     if (!hasCompletedTour && !isTourOpen && isDashboardRoute) {
        const timer = setTimeout(() => {
          startTour();
        }, 1000);
        return () => clearTimeout(timer);
      }
-   }, [hasCompletedTour, startTour]);
+   }, [hasCompletedTour, isTourOpen, location.pathname, startTour]);
   
   // Get greeting based on time of day
   const getGreeting = () => {
@@ -114,7 +127,7 @@ export function TopBar({ title = "Tableau de bord", subtitle }: TopBarProps) {
              <Tooltip>
                <TooltipTrigger asChild>
                  <button
-                   onClick={startTour}
+                   onClick={handleTourLaunch}
                    className={cn(
                      "relative p-2 rounded-lg hover:bg-muted transition-colors",
                      !hasCompletedTour && "animate-pulse-ring"
@@ -132,7 +145,7 @@ export function TopBar({ title = "Tableau de bord", subtitle }: TopBarProps) {
                  </button>
                </TooltipTrigger>
                <TooltipContent>
-                 <p>Guide de visite</p>
+                 <p>{hasCompletedTour ? 'Guide de la page' : 'Commencer la visite guidée'}</p>
                </TooltipContent>
              </Tooltip>
  
@@ -155,7 +168,14 @@ export function TopBar({ title = "Tableau de bord", subtitle }: TopBarProps) {
                data-tour="notifications"
             >
               <Bell className="w-5 h-5 text-muted-foreground" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
+              {unreadNotifications > 0 && (
+                <>
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-[10px] text-destructive-foreground flex items-center justify-center">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                </>
+              )}
             </button>
 
             <button 
@@ -176,7 +196,11 @@ export function TopBar({ title = "Tableau de bord", subtitle }: TopBarProps) {
       <ExportDataModal open={exportOpen} onOpenChange={setExportOpen} />
       <AddSensorModal open={addSensorOpen} onOpenChange={setAddSensorOpen} />
       <ProfileModal open={profileOpen} onOpenChange={setProfileOpen} />
-      <NotificationsPanel open={notificationsOpen} onOpenChange={setNotificationsOpen} />
+      <NotificationsPanel
+        open={notificationsOpen}
+        onOpenChange={setNotificationsOpen}
+        onUnreadCountChange={setUnreadNotifications}
+      />
       <AlertThresholdsModal open={thresholdsOpen} onOpenChange={setThresholdsOpen} />
     </>
   );

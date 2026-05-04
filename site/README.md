@@ -75,7 +75,7 @@ cd air-sense-dashboard
 
 ### 2. Backend (Flask)
 ```bash
-# Depuis site-v2/
+# Depuis site/
 cp .env.example .env
 
 cd backend
@@ -87,9 +87,9 @@ python app.py             # Démarrer serveur
 ```
 
 Important:
-- Le fichier `site-v2/.env` est pour le frontend (variables `VITE_*` uniquement).
-- Le fichier `site-v2/backend/.env` est pour le backend Flask (secrets, JWT, Mistral).
-- La clé `MISTRAL_API_KEY` doit être dans `site-v2/backend/.env`.
+- Le fichier `site/.env` est pour le frontend (variables `VITE_*` uniquement).
+- Le fichier `site/backend/.env` est pour le backend Flask (secrets, JWT, Mistral).
+- La clé `MISTRAL_API_KEY` doit être dans `site/backend/.env`.
 
 Voir aussi: `docs/CONFIG.md`.
 
@@ -264,7 +264,8 @@ Voir **[Guide Déploiement Complet](docs/guides/DEPLOYMENT.md)** pour instructio
 
 ## 📄 Fichiers Importants
 
-- `.env.example` - Modèle de configuration
+- `.env.example` - Modèle frontend (`VITE_*`)
+- `backend/.env.example` - Modèle backend (secrets + IA)
 - `backend/config.py` - Configuration Python
 - `backend/requirements.txt` - Dépendances Python
 - `package.json` - Dépendances Node.js
@@ -275,25 +276,28 @@ Voir **[Guide Déploiement Complet](docs/guides/DEPLOYMENT.md)** pour instructio
 
 ## 📋 Fichiers de Configuration
 
-### `.env.example` (Backend)
+### `site/.env.example` (Frontend)
 ```env
-# Copier en .env et adapter
-
-# Seuils d'alerte
-ALERT_CO2_THRESHOLD=1200
-ALERT_TEMP_MIN=15
-ALERT_TEMP_MAX=28
-ALERT_HUMIDITY_THRESHOLD=80
-
-# Rate Limiting
-ENABLE_RATE_LIMITING=True
-RATELIMIT_DEFAULT=200 per day;50 per hour;10 per minute
-
-FLASK_ENV=development
-FLASK_DEBUG=True
+# Copier en site/.env
+VITE_API_URL=http://localhost:5000/api
+VITE_FLASK_ENABLED=true
 ```
 
-Voir `.env.example` pour toutes les options disponibles.
+### `site/backend/.env.example` (Backend)
+```env
+# Copier en site/backend/.env et adapter
+
+SECRET_KEY=...
+JWT_SECRET_KEY=...
+MISTRAL_API_KEY=...
+MISTRAL_MODEL=mistral-small-latest
+MISTRAL_MAX_TOKENS=700
+ENABLE_PROPHET=False
+ENABLE_RATE_LIMITING=True
+FRONTEND_URL=http://localhost:5173
+```
+
+Voir `site/.env.example` et `site/backend/.env.example` pour toutes les options disponibles.
 
 ---
 

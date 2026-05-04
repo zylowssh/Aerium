@@ -175,7 +175,7 @@ const Settings = () => {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="p-6 rounded-xl bg-card border border-border">
+              <div className="widget-shell p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Organisation</h3>
                 
                 <div className="space-y-4">
@@ -197,7 +197,7 @@ const Settings = () => {
                 </div>
               </div>
 
-              <div className="p-6 rounded-xl bg-card border border-border">
+              <div className="widget-shell p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Conservation des Données</h3>
                 
                 <div className="space-y-4">
@@ -232,7 +232,7 @@ const Settings = () => {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="p-6 rounded-xl bg-card border border-border">
+              <div className="widget-shell p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                   <Gauge className="w-5 h-5" />
                   Seuils d'Alerte par Capteur
@@ -313,7 +313,7 @@ const Settings = () => {
                 </div>
               </div>
 
-              <div className="p-6 rounded-xl bg-card border border-border">
+              <div className="widget-shell p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Canaux de Notification</h3>
                 
                 <div className="space-y-4">
@@ -341,7 +341,7 @@ const Settings = () => {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="p-6 rounded-xl bg-card border border-border">
+              <div className="widget-shell p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Thème</h3>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -385,7 +385,7 @@ const Settings = () => {
                 </div>
               </div>
 
-              <div className="p-6 rounded-xl bg-card border border-border">
+              <div className="widget-shell p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Préférences d'Affichage</h3>
                 
                 <div className="space-y-4">
@@ -414,7 +414,7 @@ const Settings = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 rounded-xl bg-card border border-border"
+              className="widget-shell p-6"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-foreground">Membres de l'Équipe</h3>
@@ -463,7 +463,7 @@ const Settings = () => {
               className="space-y-4"
             >
              {/* Demo Mode Controls */}
-             <div className="p-6 rounded-xl bg-card border border-border">
+             <div className="widget-shell p-6">
                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                  <Gauge className="w-5 h-5" />
                  Mode Démonstration
@@ -510,7 +510,7 @@ const Settings = () => {
              {/* Backend Status Widget */}
              <BackendStatusWidget />
 
-              <div className="p-5 rounded-xl bg-card border border-border">
+              <div className="widget-shell p-5">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
                     <Plug className="w-6 h-6 text-muted-foreground" />

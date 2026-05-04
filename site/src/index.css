@@ -282,6 +282,37 @@
     animation: glow 2s ease-in-out infinite alternate;
   }
 
+  .widget-shell {
+    @apply relative rounded-2xl border border-border/80 backdrop-blur-sm;
+    background-color: hsl(var(--card) / 0.7);
+  }
+
+  @supports (backdrop-filter: blur(0px)) {
+    .widget-shell {
+      background-color: hsl(var(--card) / 0.55);
+    }
+  }
+
+  .widget-shell-subtle {
+    @apply rounded-xl border border-border/70;
+    background-color: hsl(var(--background) / 0.55);
+  }
+
+  .widget-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-border/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground;
+    background-color: hsl(var(--background) / 0.7);
+  }
+
+  /* Harmonize Recharts hover cursor across the app (avoid bright white hover overlays). */
+  .recharts-rectangle.recharts-tooltip-cursor {
+    fill: hsl(var(--muted) / 0.26) !important;
+    stroke: hsl(var(--border) / 0.4) !important;
+  }
+
+  .recharts-curve.recharts-tooltip-cursor {
+    stroke: hsl(var(--border) / 0.55) !important;
+  }
+
   /* Smooth color interpolation when switching between light and dark theme. */
   .theme-smooth,
   .theme-smooth * {

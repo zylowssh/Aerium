@@ -504,6 +504,34 @@ class ApiClient {
     return response.data.users;
   }
 
+  async createUser(data: {
+    email: string;
+    password: string;
+    full_name?: string;
+    role?: "admin" | "user";
+  }) {
+    const response = await this.client.post("/users", data);
+    return response.data.user;
+  }
+
+  async updateUser(
+    userId: string,
+    updates: {
+      email?: string;
+      full_name?: string;
+      role?: "admin" | "user";
+      password?: string;
+    },
+  ) {
+    const response = await this.client.put(`/users/${userId}`, updates);
+    return response.data.user;
+  }
+
+  async deleteUser(userId: string) {
+    const response = await this.client.delete(`/users/${userId}`);
+    return response.data;
+  }
+
   // Alert methods
   async getPredictions() {
     const data = await this.getPredictiveAlertsData();

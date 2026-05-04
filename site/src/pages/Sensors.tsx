@@ -122,7 +122,7 @@ const Sensors = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-           className="rounded-xl border border-border bg-card overflow-hidden"
+            className="widget-shell overflow-hidden"
            data-tour="sensors-table"
         >
           {isLoading ? (
@@ -289,7 +289,7 @@ const Sensors = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 * index }}
-              className="p-4 rounded-xl bg-card border border-border"
+              className="widget-shell p-4"
             >
               <p className="text-sm text-muted-foreground">{stat.label}</p>
               <p className={cn("text-2xl font-bold mt-1", stat.color || 'text-foreground')}>

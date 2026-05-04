@@ -14,10 +14,9 @@ import { OccupancyWidget } from '@/components/dashboard/OccupancyWidget';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { useSensors } from '@/hooks/useSensors';
 import { apiClient } from '@/lib/apiClient';
+import { parseBackendDate } from '@/lib/dateTime';
 import AddSensorDialog from '@/components/sensors/AddSensorDialog';
 import { Button } from '@/components/ui/button';
- import { TourGuide } from '@/components/tour/TourGuide';
- import { useTourContext } from '@/contexts/TourContext';
 import { 
   getHealthScore,
   Alert,
@@ -31,16 +30,6 @@ interface SensorReadingPayload {
 
 const Dashboard = () => {
   const { sensors, isLoading } = useSensors();
-   const { 
-     isOpen: isTourOpen, 
-     currentStep, 
-     totalSteps, 
-     currentStepData, 
-     nextStep, 
-     prevStep, 
-     skipTour, 
-     completeTour 
-   } = useTourContext();
   const [trendData, setTrendData] = useState<Reading[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -209,7 +198,10 @@ const Dashboard = () => {
         
         allSensorReadings.forEach(readings => {
           (readings as SensorReadingPayload[]).forEach((reading) => {
-            const timestamp = new Date(reading.recorded_at).getTime();
+            const timestamp = parseBackendDate(reading.recorded_at).getTime();
+            if (!Number.isFinite(timestamp)) {
+              return;
+            }
             // Round to nearest 30 seconds for grouping (30000 ms)
             const roundedTime = Math.floor(timestamp / 30000) * 30000;
             
@@ -301,12 +293,23 @@ const Dashboard = () => {
     (sensor) => sensor.status === 'en ligne' && sensor.hasReading !== false && Number(sensor.co2 || 0) < 900
   ).length;
   const isMetricsLoading = isLoading || isTrendLoading;
+  const sectionEase = [0.22, 1, 0.36, 1] as const;
+  const sectionTransition = (step: number) => ({
+    duration: 0.34,
+    delay: 0.05 * step,
+    ease: sectionEase,
+  });
 
   return (
     <AppLayout>
        <div className="space-y-4" data-tour="dashboard">
         {/* Air Quality Overview */}
-        <div data-tour="air-quality">
+        <motion.div
+          data-tour="air-quality"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={sectionTransition(0)}
+        >
           <AirQualityOverviewCard
             key="air-quality-overview"
             avgCo2={avgCo2}
@@ -316,50 +319,62 @@ const Dashboard = () => {
             totalSensors={totalSensors}
             isLoading={isTrendLoading}
           />
-        </div>
+        </motion.div>
 
         {/* KPI Cards */}
-        {isLoading ? (
-          <LoadingSkeleton variant="kpi" count={4} />
-        ) : (
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="kpi-cards">
-          <KPICard 
-            label="CO₂ Moyen" 
-            value={avgCo2} 
-            unit="ppm" 
-            icon={Activity}
-            trend={co2Trend}
-            trendLabel="sur la période"
-            status={avgCo2 < 800 ? 'success' : avgCo2 < 1000 ? 'warning' : 'danger'}
-          />
-          <KPICard 
-            label="Température" 
-            value={avgTemp} 
-            unit="°C" 
-            icon={Thermometer}
-            status="default"
-          />
-          <KPICard 
-            label="Humidité" 
-            value={avgHumidity} 
-            unit="%" 
-            icon={Droplets}
-            status="default"
-          />
-          <KPICard 
-            label="Score de Santé" 
-            value={healthScore} 
-            unit="/100" 
-            icon={Heart}
-            trend={healthTrend}
-            trendLabel="sur la période"
-            status={healthScore >= 80 ? 'success' : healthScore >= 60 ? 'warning' : 'danger'}
-          />
-        </div>
-        )}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={sectionTransition(1)}
+        >
+          {isLoading ? (
+            <LoadingSkeleton variant="kpi" count={4} />
+          ) : (
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="kpi-cards">
+            <KPICard 
+              label="CO₂ Moyen" 
+              value={avgCo2} 
+              unit="ppm" 
+              icon={Activity}
+              trend={co2Trend}
+              trendLabel="sur la période"
+              status={avgCo2 < 800 ? 'success' : avgCo2 < 1000 ? 'warning' : 'danger'}
+            />
+            <KPICard 
+              label="Température" 
+              value={avgTemp} 
+              unit="°C" 
+              icon={Thermometer}
+              status="default"
+            />
+            <KPICard 
+              label="Humidité" 
+              value={avgHumidity} 
+              unit="%" 
+              icon={Droplets}
+              status="default"
+            />
+            <KPICard 
+              label="Score de Santé" 
+              value={healthScore} 
+              unit="/100" 
+              icon={Heart}
+              trend={healthTrend}
+              trendLabel="sur la période"
+              status={healthScore >= 80 ? 'success' : healthScore >= 60 ? 'warning' : 'danger'}
+            />
+          </div>
+          )}
+        </motion.div>
 
         {/* Alerts and Insights Below */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-tour="alerts">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+          data-tour="alerts"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={sectionTransition(2)}
+        >
           {/* Recent Alerts */}
           {isAlertsLoading ? (
             <LoadingSkeleton variant="alerts" count={3} />
@@ -417,26 +432,45 @@ const Dashboard = () => {
             bestAirTime={bestAirTime}
             isLoading={isMetricsLoading}
           />
-        </div>
+        </motion.div>
 
         {/* Secondary Widgets Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MaintenanceWidget />
-          <PredictiveAlertsWidget />
-          <EnergyMonitorWidget
-            avgCo2={avgCo2}
-            avgTemp={parseFloat(String(avgTemp))}
-            avgHumidity={avgHumidity}
-            onlineSensors={sensorsOnline}
-            totalSensors={totalSensors}
-            efficientSensors={efficientSensors}
-            isLoading={isMetricsLoading}
-          />
-          <OccupancyWidget />
-        </div>
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={sectionTransition(3)}
+        >
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={sectionTransition(3.2)}>
+            <MaintenanceWidget />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={sectionTransition(3.4)}>
+            <PredictiveAlertsWidget />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={sectionTransition(3.6)}>
+            <EnergyMonitorWidget
+              avgCo2={avgCo2}
+              avgTemp={parseFloat(String(avgTemp))}
+              avgHumidity={avgHumidity}
+              onlineSensors={sensorsOnline}
+              totalSensors={totalSensors}
+              efficientSensors={efficientSensors}
+              isLoading={isMetricsLoading}
+            />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={sectionTransition(3.8)}>
+            <OccupancyWidget />
+          </motion.div>
+        </motion.div>
 
         {/* Active Sensors */}
-         <div data-tour="sensors" className="mt-4">
+         <motion.div
+          data-tour="sensors"
+          className="mt-4"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={sectionTransition(4)}
+         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Capteurs Actifs</h2>
             <Button 
@@ -484,22 +518,10 @@ const Dashboard = () => {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Add Sensor Dialog */}
         <AddSensorDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
-         
-         {/* Tour Guide */}
-         <TourGuide
-           isOpen={isTourOpen}
-           currentStep={currentStep}
-           totalSteps={totalSteps}
-           stepData={currentStepData}
-           onNext={nextStep}
-           onPrev={prevStep}
-           onSkip={skipTour}
-           onComplete={completeTour}
-         />
       </div>
     </AppLayout>
   );

@@ -15,6 +15,7 @@ import {
 import { apiClient } from '@/lib/apiClient';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { parseBackendDate } from '@/lib/dateTime';
 
 interface ActiveAlert {
   id: string;
@@ -285,7 +286,7 @@ const AlertHistory = () => {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleString('fr-FR', {
+    return parseBackendDate(date).toLocaleString('fr-FR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -315,7 +316,7 @@ const AlertHistory = () => {
           </motion.div>
         )}
 
-        <div className="p-4 bg-card border border-border rounded-lg space-y-4">
+        <div className="widget-shell p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-foreground">Alertes Actuelles</h3>
@@ -342,7 +343,7 @@ const AlertHistory = () => {
               { label: 'Reconnues', value: currentStats.reconnues, color: 'text-warning' },
               { label: 'Résolues', value: currentStats.resolues, color: 'text-green-600' },
             ].map((stat) => (
-              <div key={stat.label} className="p-3 rounded-lg border border-border bg-muted/30">
+              <div key={stat.label} className="widget-shell-subtle p-3">
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
                 <p className={cn('text-xl font-semibold', stat.color || 'text-foreground')}>{stat.value}</p>
               </div>
@@ -366,7 +367,7 @@ const AlertHistory = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className={cn('p-4 rounded-xl border bg-card', alert.status === 'nouvelle' ? styles.border : 'border-border')}
+                    className={cn('widget-shell-subtle p-4 border', alert.status === 'nouvelle' ? styles.border : 'border-border')}
                   >
                     <div className="flex items-start gap-4">
                       <div className={cn('p-2.5 rounded-lg', styles.bg)}>
@@ -404,7 +405,7 @@ const AlertHistory = () => {
                         <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
-                            {formatDistanceToNow(new Date(alert.timestamp), { addSuffix: true })}
+                            {formatDistanceToNow(parseBackendDate(alert.timestamp), { addSuffix: true })}
                           </span>
                         </div>
                       </div>
@@ -416,7 +417,7 @@ const AlertHistory = () => {
           </div>
         </div>
 
-        <div className="p-4 bg-card border border-border rounded-lg space-y-4">
+        <div className="widget-shell p-4 space-y-4">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4" />
             <span className="font-semibold">Historique des alertes</span>
@@ -485,7 +486,7 @@ const AlertHistory = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
                 >
-                  <Card className="p-4 border border-border bg-card">
+                  <Card className="p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex gap-4 flex-1">
                         <div className="mt-1">{getHistoryIcon(alert.status)}</div>

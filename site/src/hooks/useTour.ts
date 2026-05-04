@@ -1,13 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
 const TOUR_STORAGE_KEY = "aerium_tour_completed";
+const STARTER_TOUR_STEP_IDS = [
+  "welcome",
+  "kpi-cards",
+  "air-quality",
+  "alerts",
+  "sensors",
+  "add-sensor",
+  "tour-button",
+];
 
 export interface TourStep {
   id: string;
   target: string;
   title: string;
   content: string;
+  section?: string;
+  mascotTip?: string;
   placement?: "top" | "bottom" | "left" | "right";
   page?: string;
 }
@@ -19,6 +30,9 @@ export const tourSteps: TourStep[] = [
     title: "Bienvenue sur Aerium ! 👋",
     content:
       "Aerium vous aide à surveiller la qualité de l'air en temps réel. Suivez ce guide pour découvrir les fonctionnalités principales.",
+    section: "Accueil",
+    mascotTip:
+      "Commencez par observer la vue globale: votre mascotte peut annoncer les priorités du jour dès l'ouverture.",
     placement: "bottom",
     page: "/dashboard",
   },
@@ -28,6 +42,9 @@ export const tourSteps: TourStep[] = [
     title: "Indicateurs Clés",
     content:
       "Ces cartes affichent les métriques essentielles : CO₂ moyen, température, humidité et score de santé global.",
+    section: "Vue rapide",
+    mascotTip:
+      "Utilisez les cartes comme check-up express: en quelques secondes, vous savez si la situation est stable.",
     placement: "bottom",
     page: "/dashboard",
   },
@@ -37,6 +54,9 @@ export const tourSteps: TourStep[] = [
     title: "Qualité de l'Air",
     content:
       "Visualisez l'évolution du CO₂ sur les dernières heures avec ce graphique interactif.",
+    section: "Tendances",
+    mascotTip:
+      "Votre mascotte peut souligner les pics anormaux et proposer une action immédiate quand la courbe grimpe.",
     placement: "right",
     page: "/dashboard",
   },
@@ -46,6 +66,9 @@ export const tourSteps: TourStep[] = [
     title: "Alertes en Temps Réel",
     content:
       "Recevez des notifications instantanées lorsque les seuils de qualité de l'air sont dépassés.",
+    section: "Sécurité",
+    mascotTip:
+      "Pensez à hiérarchiser les alertes critiques: c'est le meilleur endroit pour guider les actions urgentes.",
     placement: "left",
     page: "/dashboard",
   },
@@ -55,6 +78,9 @@ export const tourSteps: TourStep[] = [
     title: "Vos Capteurs",
     content:
       "Gérez vos capteurs ici. Ajoutez des capteurs réels (MQ-135, SCD30, etc.) ou utilisez le mode simulation pour tester.",
+    section: "Réseau",
+    mascotTip:
+      "Un bon rituel: vérifier la santé des capteurs chaque matin pour éviter les données manquantes.",
     placement: "top",
     page: "/dashboard",
   },
@@ -64,6 +90,9 @@ export const tourSteps: TourStep[] = [
     title: "Ajouter un Capteur",
     content:
       "Cliquez ici pour ajouter un nouveau capteur à votre réseau de surveillance.",
+    section: "Configuration",
+    mascotTip:
+      "Préparez un nom de capteur clair (ex: Salle A, Atelier, Bureau) pour retrouver vite vos zones.",
     placement: "bottom",
     page: "/dashboard",
   },
@@ -145,6 +174,9 @@ export const tourSteps: TourStep[] = [
     title: "Relancer le Guide",
     content:
       "Vous pouvez relancer ce guide à tout moment en cliquant sur ce bouton. Bonne exploration !",
+    section: "Autonomie",
+    mascotTip:
+      "Idéal pour une mini-visite d'une page: votre mascotte peut proposer un parcours court selon le contexte.",
     placement: "bottom",
     page: "/dashboard",
   },
@@ -154,13 +186,28 @@ export const useTour = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasCompletedTour, setHasCompletedTour] = useState(true);
+  const [tourMode, setTourMode] = useState<"starter" | "page">("starter");
   const location = useLocation();
 
   // Get steps for current page
   const currentPageSteps = tourSteps.filter(
     (step) => step.page === location.pathname,
   );
+
+  const starterSteps = useMemo(
+    () => tourSteps.filter((step) => STARTER_TOUR_STEP_IDS.includes(step.id)),
+    [],
+  );
+
   const allSteps = tourSteps;
+  const activeSteps = tourMode === "page" ? currentPageSteps : starterSteps;
+  const safeSteps =
+    activeSteps.length > 0
+      ? activeSteps
+      : starterSteps.length > 0
+        ? starterSteps
+        : allSteps;
+  const safeStepIndex = Math.min(currentStep, Math.max(0, safeSteps.length - 1));
 
   useEffect(() => {
     const completed = localStorage.getItem(TOUR_STORAGE_KEY);
@@ -169,32 +216,55 @@ export const useTour = () => {
     }
   }, []);
 
-  // Get the step data based on whether we're doing a full tour or page-specific
-  const getSteps = () => allSteps;
+  useEffect(() => {
+    if (safeSteps.length === 0) {
+      setCurrentStep(0);
+      return;
+    }
+
+    if (currentStep > safeSteps.length - 1) {
+      setCurrentStep(0);
+    }
+  }, [currentStep, safeSteps.length]);
 
   const startTour = useCallback(() => {
+    setTourMode("starter");
     setCurrentStep(0);
     setIsOpen(true);
   }, []);
 
   const startPageTour = useCallback(() => {
-    // Find the first step for the current page
-    const firstPageStepIndex = allSteps.findIndex(
-      (step) => step.page === location.pathname,
-    );
-    if (firstPageStepIndex !== -1) {
-      setCurrentStep(firstPageStepIndex);
+    if (currentPageSteps.length === 0) {
+      setTourMode("starter");
+      setCurrentStep(0);
       setIsOpen(true);
+      return;
     }
-  }, [location.pathname]);
+
+    setTourMode("page");
+    setCurrentStep(0);
+    setIsOpen(true);
+  }, [currentPageSteps.length]);
+
+  const completeTour = useCallback(() => {
+    setIsOpen(false);
+    setTourMode("starter");
+    setHasCompletedTour(true);
+    localStorage.setItem(TOUR_STORAGE_KEY, "true");
+  }, []);
 
   const nextStep = useCallback(() => {
-    if (currentStep < allSteps.length - 1) {
+    if (safeSteps.length === 0) {
+      completeTour();
+      return;
+    }
+
+    if (currentStep < safeSteps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
       completeTour();
     }
-  }, [currentStep]);
+  }, [completeTour, currentStep, safeSteps.length]);
 
   const prevStep = useCallback(() => {
     if (currentStep > 0) {
@@ -202,21 +272,15 @@ export const useTour = () => {
     }
   }, [currentStep]);
 
-  const completeTour = useCallback(() => {
-    setIsOpen(false);
-    setHasCompletedTour(true);
-    localStorage.setItem(TOUR_STORAGE_KEY, "true");
-  }, []);
-
   const skipTour = useCallback(() => {
     completeTour();
   }, [completeTour]);
 
   return {
     isOpen,
-    currentStep,
-    totalSteps: tourSteps.length,
-    currentStepData: tourSteps[currentStep],
+    currentStep: safeStepIndex,
+    totalSteps: safeSteps.length,
+    currentStepData: safeSteps[safeStepIndex],
     hasCompletedTour,
     startTour,
     nextStep,
