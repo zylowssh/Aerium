@@ -207,7 +207,10 @@ export const useTour = () => {
       : starterSteps.length > 0
         ? starterSteps
         : allSteps;
-  const safeStepIndex = Math.min(currentStep, Math.max(0, safeSteps.length - 1));
+  const safeStepIndex = Math.min(
+    currentStep,
+    Math.max(0, safeSteps.length - 1),
+  );
 
   useEffect(() => {
     const completed = localStorage.getItem(TOUR_STORAGE_KEY);
